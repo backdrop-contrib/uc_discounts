@@ -1,4 +1,6 @@
 <?php
+//$Id$
+
 /**
  * @file
  * Discounts module for Ubercart 2.0+.

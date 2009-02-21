@@ -1,4 +1,6 @@
 <?php
+//$Id$
+
 /**
  * @file
  * Install hooks for codeless_discounts_field.module.

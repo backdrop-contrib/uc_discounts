@@ -1,4 +1,6 @@
 <?php
+//$Id$
+
 /**
  * @file
  * Discounts administration menu items.

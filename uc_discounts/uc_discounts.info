@@ -1,3 +1,4 @@
+; $Id$
 name = Discounts
 description = Defines Ubercart discount based on user-defined codes.
 dependencies[] = date_popup

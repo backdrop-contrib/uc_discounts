@@ -1,0 +1,563 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  uc_discounts.admin.inc: n/a
+#  uc_discounts.install: n/a
+#  uc_discounts.module: n/a
+#  uc_discounts.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-02-14 17:20-0800\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: uc_discounts.admin.inc:14;80;664;729
+msgid "Name"
+msgstr ""
+
+#: uc_discounts.admin.inc:15;89;665
+msgid "Short Description"
+msgstr ""
+
+#: uc_discounts.admin.inc:16;666
+msgid "Qualifying Type"
+msgstr ""
+
+#: uc_discounts.admin.inc:17;667
+msgid "Discount Type"
+msgstr ""
+
+#: uc_discounts.admin.inc:18;370;668
+msgid "Weight"
+msgstr ""
+
+#: uc_discounts.admin.inc:19;672;733
+msgid "Operations"
+msgstr ""
+
+#: uc_discounts.admin.inc:40;699
+msgid "view usage"
+msgstr ""
+
+#: uc_discounts.admin.inc:41;700;749
+msgid "edit"
+msgstr ""
+
+#: uc_discounts.admin.inc:42;750
+msgid "copy"
+msgstr ""
+
+#: uc_discounts.admin.inc:43;701;751
+msgid "delete"
+msgstr ""
+
+#: uc_discounts.admin.inc:49
+msgid "No discounts."
+msgstr ""
+
+#: uc_discounts.admin.inc:55
+msgid "Create a new discount."
+msgstr ""
+
+#: uc_discounts.admin.inc:81
+msgid "Shown in admin reports and logs."
+msgstr ""
+
+#: uc_discounts.admin.inc:90
+msgid "Description displayed to user during checkout and in order review."
+msgstr ""
+
+#: uc_discounts.admin.inc:98
+msgid "Description"
+msgstr ""
+
+#: uc_discounts.admin.inc:99
+msgid "Internal use only."
+msgstr ""
+
+#: uc_discounts.admin.inc:106
+msgid "Qualifying type"
+msgstr ""
+
+#: uc_discounts.admin.inc:107
+msgid "The amount used to determine if a cart qualifies for this discount."
+msgstr ""
+
+#: uc_discounts.admin.inc:114
+msgid "Qualifying amount"
+msgstr ""
+
+#: uc_discounts.admin.inc:115
+msgid "The amount required to qualify for the discount.\tE.g. 50 (for $50), 5 (for 5 items).  Remember for a discount like 'buy 4 get 1 free' the qualifying amount is '5'."
+msgstr ""
+
+#: uc_discounts.admin.inc:123
+msgid "Discount type"
+msgstr ""
+
+#: uc_discounts.admin.inc:124
+msgid "Apply discounts to specific product types."
+msgstr ""
+
+#: uc_discounts.admin.inc:131
+msgid "Discount amount"
+msgstr ""
+
+#: uc_discounts.admin.inc:132
+msgid "The amount required to qualify for the discount.\tE.g. 50 (for $50), 5 (for 5 items), or 0.5 (for 5%)"
+msgstr ""
+
+#: uc_discounts.admin.inc:154
+msgid "Require(s) code to activate discount."
+msgstr ""
+
+#: uc_discounts.admin.inc:172
+msgid "Discount codes"
+msgstr ""
+
+#: uc_discounts.admin.inc:173;232;257;343
+msgid "This field is required."
+msgstr ""
+
+#: uc_discounts.admin.inc:174
+msgid "Enter discount codes in box above, one code per line.  Spaces are permitted but may confuse consumers. Note codes will be trimmed."
+msgstr ""
+
+#: uc_discounts.admin.inc:204
+msgid "Filter By Products"
+msgstr ""
+
+#: uc_discounts.admin.inc:205
+msgid "Filter By Terms"
+msgstr ""
+
+#: uc_discounts.admin.inc:208
+msgid "Filter Type"
+msgstr ""
+
+#: uc_discounts.admin.inc:209
+msgid "Determine whether to filter by products or by terms."
+msgstr ""
+
+#: uc_discounts.admin.inc:226
+msgid "<All Products>"
+msgstr ""
+
+#: uc_discounts.admin.inc:231
+msgid "Products"
+msgstr ""
+
+#: uc_discounts.admin.inc:233
+msgid "Select all products this discount applies to or &lt;All Products&gt; to apply to all products."
+msgstr ""
+
+#: uc_discounts.admin.inc:251
+msgid "<All Terms>"
+msgstr ""
+
+#: uc_discounts.admin.inc:256
+msgid "Terms"
+msgstr ""
+
+#: uc_discounts.admin.inc:258
+msgid "Select all terms this discount applies to or &lt;All Terms&gt; to apply to all terms.  Selections are <b>not</b> recursive."
+msgstr ""
+
+#: uc_discounts.admin.inc:273
+msgid "Require single product to qualify."
+msgstr ""
+
+#: uc_discounts.admin.inc:274
+msgid "Requires a single product to meet the qualifying requirements to receive discount.\tOtherwise qualifying requirements may be met by the combination of selected products."
+msgstr ""
+
+#: uc_discounts.admin.inc:280
+msgid "Maximum times applied"
+msgstr ""
+
+#: uc_discounts.admin.inc:281
+msgid "Number of times this discount can be applied to a single cart (0 for unlimited).  Does not apply to 'Percent off' discounts."
+msgstr ""
+
+#: uc_discounts.admin.inc:290
+msgid "Can be combined with other discounts"
+msgstr ""
+
+#: uc_discounts.admin.inc:291;333 uc_discounts.install:88
+msgid "Whether or not this discount will be applied if other discounts are."
+msgstr ""
+
+#: uc_discounts.admin.inc:298
+msgid "Max uses"
+msgstr ""
+
+#: uc_discounts.admin.inc:299
+msgid "Number of times this discount can be applied (0 for unlimited)."
+msgstr ""
+
+#: uc_discounts.admin.inc:308
+msgid "Max uses per user"
+msgstr ""
+
+#: uc_discounts.admin.inc:309 uc_discounts.install:100
+msgid "Number of times this discount can be applied to a particular user (0 for unlimited)."
+msgstr ""
+
+#: uc_discounts.admin.inc:332
+msgid "Discount expires"
+msgstr ""
+
+#: uc_discounts.admin.inc:342
+msgid "Discount expiration"
+msgstr ""
+
+#: uc_discounts.admin.inc:344
+msgid "Date and time when the discount expires."
+msgstr ""
+
+#: uc_discounts.admin.inc:359
+msgid "Is published"
+msgstr ""
+
+#: uc_discounts.admin.inc:360 uc_discounts.install:120
+msgid "Convenience flag to state whether code is published on site or not."
+msgstr ""
+
+#: uc_discounts.admin.inc:371
+msgid "Lighter discounts are applied to an order first. This value is unimportant if there are no discounts on discount line items."
+msgstr ""
+
+#: uc_discounts.admin.inc:376;448
+msgid "Submit"
+msgstr ""
+
+#: uc_discounts.admin.inc:391
+msgid "Discounts codes are required because 'Require(s) code' is checked"
+msgstr ""
+
+#: uc_discounts.admin.inc:404
+msgid "Discount amount must be integer, decimal or percentage."
+msgstr ""
+
+#: uc_discounts.admin.inc:413
+msgid "Products are required because of 'Filter Type' value"
+msgstr ""
+
+#: uc_discounts.admin.inc:421
+msgid "Terms are required because of 'Filter Type' value"
+msgstr ""
+
+#: uc_discounts.admin.inc:427
+msgid "Invalid filter type value"
+msgstr ""
+
+#: uc_discounts.admin.inc:433
+msgid "Expiration are required because 'Discount expires' is checked"
+msgstr ""
+
+#: uc_discounts.admin.inc:570
+msgid "%name settings have been saved."
+msgstr ""
+
+#: uc_discounts.admin.inc:585
+msgid "Copy of @discount"
+msgstr ""
+
+#: uc_discounts.admin.inc:634
+msgid "Delete @row?"
+msgstr ""
+
+#: uc_discounts.admin.inc:635
+msgid "Continue"
+msgstr ""
+
+#: uc_discounts.admin.inc:635
+msgid "Cancel"
+msgstr ""
+
+#: uc_discounts.admin.inc:653
+msgid "Discount deleted."
+msgstr ""
+
+#: uc_discounts.admin.inc:669;730
+msgid "Uses"
+msgstr ""
+
+#: uc_discounts.admin.inc:670;731;764
+msgid "Times Applied"
+msgstr ""
+
+#: uc_discounts.admin.inc:671;732
+msgid "Total Amount"
+msgstr ""
+
+#: uc_discounts.admin.inc:707;794
+msgid "No discount data available."
+msgstr ""
+
+#: uc_discounts.admin.inc:721
+msgid "Report for all discounts."
+msgstr ""
+
+#: uc_discounts.admin.inc:761
+msgid "User"
+msgstr ""
+
+#: uc_discounts.admin.inc:762
+msgid "Order"
+msgstr ""
+
+#: uc_discounts.admin.inc:763
+msgid "Code"
+msgstr ""
+
+#: uc_discounts.admin.inc:765
+msgid "Amount"
+msgstr ""
+
+#: uc_discounts.admin.inc:766
+msgid "Date"
+msgstr ""
+
+#: uc_discounts.admin.inc:778
+msgid "Anonymous"
+msgstr ""
+
+#: uc_discounts.admin.inc:785
+msgid "no code"
+msgstr ""
+
+#: uc_discounts.module:48
+msgid "Add and review discounts"
+msgstr ""
+
+#: uc_discounts.module:199;217
+msgid "Discounts have changed.  Please review your cart and continue checkout."
+msgstr ""
+
+#: uc_discounts.module:254
+msgid "Discount"
+msgstr ""
+
+#: uc_discounts.module:280
+msgid "Enter discount codes"
+msgstr ""
+
+#: uc_discounts.module:300
+msgid "Enter discount codes in the box below (one per line)."
+msgstr ""
+
+#: uc_discounts.module:322
+msgid "Click to calculate discounts"
+msgstr ""
+
+#: uc_discounts.module:330
+msgid "Calculating discounts..."
+msgstr ""
+
+#: uc_discounts.module:331
+msgid "Please enter at least one code"
+msgstr ""
+
+#: uc_discounts.module:332
+msgid "No applicable discounts"
+msgstr ""
+
+#: uc_discounts.module:333
+msgid "There were problems determinging if any discounts apply.  Please try again shortly.\nIf this does not resolve the issue, please call @phone to complete your order."
+msgstr ""
+
+#: uc_discounts.module:359;475
+msgid "Warning:"
+msgstr ""
+
+#: uc_discounts.module:845
+msgid "The discount for code \"@code\" has expired."
+msgstr ""
+
+#: uc_discounts.module:891;910
+msgid "The discount for code \"@code\" has reached its max number of uses."
+msgstr ""
+
+#: uc_discounts.module:927;939
+msgid "The discount for code \"@code\" cannot be combined with other discounts."
+msgstr ""
+
+#: uc_discounts.module:1013
+msgid "The discount for code \"@code\" requires a minimum price of @qualifying_amount to qualify."
+msgstr ""
+
+#: uc_discounts.module:1017
+msgid "The discount for code \"@code\" requires a minimum quantity of @qualifying_amount to qualify."
+msgstr ""
+
+#: uc_discounts.module:1103
+msgid "The discount, '@short_description', with code '@code' was applied for a discount of @discount_amount."
+msgstr ""
+
+#: uc_discounts.module:1106
+msgid "The discount, '@short_description', with code '@code' was applied @times_applied times for a discount of @discount_amount."
+msgstr ""
+
+#: uc_discounts.module:1112
+msgid "The discount, '@short_description', was applied for a discount of @discount_amount."
+msgstr ""
+
+#: uc_discounts.module:1115
+msgid "The discount, '@short_description', was applied @times_applied times for a discount of @discount_amount."
+msgstr ""
+
+#: uc_discounts.module:1276
+msgid "Minimum price"
+msgstr ""
+
+#: uc_discounts.module:1277
+msgid "Minimum quantity"
+msgstr ""
+
+#: uc_discounts.module:1298
+msgid "Percent off"
+msgstr ""
+
+#: uc_discounts.module:1299
+msgid "Fixed amount off"
+msgstr ""
+
+#: uc_discounts.module:1300
+msgid "Free items"
+msgstr ""
+
+#: uc_discounts.module:58
+msgid "configure discounts"
+msgstr ""
+
+#: uc_discounts.module:69
+msgid "Discount settings"
+msgstr ""
+
+#: uc_discounts.module:70
+msgid "Configure discount settings."
+msgstr ""
+
+#: uc_discounts.module:76
+msgid "Edit discount rule"
+msgstr ""
+
+#: uc_discounts.module:90
+msgid "Delete discount rule"
+msgstr ""
+
+#: uc_discounts.module:103
+msgid "Ubercart discounts usage data"
+msgstr ""
+
+#: uc_discounts.module:104
+msgid "View usage data for each Ubercart discount."
+msgstr ""
+
+#: uc_discounts.module:110
+msgid "Ubercart discount usage data"
+msgstr ""
+
+#: uc_discounts.module:0
+msgid "uc_discounts"
+msgstr ""
+
+#: uc_discounts.install:44
+msgid "Minimum quantity or price required to qualify for this discount."
+msgstr ""
+
+#: uc_discounts.install:55
+msgid "Amount to discount (i.e. 1 free item, 25%, or $2.00)"
+msgstr ""
+
+#: uc_discounts.install:62
+msgid "Requires code to activate discount."
+msgstr ""
+
+#: uc_discounts.install:68
+msgid "What type of object to filter on."
+msgstr ""
+
+#: uc_discounts.install:75
+msgid "Requires qualifying amount to come from a single product."
+msgstr ""
+
+#: uc_discounts.install:81
+msgid "Number of times this discount can be applied to a single cart (0 for unlimited)."
+msgstr ""
+
+#: uc_discounts.install:94
+msgid "Number of times this discount can be applied (0 for no limit)."
+msgstr ""
+
+#: uc_discounts.install:107
+msgid "Whether or not discount has an expiration."
+msgstr ""
+
+#: uc_discounts.install:113
+msgid "The exipration date and time as a unix timestamp."
+msgstr ""
+
+#: uc_discounts.install:132;275
+msgid "The insert date and time as a unix timestamp."
+msgstr ""
+
+#: uc_discounts.install:155;183;210;238
+msgid "The {uc_discounts}.discount_id of the discount."
+msgstr ""
+
+#: uc_discounts.install:188
+msgid "The {uc_products}.nid of the product being discounted."
+msgstr ""
+
+#: uc_discounts.install:215
+msgid "The {uc_terms}.tid of the term being discounted."
+msgstr ""
+
+#: uc_discounts.install:244
+msgid "The {users}.uid of the user who used the discount or (0 if anonymous)."
+msgstr ""
+
+#: uc_discounts.install:250;293
+msgid "The {uc_orders}.order_id of the user's order."
+msgstr ""
+
+#: uc_discounts.install:257
+msgid "Code used for discount."
+msgstr ""
+
+#: uc_discounts.install:263
+msgid "Number of times this discount was applied."
+msgstr ""
+
+#: uc_discounts.install:269
+msgid "Total amount of discount."
+msgstr ""
+
+#: uc_discounts.install:298
+msgid "Newline delimited codes string for order."
+msgstr ""
+
+#: uc_discounts.info:0
+msgid "Discounts"
+msgstr ""
+
+#: uc_discounts.info:0
+msgid "Defines Ubercart discount based on user-defined codes."
+msgstr ""
+
+#: uc_discounts.info:0
+msgid "Ubercart - core (optional)"
+msgstr ""
+

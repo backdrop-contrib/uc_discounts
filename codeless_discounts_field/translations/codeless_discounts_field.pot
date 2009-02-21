@@ -1,0 +1,49 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  codeless_discounts_field.module: n/a
+#  codeless_discounts_field.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-02-14 17:19-0800\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: codeless_discounts_field.module:13
+msgid "Codeless Discounts"
+msgstr ""
+
+#: codeless_discounts_field.module:14
+msgid "Displays uc_discounts for node without codes"
+msgstr ""
+
+#: codeless_discounts_field.module:103
+msgid "Expires:"
+msgstr ""
+
+#: codeless_discounts_field.module:0
+msgid "codeless_discounts_field"
+msgstr ""
+
+#: codeless_discounts_field.info:0
+msgid "Codeless Discounts Field"
+msgstr ""
+
+#: codeless_discounts_field.info:0
+msgid "Defines CCK-based field for displaying uc_discounts not requiring codes attached to nodes."
+msgstr ""
+
+#: codeless_discounts_field.info:0
+msgid "CCK"
+msgstr ""
+

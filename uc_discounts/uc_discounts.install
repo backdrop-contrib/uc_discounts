@@ -1,0 +1,333 @@
+<?php
+/**
+ * @file
+ * Install hooks for uc_discounts.module.
+ */
+
+function uc_discounts_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts"] = array(
+		"fields" => array(
+			"discount_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"name" => array(
+				"type" => "varchar",
+				"length" => 255,
+				"not null" => TRUE,
+				"default" => "",
+			),
+			"short_description" => array(
+				"type" => "varchar",
+				"length" => 100,
+				"not null" => TRUE,
+				"default" => "",
+			),
+			"description" => array(
+				"type" => "varchar",
+				"length" => 1000,
+				"not null" => TRUE,
+				"default" => "",
+			),
+			"qualifying_type" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+			),
+			"qualifying_amount" => array(
+				"type" => "float",
+				"not null" => TRUE,
+				"default" => 0.0,
+				"description" => t("Minimum quantity or price required to qualify for this discount."),
+			),
+			"discount_type" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+			),
+			"discount_amount" => array(
+				"type" => "float",
+				"not null" => TRUE,
+				"default" => 0.0,
+				"description" => t("Amount to discount (i.e. 1 free item, 25%, or $2.00)"),
+			),
+			"requires_code" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 1,
+				"description" => t("Requires code to activate discount."),
+			),
+			"filter_type" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 1,
+				"description" => t("What type of object to filter on."),
+			),
+			"requires_single_product_to_qualify" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 1,
+				"description" => t("Requires qualifying amount to come from a single product."),
+			),
+			"max_times_applied" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 1,
+				"description" => t("Number of times this discount can be applied to a single cart (0 for unlimited)."),
+			),
+			"can_be_combined_with_other_discounts" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Whether or not this discount will be applied if other discounts are."),
+			),
+			"max_uses" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Number of times this discount can be applied (0 for no limit)."),
+			),
+			"max_uses_per_user" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 1,
+				"description" => t("Number of times this discount can be applied to a particular user (0 for unlimited)."),
+			),
+			"has_expiration" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Whether or not discount has an expiration."),
+			),
+			"expiration" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The exipration date and time as a unix timestamp."),
+			),
+			"is_published" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => FALSE,
+				"default" => 0,
+				"description" => t("Convenience flag to state whether code is published on site or not."),
+			),
+			"weight" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 0,
+			),
+			"insert_timestamp" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The insert date and time as a unix timestamp."),
+			),
+		),
+		"primary key" => array("discount_id"),
+	);
+
+	return $schema;
+}
+
+function uc_discounts_codes_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_codes"] = array(
+		"fields" => array(
+			"discount_code_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"discount_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The {uc_discounts}.discount_id of the discount."),
+			),
+			"code" => array(
+				"type" => "varchar",
+				"length" => 100,
+				"not null" => TRUE,
+				"default" => "",
+			),
+		),
+		"primary key" => array("discount_code_id"),
+	);
+
+	return $schema;
+}
+
+function uc_discounts_products_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_products"] = array(
+		"fields" => array(
+			"discount_product_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"discount_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_discounts}.discount_id of the discount."),
+			),
+			"product_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_products}.nid of the product being discounted."),
+			),
+		),
+		"primary key" => array("discount_product_id"),
+	);
+
+	return $schema;
+}
+
+function uc_discounts_terms_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_terms"] = array(
+		"fields" => array(
+			"discount_term_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"discount_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_discounts}.discount_id of the discount."),
+			),
+			"term_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_terms}.tid of the term being discounted."),
+			),
+		),
+		"primary key" => array("discount_term_id"),
+	);
+
+	return $schema;
+}
+
+function uc_discounts_uses_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_uses"] = array(
+		"fields" => array(
+			"discount_use_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"discount_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The {uc_discounts}.discount_id of the discount."),
+			),
+			"user_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The {users}.uid of the user who used the discount or (0 if anonymous)."),
+			),
+			"order_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The {uc_orders}.order_id of the user's order."),
+			),
+			"code" => array(
+				"type" => "varchar",
+				"length" => 100,
+				"not null" => TRUE,
+				"default" => "",
+				"description" => t("Code used for discount."),
+			),
+			"times_applied" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 1,
+				"description" => t("Number of times this discount was applied."),
+			),
+			"amount" => array(
+				"type" => "float",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Total amount of discount."),
+			),
+			"insert_timestamp" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("The insert date and time as a unix timestamp.")
+			),
+		),
+		"primary key" => array("discount_use_id"),
+	);
+
+	return $schema;
+}
+
+function uc_discounts_order_codes_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_order_codes"] = array(
+		"fields" => array(
+			"order_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_orders}.order_id of the user's order."),
+			),
+			"codes" => array(
+				"type" => "text",
+				"not null" => TRUE,
+				"description" => t("Newline delimited codes string for order."),
+			),
+		),
+	);
+
+	return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function uc_discounts_install()
+{
+	drupal_install_schema("uc_discounts");
+	drupal_install_schema("uc_discounts_codes");
+	drupal_install_schema("uc_discounts_products");
+	drupal_install_schema("uc_discounts_terms");
+	drupal_install_schema("uc_discounts_uses");
+	drupal_install_schema("uc_discounts_order_codes");
+	
+	//Weight must be less than uc_payment's
+	db_query("UPDATE {system} SET weight=-10 WHERE name='uc_discounts'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function uc_discounts_uninstall()
+{
+	drupal_uninstall_schema("uc_discounts_order_codes");
+	drupal_uninstall_schema("uc_discounts_uses");
+	drupal_uninstall_schema("uc_discounts_products");
+	drupal_uninstall_schema("uc_discounts_terms");
+	drupal_uninstall_schema("uc_discounts_codes");
+	drupal_uninstall_schema("uc_discounts");
+}

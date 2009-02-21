@@ -1,0 +1,114 @@
+<?php
+/**
+ * See http://drupal.org/node/106716 for more information.
+ */
+
+/**
+ * Implementation of hook_field_info().
+ */
+function codeless_discounts_field_field_info()
+{
+	return array(
+		"codeless_discounts" => array(
+			"label" => t("Codeless Discounts"),
+			"description" => t("Displays uc_discounts for node without codes"),
+			"callbacks" => array(
+				"tables" => CONTENT_CALLBACK_DEFAULT,
+				"arguments" => CONTENT_CALLBACK_DEFAULT,
+			),
+		),
+	);
+}
+
+function codeless_discounts_field_widget_info()
+{
+	return array(
+		"codeless_discounts" => array(
+			"label" => "Default Display",
+			"field types" => array("codeless_discounts"),
+			"multiple values" => CONTENT_HANDLE_CORE,
+			"callbacks" => array(
+				"default value" => CONTENT_CALLBACK_DEFAULT,
+			),
+		),
+	);
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function codeless_discounts_field_widget(&$form, &$form_state, $field, $items, $delta = 0)
+{
+	$element = array(
+		"#type" => $field["widget"]["type"],
+		"#default_value" => isset($items[$delta]) ? $items[$delta] : NULL,
+	);
+	return $element;
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function codeless_discounts_field_field_formatter_info()
+{
+	return array(
+		"default" => array(
+			"label" => "Discount Description",
+			"field types" => array("codeless_discounts"),
+		),
+	);
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function codeless_discounts_field_theme()
+{
+	return array(
+		"codeless_discounts_field_formatter_default" => array(
+			"arguments" => array("element"),
+		),
+	);
+		
+}
+ 
+/**
+ * Theme function for codeless discounts element.
+ */
+function theme_codeless_discounts_field_formatter_default($element)
+{
+	return $element["#item"]["codeless_discounts"];
+}
+
+/**
+ * Implementation of hook_field()
+ */
+function codeless_discounts_field_field($op, &$node, $field, &$items, $teaser, $page)
+{
+	switch ($op)
+	{
+		case "load":
+		case "sanitize":
+			//If items is empty, generate value by getting discounts that apply to this product
+			if ( empty($items) )
+			{
+				$discounts = get_codeless_discounts_for_product($node->nid);
+				if ( !empty($discounts) )
+				{
+					$descriptions = array();
+					foreach ($discounts as $discount)
+					{
+						$description = $discount->short_description;
+						if ($discount->has_expiration)
+							$description .= " (" . t("Expires:") . " " . date("Y-m-d H:i", $discount->expiration) . ")";
+						$descriptions[] = $description;
+					}
+
+					$item = array();
+					$item["codeless_discounts"] = join("<br/>", $descriptions);
+					$items[] = $item;
+				}
+			}
+			break;
+	}
+}

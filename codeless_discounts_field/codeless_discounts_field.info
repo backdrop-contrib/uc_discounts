@@ -1,0 +1,6 @@
+name = Codeless Discounts Field
+description = Defines CCK-based field for displaying uc_discounts not requiring codes attached to nodes.
+dependencies[] = uc_discounts
+dependencies[] = content
+package = CCK
+core = 6.x

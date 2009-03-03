@@ -114,7 +114,7 @@ msgid "Discount amount"
 msgstr ""
 
 #: uc_discounts.admin.inc:132
-msgid "The amount required to qualify for the discount.\tE.g. 50 (for $50), 5 (for 5 items), or 0.5 (for 5%)"
+msgid "The amount of discount.\tE.g. 50 (for $50), 5 (for 5 items), or 0.5 (for 5%)"
 msgstr ""
 
 #: uc_discounts.admin.inc:154
@@ -374,7 +374,7 @@ msgid "No applicable discounts"
 msgstr ""
 
 #: uc_discounts.module:333
-msgid "There were problems determinging if any discounts apply.  Please try again shortly.\nIf this does not resolve the issue, please call @phone to complete your order."
+msgid "There were problems determining if any discounts apply.  Please try again shortly.\nIf this does not resolve the issue, please call @phone to complete your order."
 msgstr ""
 
 #: uc_discounts.module:359;475

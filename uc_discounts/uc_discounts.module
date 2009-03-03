@@ -606,13 +606,11 @@ function uc_discounts_update($discount_id,
  */
 function uc_discounts_delete_all($discount_id)
 {
-	$query = "DELETE FROM {uc_discounts_uses} WHERE discount_id=%d;"
-		. "DELETE FROM {uc_discounts_products} WHERE discount_id=%d;"
-		. "DELETE FROM {uc_discounts_terms} WHERE discount_id=%d;"
-		. "DELETE FROM {uc_discounts_codes} WHERE discount_id=%d;"
-		. "DELETE FROM {uc_discounts} WHERE discount_id=%d;";
-	uc_discounts_log("query=" . $query);
-	db_query($query, $discount_id, $discount_id, $discount_id, $discount_id, $discount_id);
+	db_query("DELETE FROM {uc_discounts_uses} WHERE discount_id=%d", $discount_id);
+	db_query("DELETE FROM {uc_discounts_products} WHERE discount_id=%d", $discount_id);
+	db_query("DELETE FROM {uc_discounts_terms} WHERE discount_id=%d", $discount_id);
+	db_query("DELETE FROM {uc_discounts_codes} WHERE discount_id=%d", $discount_id);
+	db_query("DELETE FROM {uc_discounts} WHERE discount_id=%d", $discount_id);
 }
 
 /**

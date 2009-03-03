@@ -860,6 +860,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 	uc_discounts_log("query=" . $query);
 	$result = db_query($query);
 
+	$total_discount_amount = 0;
 	$discounts = array();
 	while ( $discount = db_fetch_object($result) )
 	{
@@ -966,16 +967,20 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 					foreach ($product_ids as $product_id)
 					{
 						if ( isset($order_product_id_subtotal_map[$product_id]) )
-							$amount = max($max_amount, $order_product_id_subtotal_map[$product_id]);
+							$amount = max($amount, $order_product_id_subtotal_map[$product_id]);
 					}
+					//Subtract already discounted amount
+					$amount -= $total_discount_amount;
+//TO DO: keep track of each item's subtotal and decrement upon applying discount
 					break;
 				case QUALIFYING_TYPE_MINIMUM_QUANTITY:
 					//Determine the maximum product quantity
 					foreach ($product_ids as $product_id)
 					{
 						if ( isset($order_product_id_quantity_map[$product_id]) )
-							$amount = max($max_amount, $order_product_id_quantity_map[$product_id]);
+							$amount = max($amount, $order_product_id_quantity_map[$product_id]);
 					}
+//TO DO: keep track of each item's quantity and decrement upon applying discount
 					break;
 			}
 		}
@@ -991,6 +996,8 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 						if ( isset($order_product_id_subtotal_map[$product_id]) )
 							$amount += $order_product_id_subtotal_map[$product_id];
 					}
+					//Subtract already discounted amount
+					$amount -= $total_discount_amount;
 					break;
 				case QUALIFYING_TYPE_MINIMUM_QUANTITY:
 					//Determine the total quantity of discount's products
@@ -999,6 +1006,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 						if ( isset($order_product_id_quantity_map[$product_id]) )
 							$amount += $order_product_id_quantity_map[$product_id];
 					}
+//TO DO: keep track of each item's subtotal and decrement upon applying discount
 					break;
 			}
 		}
@@ -1085,7 +1093,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			case DISCOUNT_TYPE_PERCENTAGE_OFF:
 				//Always apply once
 				$discount->times_applied = 1;
-				$discount->amount = $order_subtotal * $discount->discount_amount;
+				$discount->amount = max($order_subtotal - $total_discount_amount, 0) * $discount->discount_amount;
 				break;
 			case DISCOUNT_TYPE_FIXED_AMOUNT_OFF:
 				$discount->amount = $discount->discount_amount * $discount->times_applied;
@@ -1118,6 +1126,8 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 						$options);
 			}
 		}
+
+		$total_discount_amount += $discount->amount;
 
 		$discounts[] = $discount;
 	}

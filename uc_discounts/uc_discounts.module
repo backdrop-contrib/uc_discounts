@@ -774,28 +774,40 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 	$order_product_id_subtotal_map = array();
 	$order_product_id_quantity_map = array();
 	$order_product_ids = array();
-	$order_product_id_product_map = array();
+	$order_product_ids_set = array();
+	$order_product_id_product_array_map = array();
 	$order_subtotal = 0;
 
 	//Create IN string of product node IDs in order
-	$temp_product_ids = array();
-	$temp_product_ids[] = ALL_PRODUCTS;
 	if ( is_array($order->products) && !empty($order->products) )
 	{
 		foreach ($order->products as $product)
 		{
-			$temp_product_ids[] = $product->nid;
+			$nid = $product->nid;
 
-			$order_product_id_subtotal_map[$product->nid] = $product->price * $product->qty;
-			$order_product_id_quantity_map[$product->nid] = $product->qty;
-			$order_product_ids[] = $product->nid;
-			$order_product_id_line_item_map[$product->nid] = $product;
+			$order_product_ids_set[$nid] = TRUE;
+
+			uc_discounts_add_to_existing_map_number_value($order_product_id_subtotal_map, 
+				$nid, $product->price * $product->qty);
+			uc_discounts_add_to_existing_map_number_value($order_product_id_quantity_map, $nid, $product->qty);
+			
+			$a = $order_product_id_product_array_map[$nid];
+			if ( !is_array($a) )
+				$a = array();
+			$a[] = $product;
+			$order_product_id_product_array_map[$nid] = $a;
+
 			$order_subtotal += $product->price * $product->qty;
 		}
 	}
+
+	$order_product_ids = array_keys($order_product_ids_set);
+
+	$temp_product_ids = $order_product_ids;
+	$temp_product_ids[] = ALL_PRODUCTS;
 	$product_ids_clause = sprintf( "d.filter_type<>%d OR dp.product_id IN(%s)", 
 		FILTER_TYPE_PRODUCTS, join(",", $temp_product_ids) );
- 
+
  	//Create IN string of term TIDs in order
 	$temp_term_ids = array();
 	$temp_term_ids[] = ALL_TERMS;
@@ -1046,7 +1058,11 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			case DISCOUNT_TYPE_FREE_ITEMS:
 				//Find qualifying items in order
 				$discount_product_ids = array_intersect($product_ids, $order_product_ids);
-//TO DO: test array_intersect
+
+				//Create array of product objects related to this discount						
+				$products = array();
+				foreach ($discount_product_ids as $product_id)
+					$products = array_merge($products, $order_product_id_product_array_map[$product_id]);
 
 				$amount = 0;
 								
@@ -1055,10 +1071,8 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 				{
 					//Determine cheapest remaining qualifying item
 					$cheapest_product = NULL;
-					foreach ($discount_product_ids as $product_id)
+					foreach ($products as $product)
 					{
-						$product = $order_product_id_line_item_map[$product_id];
-						
 						//If this product has been fully discounted, continue
 						if ($product->uc_discounts_is_fully_discounted)
 							continue;
@@ -1077,14 +1091,14 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 					if ( is_null($cheapest_product) )
 						break;
 
-					//Discount up to the minimum of prodct quantity and free_items_remaining
-					$discount_count = min($product->qty, $free_items_remaining);
+					//Discount up to the minimum of cheapest product quantity and free_items_remaining
+					$discount_count = min($cheapest_product->qty, $free_items_remaining);
 
 					//Add current discount amount to running total
 					$amount += $discount_count * $cheapest_product->price;
 					
 					//Mark item fully discounted
-					$product->uc_discounts_is_fully_discounted = TRUE;
+					$cheapest_product->uc_discounts_is_fully_discounted = TRUE;
 					
 					$free_items_remaining -= $discount_count;
 				}
@@ -1319,6 +1333,11 @@ function discount_type_name($discount_type)
 {
 	$options = discount_type_options();
 	return $options[$discount_type];
+}
+
+function uc_discounts_add_to_existing_map_number_value(&$a, $key, $value)
+{
+	$a[$key] = ( array_key_exists($key, $a) ) ? $a[$key] + $value : $value;
 }
 
 function uc_discounts_log($s)

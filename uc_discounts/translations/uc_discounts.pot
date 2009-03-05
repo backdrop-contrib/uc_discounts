@@ -114,7 +114,7 @@ msgid "Discount amount"
 msgstr ""
 
 #: uc_discounts.admin.inc:132
-msgid "The amount of discount.\tE.g. 50 (for $50), 5 (for 5 items), or 0.5 (for 5%)"
+msgid "The amount of discount.\tE.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)"
 msgstr ""
 
 #: uc_discounts.admin.inc:154

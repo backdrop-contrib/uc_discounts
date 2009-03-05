@@ -1172,7 +1172,8 @@ function get_codeless_discounts_for_product($product_id)
 		WHERE d.requires_code=0
 		AND (%s)
 		AND (%s)
-		AND (d.has_expiration=0 OR d.expiration>%d)";
+		AND (d.has_expiration=0 OR d.expiration>%d)
+		ORDER BY d.weight";
 	uc_discounts_log("query=" . $query);
 	$result = db_query( $query, $product_ids_clause, $term_ids_clause, time() );
 	

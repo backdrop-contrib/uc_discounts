@@ -57,7 +57,23 @@ function uc_discountsProcessCodes(context)
 					return;
 				}
 
-				try { uc_discountsProcessCalculateDiscountResponse(Drupal.parseJson(xmlHttpRequest.responseText), context); }
+                var responseText = xmlHttpRequest.responseText;
+                var calculateDiscountResponse = null;
+				try
+				{
+				    responseText = xmlHttpRequest.responseText;
+				    calculateDiscountResponse = Drupal.parseJson(responseText);
+                }
+				catch (e)
+				{
+					alert(Drupal.settings.uc_discounts.response_parse_err_msg + responseText);
+					return;
+				}
+
+				try
+				{
+				    uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse, context);
+                }
 				catch (e)
 				{
 					alert(Drupal.settings.uc_discounts.err_msg);
@@ -84,9 +100,17 @@ function uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse,
 		    return;
 	    }
 
-        var line_items = calculateDiscountResponse[Drupal.settings.uc_discounts.calculate_discount_response_line_items_key];
-        var errors = calculateDiscountResponse[Drupal.settings.uc_discounts.calculate_discount_response_errors_key];
-        var messages = calculateDiscountResponse[Drupal.settings.uc_discounts.calculate_discount_response_messages_key];
+        var line_items = null;
+        var errors = null;
+        var messages = null;
+
+        try
+        {
+            line_items = calculateDiscountResponse[Drupal.settings.uc_discounts.calculate_discount_response_line_items_key];
+            errors = calculateDiscountResponse[Drupal.settings.uc_discounts.calculate_discount_response_errors_key];
+            messages = calculateDiscountResponse[Drupal.settings.uc_discounts.calculate_discount_response_messages_key];
+        }
+        catch (e) { }
 
         //Process discount line items and update total (false to not display messages)
         uc_discountsRenderLineItems(line_items, true);
@@ -119,8 +143,8 @@ function uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse,
 function uc_discountsRenderLineItems(line_items, show_message)
 {
     uc_discountsRemoveDiscountLineItems();
-
-    if (!window.set_line_item)
+    
+    if ( (window.set_line_item == null) || (line_items == null) )
         return;
 
     var total_amount = 0;

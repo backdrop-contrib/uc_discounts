@@ -329,6 +329,7 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2)
 					"no_applicable_discounts" => t("No applicable discounts"),
 					"err_msg" => t(  "There were problems determining if any discounts apply.  Please try again shortly.\nIf this does not resolve the issue, please call @phone to complete your order.", 
 							array( "@phone" => variable_get("uc_store_phone", NULL) )  ),
+					"response_parse_err_msg" => t("Unable to parse response text: "),
 				)
 			), "setting");
 

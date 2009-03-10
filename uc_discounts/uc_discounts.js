@@ -159,7 +159,7 @@ function uc_discountsRenderLineItems(line_items, show_message)
     {
         set_line_item(Drupal.settings.uc_discounts.line_item_key_name, 
             Drupal.settings.uc_discounts.total_discount_text, total_amount, 
-            parseFloat(Drupal.settings.uc_discounts.line_item_weight) + 0.5, 0, false);
+            parseFloat(Drupal.settings.uc_discounts.line_item_weight) + 0.5, 1, false);
     }
 }
 

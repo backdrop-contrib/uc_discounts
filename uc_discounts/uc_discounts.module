@@ -254,20 +254,12 @@ function uc_discounts_line_item()
 	$line_items[] = array(
 		"id" => LINE_ITEM_KEY_NAME,
 		"title" => t("Discount"),
-		"callback" => "uc_line_item_uc_discounts",
 		"weight" => LINE_ITEM_WEIGHT,
 		"stored" => TRUE,
 		"calculated" => TRUE, //Added to total
 		"display_only" => FALSE,
 	);
 	return $line_items;
-}
-
-/**
- * Discounts line item callback.
- */
-function uc_line_item_uc_discounts($op, $arg1)
-{
 }
 
 /**
@@ -326,6 +318,9 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2)
 
 			drupal_add_js(array(
 				"uc_discounts" => array(
+					"line_item_key_name" => LINE_ITEM_KEY_NAME,
+					"line_item_weight" => LINE_ITEM_WEIGHT,
+					"total_discount_text" => t("Total Discount"),
 					"calculate_discount_response_line_items_key" => CALCULATE_DISCOUNT_RESPONSE_LINE_ITEMS_KEY,
 					"calculate_discount_response_errors_key" => CALCULATE_DISCOUNT_RESPONSE_ERRORS_KEY,
 					"calculate_discount_response_messages_key" => CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY,
@@ -1150,7 +1145,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
  * Returns all codeless discounts for product.
  * @param $product_id Node ID for product
  */
-function get_codeless_discounts_for_product($product_id)
+function get_codeless_discounts_for_product($product_id, $sort_column = "weight", $is_ascending_sort = TRUE)
 {
 	$product_ids = array(ALL_PRODUCTS, $product_id);
 	$product_ids_clause = sprintf( "d.filter_type<>%d OR dp.product_id IN(%s)", 
@@ -1166,16 +1161,18 @@ function get_codeless_discounts_for_product($product_id)
 	$term_ids_clause = sprintf( "d.filter_type<>%d OR dt.term_id IN(%s)", 
 		FILTER_TYPE_TERMS, join(",", $term_ids) );
 
-	$query = "SELECT d.* FROM {uc_discounts} d
+	$sort_order_string = (is_ascending_sort) ? "ASC" : "DESC";
+
+	$query = sprintf("SELECT d.* FROM {uc_discounts} d
 		LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id
 		LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
 		WHERE d.requires_code=0
 		AND (%s)
 		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)
-		ORDER BY d.weight";
+		ORDER BY d.%s %s", $product_ids_clause, $term_ids_clause, time(), $sort_column, $sort_order_string);
 	uc_discounts_log("query=" . $query);
-	$result = db_query( $query, $product_ids_clause, $term_ids_clause, time() );
+	$result = db_query($query);
 	
 	$discounts = array();
 	while ( $discount = db_fetch_object($result) )

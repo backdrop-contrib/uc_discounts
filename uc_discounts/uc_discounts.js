@@ -120,12 +120,22 @@ function uc_discountsRenderLineItems(line_items, show_message)
 {
     uc_discountsRemoveDiscountLineItems();
 
+    if (!window.set_line_item)
+        return;
+
+    var total_amount = 0;
     for (i = 0; i < line_items.length; i++)
     {
         var line_item = line_items[i];
-        uc_discountsLineItems.push(line_item);
-        if (window.set_line_item)
-            set_line_item(line_item["id"], line_item["title"], line_item["amount"], line_item["weight"], 1, false);
+        total_amount += parseFloat(line_item["amount"]);
+    }
+
+    //Add total discount line item
+    if (line_items.length > 0)
+    {
+        set_line_item(Drupal.settings.uc_discounts.line_item_key_name, 
+            Drupal.settings.uc_discounts.total_discount_text, total_amount, 
+            parseFloat(Drupal.settings.uc_discounts.line_item_weight) + 0.5, 0, false);
     }
 }
 
@@ -141,6 +151,9 @@ function uc_discountsRemoveDiscountLineItems(updateLineItems)
 
     for (i = 0; i < line_items.length; i++)
         remove_line_item(line_items[i]["id"]);
+
+    //Remove total discount line item
+    remove_line_item(Drupal.settings.uc_discounts.line_item_key_name);
     
     if (updateLineItems)
         uc_discountsUpdateTotal();

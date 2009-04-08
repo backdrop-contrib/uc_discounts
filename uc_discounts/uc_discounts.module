@@ -808,7 +808,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 	if ( is_array($order->products) && !empty($order->products) )
 	{
 		//Get terms for order's products
-		$result = db_query( "SELECT DISTINCT tid FROM term_node WHERE nid IN(%s)", join(",", $order_product_ids) );
+		$result = db_query( "SELECT DISTINCT tid FROM {term_node} WHERE nid IN(%s)", join(",", $order_product_ids) );
 		while ( $row = db_fetch_array($result) )
 		{
 			$temp_term_ids[] = $row["tid"];
@@ -1102,6 +1102,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 				//Always apply once
 				$discount->times_applied = 1;
 				$discount->amount = max($order_subtotal - $total_discount_amount, 0) * $discount->discount_amount;
+				//$discount->amount = max($amount - $total_discount_amount, 0) * $discount->discount_amount;
 				break;
 			case DISCOUNT_TYPE_FIXED_AMOUNT_OFF:
 				$discount->amount = $discount->discount_amount * $discount->times_applied;
@@ -1155,7 +1156,7 @@ function get_codeless_discounts_for_product($product_id, $sort_column = "weight"
 	//Get terms for product
 	$term_ids = array();
 	$term_ids[] = ALL_TERMS;
-	$result = db_query("SELECT DISTINCT tid FROM term_node WHERE nid=%d", $product_id);
+	$result = db_query("SELECT DISTINCT tid FROM {term_node} WHERE nid=%d", $product_id);
 	while ( $row = db_fetch_array($result) )
 		$term_ids[] = $row["tid"];
 

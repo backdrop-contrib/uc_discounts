@@ -224,7 +224,7 @@ function uc_discounts_form($form_state, $discount_id = 0)
 	//Create products form element
 	$options = array();
 	$result = db_query("SELECT n.nid as nid, n.title as title, p.model as model"
-		. " FROM {uc_products} p INNER JOIN node n ON p.nid=n.nid ORDER BY title");
+		. " FROM {uc_products} p INNER JOIN {node} n ON p.nid=n.nid ORDER BY title");
 	$options[ALL_PRODUCTS] = t("<All Products>");
 	while ( $row = db_fetch_object($result) )
 		$options[$row->nid] = $row->title . " (" . $row->model . ")";
@@ -266,6 +266,57 @@ function uc_discounts_form($form_state, $discount_id = 0)
 	);
 
 	$form["filter_type_footer"] = array(
+		"#type" => "hidden",
+		"#suffix" => "</div>",
+	);
+
+	$has_role_filter = isset($form_state["values"]["has_role_filter"]) ? $form_state["values"]["has_role_filter"] : HAS_ROLE_FILTER_DEFAULT;
+	$display_string = ($has_role_filter) ? "" : " style='display:none'";
+
+	$roles_container_id = "roles-container-" . $seed;
+	$roles_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )"
+		. "{ jQuery(\"#%s .roles-container\").slideDown(); }"
+		. "else { jQuery(\"#%s .roles-container\").slideUp(); }'>", 
+		$roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id);
+
+	$form["roles_header"] = array(
+		"#type" => "hidden",
+		"#prefix" => $roles_prefix,
+	);
+
+	$form["has_role_filter"] = array(
+		"#type" => "checkbox",
+		"#title" => t("Filter based on roles."),
+		"#default_value" => $has_role_filter,
+	);
+
+	//Get current discount roles
+	$role_ids = null;
+	if ( isset($form_state["values"]["role_ids"]) )
+		$role_ids = $form_state["values"]["role_ids"];
+	elseif ($is_edit)
+		$role_ids = get_role_ids_for_discount($discount_id, FALSE);
+
+	//Create roles form element
+	$options = array();
+	//$result = db_query("SELECT rid, name FROM {role} WHERE rid<>%d AND rid<>%d ORDER BY rid", DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID);
+	$result = db_query("SELECT rid, name FROM {role} ORDER BY rid");
+	$options[ALL_ROLES] = t("<All Roles>");
+	while ( $row = db_fetch_object($result) )
+		$options[$row->rid] = $row->name;
+	$form["role_ids"] = array(
+		"#type" => "select",
+		"#title" => t("Roles")
+			. sprintf("<span title='" . t("This field is required.") . "' class='form-required'>*</span>"),
+		"#description" => t("Select all roles this discount applies to or &lt;All Roles&gt; to apply to all roles."),
+		"#options" => $options,
+		"#default_value" => $role_ids,
+		"#multiple" => TRUE,
+		"#prefix" => sprintf("<div class='roles-container'%s>", $display_string),
+		"#suffix" => "</div>",
+	);
+
+	$form["roles_footer"] = array(
 		"#type" => "hidden",
 		"#suffix" => "</div>",
 	);
@@ -429,6 +480,12 @@ function uc_discounts_form_validate($form, &$form_state)
 		form_set_error( "filter_type", t("Invalid filter type value") );
 		$has_errors = TRUE;
 	}
+
+	if ( $values["has_role_filter"] && empty($values["role_ids"]) )
+	{
+	    form_set_error( "roles", t("Roles are required because 'Filter based on roles' is checked") );
+	    $has_errors = TRUE;
+	}
 	
 	if ( $values["has_expiration"] && !date_is_valid($values["expiration"]) )
 	{
@@ -464,6 +521,13 @@ function uc_discounts_form_submit($form, &$form_state)
 		//If terms container "all terms", insert only all terms row (term_id=<ALL_TERMS>)
 		if ( in_array(ALL_TERMS, $term_ids) )
 			$term_ids = array(ALL_TERMS);
+
+		$role_ids = ($form_state["values"]["has_role_filter"]) 
+			? $form_state["values"]["role_ids"] : array();
+
+		//If roles container "all roles", insert only all roles row (role_id=<ALL_ROLES>)
+		if ( in_array(ALL_ROLES, $role_ids) )
+			$role_ids = array(ALL_ROLES);
 		
 		//Set expiration to a valid value because it is not nullable
 		if ( isset($form_state["values"]["expiration"]) )
@@ -489,6 +553,7 @@ function uc_discounts_form_submit($form, &$form_state)
 				$discount_amount,
 				$form_state["values"]["requires_code"],
 				$form_state["values"]["filter_type"],
+				$form_state["values"]["has_role_filter"],
 				$form_state["values"]["requires_single_product_to_qualify"],
 				$form_state["values"]["max_times_applied"],
 				$form_state["values"]["can_be_combined_with_other_discounts"],
@@ -516,6 +581,7 @@ function uc_discounts_form_submit($form, &$form_state)
 				$discount_amount,
 				$form_state["values"]["requires_code"],
 				$form_state["values"]["filter_type"],
+				$form_state["values"]["has_role_filter"],
 				$form_state["values"]["requires_single_product_to_qualify"],
 				$form_state["values"]["max_times_applied"],
 				$form_state["values"]["can_be_combined_with_other_discounts"],
@@ -534,6 +600,9 @@ function uc_discounts_form_submit($form, &$form_state)
 
 			//Delete existing database terms
 			uc_discounts_terms_delete($discount_id);
+
+			//Delete existing database roles
+			uc_discounts_roles_delete($discount_id);
 		}
 
 		//Insert codes (if necessary)
@@ -566,6 +635,17 @@ function uc_discounts_form_submit($form, &$form_state)
 				if ( empty($term_id) )
 					continue;
 				uc_discounts_terms_insert($discount_id, $term_id);
+			}
+		}
+
+		//Insert terms
+		if ($form_state["values"]["has_role_filter"])
+		{
+			foreach ($role_ids as $role_id)
+			{
+				if ( empty($role_id) )
+					continue;
+				uc_discounts_roles_insert($discount_id, $role_id);
 			}
 		}
 
@@ -617,6 +697,11 @@ function uc_discounts_copy($original_discount_id)
 	$term_ids = get_term_ids_for_discount($original_discount_id);
 	foreach ($term_ids as $term_id)
 		uc_discounts_terms_insert($discount_id, $term_id);
+
+	//Copy discount's roles
+	$role_ids = get_role_ids_for_discount($original_discount_id);
+	foreach ($role_ids as $role_id)
+		uc_discounts_roles_insert($discount_id, $role_id);
 
 	drupal_goto("admin/store/settings/uc_discounts");
 }

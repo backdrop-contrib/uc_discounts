@@ -20,10 +20,12 @@ define("FILTER_TYPE_TERMS", 2);
 
 define("ALL_PRODUCTS", "-1");
 define("ALL_TERMS", "-1");
+define("ALL_ROLES", "-1");
 
 define("REQUIRES_SINGLE_PRODUCT_TO_QUALIFY_DEFAULT", FALSE);
 define("REQUIRES_CODE_DEFAULT", TRUE);
 define("FILTER_TYPE_DEFAULT", FILTER_TYPE_PRODUCTS);
+define("HAS_ROLE_FILTER_DEFAULT", FALSE);
 define("MAX_TIMES_APPLIED_DEFAULT", 1);
 define("CAN_BE_COMBINED_WITH_OTHER_DISCOUNTS_DEFAULT", FALSE);
 define("MAX_USES_DEFAULT", 0);
@@ -493,9 +495,9 @@ function get_uc_discounts_column_names()
 {
 	return array("name", "short_description", "description", "qualifying_type", 
 		"qualifying_amount", "discount_type", "discount_amount", "requires_code", 
-		"filter_type", "requires_single_product_to_qualify", "max_times_applied", "can_be_combined_with_other_discounts", 
-		"max_uses", "max_uses_per_user", "has_expiration", "expiration", 
-		"is_published", "weight");
+		"filter_type", "has_role_filter", "requires_single_product_to_qualify", "max_times_applied", 
+		"can_be_combined_with_other_discounts", "max_uses", "max_uses_per_user", "has_expiration", 
+		"expiration", "is_published", "weight");
 }
 /**
  * Returns array of uc_discounts insert column names.
@@ -521,7 +523,7 @@ function get_uc_discounts_column_printf_wildcards()
 		"%f", "%d", "%f", "%d", 
 		"%d", "%d", "%d", "%d", 
 		"%d", "%d", "%d", "%d", 
-		"%d", "%d");
+		"%d", "%d", "%d");
 }
 /**
  * Returns array of uc_discounts insert column printf wildcards.
@@ -543,9 +545,9 @@ function get_uc_discounts_column_update_printf_wildcards()
  */
 function uc_discounts_insert($name, $short_description, $description, $qualifying_type, 
 	$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-	$filter_type, $requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, 
-	$max_uses, $max_uses_per_user, $has_expiration, $expiration, 
-	$is_published, $weight, $insert_timestamp = NULL)
+	$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
+	$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
+	$expiration, $is_published, $weight, $insert_timestamp = NULL)
 {
 	if ( is_null($insert_timestamp) )
 		$insert_timestamp = time();
@@ -556,9 +558,9 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
 	db_query($query, 
 		$name, $short_description, $description, $qualifying_type, 
 		$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-		$filter_type, $requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, 
-		$max_uses, $max_uses_per_user, $has_expiration, $expiration, 
-		$is_published, $weight, $insert_timestamp);
+		$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
+		$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
+		$expiration, $is_published, $weight, $insert_timestamp);
 	$discount_id = db_last_insert_id("uc_discounts", "discount_id");
 	uc_discounts_log("new discount_id=" . $discount_id);
 	return $discount_id;
@@ -570,9 +572,9 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
 function uc_discounts_update($discount_id, 
 	$name, $short_description, $description, $qualifying_type, 
 	$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-	$filter_type, $requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, 
-	$max_uses, $max_uses_per_user, $has_expiration, $expiration, 
-	$is_published, $weight)
+	$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
+	$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
+	$expiration, $is_published, $weight)
 {
 	$query = "UPDATE {uc_discounts} SET ";
 	
@@ -592,9 +594,9 @@ function uc_discounts_update($discount_id,
 	db_query($query, 
 		$name, $short_description, $description, $qualifying_type, 
 		$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-		$filter_type, $requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, 
-		$max_uses, $max_uses_per_user, $has_expiration, $expiration, 
-		$is_published, $weight, $discount_id);
+		$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
+		$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
+		$expiration, $is_published, $weight, $discount_id);
 }
 
 /**
@@ -605,6 +607,7 @@ function uc_discounts_delete_all($discount_id)
 	db_query("DELETE FROM {uc_discounts_uses} WHERE discount_id=%d", $discount_id);
 	db_query("DELETE FROM {uc_discounts_products} WHERE discount_id=%d", $discount_id);
 	db_query("DELETE FROM {uc_discounts_terms} WHERE discount_id=%d", $discount_id);
+	db_query("DELETE FROM {uc_discounts_roles} WHERE discount_id=%d", $discount_id);
 	db_query("DELETE FROM {uc_discounts_codes} WHERE discount_id=%d", $discount_id);
 	db_query("DELETE FROM {uc_discounts} WHERE discount_id=%d", $discount_id);
 }
@@ -735,6 +738,27 @@ function get_term_ids_for_discount($discount_id, $exclude_all_terms = FALSE)
 }
 
 /**
+ * Returns term_ids for discount.
+ */
+function get_role_ids_for_discount($discount_id, $exclude_all_roles = FALSE)
+{
+	$term_ids = array();
+
+	//Get roles from database
+	if ($exclude_all_roles)
+	{
+		$result = db_query("SELECT role_id FROM {uc_discounts_roles} WHERE discount_id=%d AND role_id<>%d", 
+			$discount_id, ALL_ROLES);
+	}
+	else
+		$result = db_query("SELECT role_id FROM {uc_discounts_roles} WHERE discount_id=%d", $discount_id);
+
+	while ( $row = db_fetch_array($result) )
+		$role_ids[] = $row["role_id"];
+	return $role_ids;
+}
+
+/**
  * Inserts a uc_discounts_terms row and returns its discount_term_id.
  */
 function uc_discounts_terms_insert($discount_id, $term_id)
@@ -751,6 +775,27 @@ function uc_discounts_terms_insert($discount_id, $term_id)
 function uc_discounts_terms_delete($discount_id)
 {
 	$query = "DELETE FROM {uc_discounts_terms} WHERE discount_id=%d";
+	uc_discounts_log("query=" . $query);
+	db_query($query, $discount_id);
+}
+
+/**
+ * Inserts a uc_discounts_roles row and returns its discount_role_id.
+ */
+function uc_discounts_roles_insert($discount_id, $role_id)
+{
+	$query = "INSERT INTO {uc_discounts_roles}(discount_id, role_id) VALUES(%d, %d)";
+	uc_discounts_log("query=" . $query);
+	db_query($query, $discount_id, $role_id);
+	return db_last_insert_id("uc_discounts_roles", "discount_role_id");
+}
+
+/**
+ * Deletes all uc_discounts_roles rows for a discount.
+ */
+function uc_discounts_roles_delete($discount_id)
+{
+	$query = "DELETE FROM {uc_discounts_roles} WHERE discount_id=%d";
 	uc_discounts_log("query=" . $query);
 	db_query($query, $discount_id);
 }
@@ -834,18 +879,26 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 	else
 		$codes_clause = "";
 
+	//Create roles clause
+	$auth_rid = ($order->uid != 0) ? DRUPAL_AUTHENTICATED_RID : DRUPAL_ANONYMOUS_RID;
+	$roles_clause = sprintf(" OR d.discount_id IN(SELECT dr.discount_id FROM {uc_discounts_roles} dr"
+		. ", {users_roles} ur WHERE (dr.role_id=ur.rid AND ur.uid=%d) OR dr.role_id=%d OR dr.role_id=%d)", 
+		$order->uid, ALL_ROLES, $auth_rid);
+
 	//Add warnings for expired discounts with codes (if necessary)
 	if ( !empty($order->uc_discounts_codes) )
 	{
 		$query = sprintf( "SELECT DISTINCT d.*, dc.code code FROM {uc_discounts} d
 			LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id
 			LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
+			LEFT JOIN {uc_discounts_roles} dr ON d.discount_id=dr.discount_id
 			LEFT JOIN {uc_discounts_codes} dc ON d.discount_id=dc.discount_id
 			WHERE dc.code IN(%s)
+			AND (d.has_role_filter=0%s)
 			AND (%s)
 			AND (%s)
 			AND (d.has_expiration<>0 AND d.expiration<=%d)
-			ORDER BY weight", $escaped_codes_string, $product_ids_clause, $term_ids_clause, time() );
+			ORDER BY weight", $escaped_codes_string, $roles_clause, $product_ids_clause, $term_ids_clause, time() );
 		uc_discounts_log("query=" . $query);
 		$result = db_query($query);
 		while ( $discount = db_fetch_object($result) )
@@ -859,10 +912,11 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id
 		LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
 		WHERE (d.requires_code=0%s)
+		AND (d.has_role_filter=0%s)
 		AND (%s)
 		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)
-		ORDER BY weight", $codes_clause, $product_ids_clause, $term_ids_clause, time() );
+		ORDER BY weight", $codes_clause, $roles_clause, $product_ids_clause, $term_ids_clause, time() );
 	uc_discounts_log("query=" . $query);
 	$result = db_query($query);
 
@@ -1160,6 +1214,13 @@ function get_codeless_discounts_for_product($product_id, $sort_column = "weight"
 	while ( $row = db_fetch_array($result) )
 		$term_ids[] = $row["tid"];
 
+	//Create roles clause
+	global $user;
+	$auth_rid = ($user->uid != 0) ? DRUPAL_AUTHENTICATED_RID : DRUPAL_ANONYMOUS_RID;
+	$roles_clause = sprintf(" OR d.discount_id IN(SELECT dr.discount_id FROM {uc_discounts_roles} dr"
+		. ", {users_roles} ur WHERE (dr.role_id=ur.rid AND ur.uid=%d) OR dr.role_id=%d OR dr.role_id=%d)", 
+		$user->uid, ALL_ROLES, $auth_rid);
+
 	$term_ids_clause = sprintf( "d.filter_type<>%d OR dt.term_id IN(%s)", 
 		FILTER_TYPE_TERMS, join(",", $term_ids) );
 
@@ -1169,10 +1230,11 @@ function get_codeless_discounts_for_product($product_id, $sort_column = "weight"
 		LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id
 		LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
 		WHERE d.requires_code=0
+		AND (d.has_role_filter=0%s)
 		AND (%s)
 		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)
-		ORDER BY d.%s %s", $product_ids_clause, $term_ids_clause, time(), $sort_column, $sort_order_string);
+		ORDER BY d.%s %s", $roles_clause, $product_ids_clause, $term_ids_clause, time(), $sort_column, $sort_order_string);
 	uc_discounts_log("query=" . $query);
 	$result = db_query($query);
 	

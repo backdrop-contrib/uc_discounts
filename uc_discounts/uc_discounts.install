@@ -69,6 +69,13 @@ function uc_discounts_schema()
 				"default" => 1,
 				"description" => t("What type of object to filter on."),
 			),
+			"has_role_filter" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Whether or not this discount filters based on role."),
+			),
 			"requires_single_product_to_qualify" => array(
 				"type" => "int",
 				"size" => "tiny",
@@ -214,10 +221,37 @@ function uc_discounts_terms_schema()
 			"term_id" => array(
 				"type" => "int",
 				"not null" => TRUE,
-				"description" => t("The {uc_terms}.tid of the term being discounted."),
+				"description" => t("The {term}.tid of the term being discounted."),
 			),
 		),
 		"primary key" => array("discount_term_id"),
+	);
+
+	return $schema;
+}
+
+function uc_discounts_roles_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_roles"] = array(
+		"fields" => array(
+			"discount_role_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"discount_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_discounts}.discount_id of the discount."),
+			),
+			"role_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {role}.rid of the role required."),
+			),
+		),
+		"primary key" => array("discount_role_id"),
 	);
 
 	return $schema;
@@ -314,6 +348,7 @@ function uc_discounts_install()
 	drupal_install_schema("uc_discounts_codes");
 	drupal_install_schema("uc_discounts_products");
 	drupal_install_schema("uc_discounts_terms");
+	drupal_install_schema("uc_discounts_roles");
 	drupal_install_schema("uc_discounts_uses");
 	drupal_install_schema("uc_discounts_order_codes");
 	
@@ -330,6 +365,26 @@ function uc_discounts_uninstall()
 	drupal_uninstall_schema("uc_discounts_uses");
 	drupal_uninstall_schema("uc_discounts_products");
 	drupal_uninstall_schema("uc_discounts_terms");
+	drupal_uninstall_schema("uc_discounts_roles");
 	drupal_uninstall_schema("uc_discounts_codes");
 	drupal_uninstall_schema("uc_discounts");
+}
+
+
+//Add {uc_discounts_roles} table
+function uc_discounts_update_1()
+{
+	$queries = array();
+
+	$schema = uc_discounts_roles_schema();
+	db_create_table($queries, "uc_discounts_roles", $schema["uc_discounts_roles"]);
+	
+	$attributes = array(
+		"type" => "tinyint",
+		"size" => "tiny",
+		"not null" => TRUE,
+		"default" => 0,);
+	db_add_column($queries, "uc_discounts", "has_role_filter", $attributes["type"], $attributes);
+
+	return $queries;
 }

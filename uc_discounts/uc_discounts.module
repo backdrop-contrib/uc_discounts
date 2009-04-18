@@ -153,11 +153,19 @@ function uc_discounts_order($op, &$arg1, $arg2)
 				else
 					$existing_line_items = uc_order_load_line_items($arg1->order_id, TRUE);
 
+				//Use new_order_line_items to populate $arg1->line_items by:
+				//	Storing all non-discounts line items
+				//	Storing new discount line items
+				$new_order_line_items = array();
+
 				//Delete existing discount line items
 				foreach ($existing_line_items as $line_item)
 				{
 					if ($line_item["type"] == LINE_ITEM_KEY_NAME)
 						uc_order_delete_line_item($line_item["line_item_id"]);
+					//Otherwise store non-discount line item
+					else
+						$new_order_line_items[] = $line_item;
 				}
 
 				//Add discount line items
@@ -165,7 +173,14 @@ function uc_discounts_order($op, &$arg1, $arg2)
 				{
 					uc_order_line_item_add($arg1->order_id, $line_item["type"], $line_item["title"], 
 						$line_item["amount"], $line_item["weight"]);
+					$new_order_line_items[] = $line_item;
 				}
+
+				//Update order line items (see new_order_line_items notes above)
+				$arg1->line_items = $new_order_line_items;
+
+				//Force tax recalculation (currently unused but may be required if line item weights change)
+				//module_invoke("uc_taxes", "order", "save", $arg1, "");
 
 				$arg1->uc_discounts_line_items_need_updating = FALSE;
 			}

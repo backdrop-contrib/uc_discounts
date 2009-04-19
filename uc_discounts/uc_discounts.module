@@ -1137,9 +1137,12 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		$order_and_discount_products = array();
 		foreach ($order_and_discount_product_ids as $product_id)
 		{
-			$order_and_discount_products = 
-				array_merge($order_and_discount_products, 
-					$order_product_id_product_array_map[$product_id]);
+			if ( array_key_exists($product_id, $order_product_id_product_array_map) )
+			{
+				$order_and_discount_products = 
+					array_merge($order_and_discount_products, 
+						$order_product_id_product_array_map[$product_id]);
+			}
 		}
 
 		//Calculate discount amount
@@ -1215,8 +1218,6 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 					$discounted_products_amount += $product->price * $product->qty;
 				  }
 				  $discount->amount = $discounted_products_amount * $discount->discount_amount;
-error_log("discounted_products_amount=" . $discounted_products_amount);
-error_log("discount->amount=" . $discount->amount);
 				// Discount the subtotal so far
 				} else {
 				  $discount->amount = max($order_subtotal - $total_discount_amount, 0) * $discount->discount_amount;

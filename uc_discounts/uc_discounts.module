@@ -1022,15 +1022,19 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		}
 
 
-		//Check if order qualifies (type, requires_single_product_to_qualify)
+		//Check if order qualifies for this discount (check type and requires_single_product_to_qualify)
 
-		//Get product_ids for discount
-		$product_ids = get_product_ids_for_discount_object($discount);
-		if ( in_array(ALL_PRODUCTS, $product_ids) )
-			$product_ids = $order_product_ids;
+		//Get product IDs for discount
+		$discount_product_ids = get_product_ids_for_discount_object($discount);
+		if ( in_array(ALL_PRODUCTS, $discount_product_ids) )
+			$discount_product_ids = $order_product_ids;
 
-		//Check if order qualifies for discount (determine amount)
-		$amount = 0;
+
+		//Determine total qualifying amount of order (store in order_qualifying_amount)
+		//and qualifying subtotal of order (store in order_qualifying_subtotal)
+
+		$order_qualifying_amount = 0;
+		$order_qualifying_subtotal = 0;
 
 		//If discount requires a single product
 		if ($discount->requires_single_product_to_qualify)
@@ -1039,21 +1043,29 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			{
 				case QUALIFYING_TYPE_MINIMUM_PRICE:
 					//Determine the maximum product subtotal
-					foreach ($product_ids as $product_id)
+					foreach ($discount_product_ids as $product_id)
 					{
 						if ( isset($order_product_id_subtotal_map[$product_id]) )
-							$amount = max($amount, $order_product_id_subtotal_map[$product_id]);
+						{
+							$order_qualifying_amount = 
+								max($order_qualifying_amount, $order_product_id_subtotal_map[$product_id]);
+						}
 					}
+
 					//Subtract already discounted amount
-					$amount -= $total_discount_amount;
+					$order_qualifying_amount -= $total_discount_amount;
 //TO DO: keep track of each item's subtotal and decrement upon applying discount
 					break;
+
 				case QUALIFYING_TYPE_MINIMUM_QUANTITY:
 					//Determine the maximum product quantity
-					foreach ($product_ids as $product_id)
+					foreach ($discount_product_ids as $product_id)
 					{
 						if ( isset($order_product_id_quantity_map[$product_id]) )
-							$amount = max($amount, $order_product_id_quantity_map[$product_id]);
+						{
+							$order_qualifying_amount = 
+								max($order_qualifying_amount, $order_product_id_quantity_map[$product_id]);
+						}
 					}
 //TO DO: keep track of each item's quantity and decrement upon applying discount
 					break;
@@ -1066,29 +1078,32 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			{
 				case QUALIFYING_TYPE_MINIMUM_PRICE:
 					//Determine the total subtotal of discount's products
-					foreach ($product_ids as $product_id)
+					foreach ($discount_product_ids as $product_id)
 					{
 						if ( isset($order_product_id_subtotal_map[$product_id]) )
-							$amount += $order_product_id_subtotal_map[$product_id];
+							$order_qualifying_amount += $order_product_id_subtotal_map[$product_id];
 					}
+
 					//Subtract already discounted amount
-					$amount -= $total_discount_amount;
+					$order_qualifying_amount -= $total_discount_amount;
 					break;
+
 				case QUALIFYING_TYPE_MINIMUM_QUANTITY:
 					//Determine the total quantity of discount's products
-					foreach ($product_ids as $product_id)
+					foreach ($discount_product_ids as $product_id)
 					{
 						if ( isset($order_product_id_quantity_map[$product_id]) )
-							$amount += $order_product_id_quantity_map[$product_id];
+							$order_qualifying_amount += $order_product_id_quantity_map[$product_id];
 					}
 //TO DO: keep track of each item's subtotal and decrement upon applying discount
 					break;
 			}
 		}
 
-		if ($amount < $discount->qualifying_amount)
+		//If order does not qualify for this discount
+		if ($order_qualifying_amount < $discount->qualifying_amount)
 		{
-			//If this is a coded discount, add error message
+			//If this is a coded discount, add warning message
 			if ( !is_null($warnings) && !is_null($discount->code) )
 			{
 				switch ($discount->qualifying_type)
@@ -1109,70 +1124,106 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
 		//Determine number of times to apply discount
 		if ($discount->qualifying_amount != 0)
-			$discount->times_applied = (int)($amount / $discount->qualifying_amount);
+			$discount->times_applied = (int)($order_qualifying_amount / $discount->qualifying_amount);
 		else
 			$discount->times_applied = 1;
 		if ($discount->max_times_applied != 0)
 			$discount->times_applied = min($discount->times_applied, $discount->max_times_applied);
 
+		//Get product IDs in order that are in discount
+		$order_and_discount_product_ids = array_intersect($discount_product_ids, $order_product_ids);
+
+		//Create array of product objects related to this discount
+		$order_and_discount_products = array();
+		foreach ($order_and_discount_product_ids as $product_id)
+		{
+			$order_and_discount_products = 
+				array_merge($order_and_discount_products, 
+					$order_product_id_product_array_map[$product_id]);
+		}
+
 		//Calculate discount amount
 		switch ($discount->discount_type)
 		{
 			case DISCOUNT_TYPE_FREE_ITEMS:
-				//Find qualifying items in order
-				$discount_product_ids = array_intersect($product_ids, $order_product_ids);
+				//The variable discount_amount is the monitary amount of discount
+				$discount_amount = 0;
 
-				//Create array of product objects related to this discount						
-				$products = array();
-				foreach ($discount_product_ids as $product_id)
-					$products = array_merge($products, $order_product_id_product_array_map[$product_id]);
-
-				$amount = 0;
-								
+				//The variable free_items_remaining is the [max] number of free items for the order
 				$free_items_remaining = $discount->discount_amount * $discount->times_applied;
+
+				//Loop until all free items have been applied or there are no more products to 
+				//discount (discount cheapest first)
 				while ($free_items_remaining > 0)
 				{
 					//Determine cheapest remaining qualifying item
 					$cheapest_product = NULL;
-					foreach ($products as $product)
+					foreach ($order_and_discount_products as $product)
 					{
 						//If this product has been fully discounted, continue
 						if ($product->uc_discounts_is_fully_discounted)
 							continue;
-						
-						//If this product has been discounted its maximum amount
+
+						//If no current cheapest product exists, use this product						
 						if ( is_null($cheapest_product) )
 							$cheapest_product = $product;
 						else
 						{
+							//If this product is cheaper than the current cheapest product, 
+							//use this product instead
 							if ($product->price < $cheapest_product->price)
 								$cheapest_product = $product;
 						}
 					}
 					
-					//If there is no cheapest_product, there are no more products to discount, break
+					//If no cheapest product could be found, there are no more products to 
+					//discount, break
 					if ( is_null($cheapest_product) )
 						break;
 
-					//Discount up to the minimum of cheapest product quantity and free_items_remaining
+					//Discount up to the lesser of cheapest product quantity and free_items_remaining
 					$discount_count = min($cheapest_product->qty, $free_items_remaining);
 
 					//Add current discount amount to running total
-					$amount += $discount_count * $cheapest_product->price;
+					$discount_amount += $discount_count * $cheapest_product->price;
 					
 					//Mark item fully discounted
 					$cheapest_product->uc_discounts_is_fully_discounted = TRUE;
 					
 					$free_items_remaining -= $discount_count;
 				}
-				$discount->amount = $amount;
+
+				$discount->amount = $discount_amount;
 				break;
+
 			case DISCOUNT_TYPE_PERCENTAGE_OFF:
 				//Always apply once
 				$discount->times_applied = 1;
-				$discount->amount = max($order_subtotal - $total_discount_amount, 0) * $discount->discount_amount;
-				//$discount->amount = max($amount - $total_discount_amount, 0) * $discount->discount_amount;
+
+//Start patch from lutegrass:
+//This fixes the problem where a percent discount does not apply to all products
+//(but doesn't fix the problem where the products being discounted have already been discounted
+//in full, or the case where the cart consists only of the products included in this discount)
+				// Get qualifying products -- ignore "all products" selection
+				$discount_product_ids = get_product_ids_for_discount($discount->discount_id, TRUE);
+
+				// Do we have any products
+				if (count($discount_product_ids) > 0) {
+				  $discounted_products_amount = 0;
+				  foreach ($order_and_discount_products as $product)
+				  {
+					$discounted_products_amount += $product->price * $product->qty;
+				  }
+				  $discount->amount = $discounted_products_amount * $discount->discount_amount;
+error_log("discounted_products_amount=" . $discounted_products_amount);
+error_log("discount->amount=" . $discount->amount);
+				// Discount the subtotal so far
+				} else {
+				  $discount->amount = max($order_subtotal - $total_discount_amount, 0) * $discount->discount_amount;
+				}
+//End patch from lutegrass
 				break;
+
 			case DISCOUNT_TYPE_FIXED_AMOUNT_OFF:
 				$discount->amount = $discount->discount_amount * $discount->times_applied;
 				break;
@@ -1205,8 +1256,13 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			}
 		}
 
+		//Round the discount to two places
+		$discount->amount = round($discount->amount, 2);
+
+		//Add this discount's amount to running total
 		$total_discount_amount += $discount->amount;
 
+		//Add this discount to list of discounts applied to order
 		$discounts[] = $discount;
 	}
 	return $discounts;

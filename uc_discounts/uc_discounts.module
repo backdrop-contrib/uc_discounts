@@ -48,7 +48,7 @@ define("CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY", "messages");
 /**
  * Implementation of hook_init().
  */
-function __test__uc_discounts_init()
+function uc_discounts_init()
 {
 	drupal_add_css(drupal_get_path("module", "uc_discounts") . "/uc_discounts.css");
 }
@@ -291,7 +291,7 @@ function uc_discounts_line_item()
 /**
  * Implementation of hook_cart_pane().
  */
-function __test__uc_discounts_cart_pane($items)
+function uc_discounts_cart_pane($items)
 {
 	global $user;
 
@@ -305,75 +305,48 @@ function __test__uc_discounts_cart_pane($items)
 	$messages = array();
 	$discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
 
-/*
-error_log("Start items:");
-	foreach ($items as $item)
-	{
-error_log("item:");
-foreach ($item as $name => $value)
-{
-	error_log("$name=$value");
-}
-error_log("");
-	}
-error_log("End items");
-*/
+	//If there are no discounts, do not alter cart
+	if (count($discounts) == 0)
+		return array();
 
+	//Calculate subtotal with discounts
 	$subtotal = 0;
 	foreach ($items as $item)
 		$subtotal += $item->price * $item->qty;
-
-$item = new stdClass();
-$item->cart_id = 3;
-$item->nid = 0;
-$item->qty = 1;
-$item->changed = "";
-$item->data = NULL;
-$item->title = "test";
-$item->vid = 4;
-$item->cost = 0;
-$item->price = 100;
-$item->weight = 1;
-$items[] = $item;
-
-	//If there are no discounts, do not add a pane
-	if (count($discounts) == 0)
-		return array();
-	
-	$body = "<div class='uc-discounts-cart-pane'>";
-	foreach ($messages as $message)
-	{
-		$body .= "<div class='uc-discounts-cart-pane-message'>" . $message . "</div>";
-	}
-	
 	$total_discount_amount = 0;
 	foreach ($discounts as $discount)
 		$total_discount_amount += $discount->amount;
+	$subtotal_including_discounts = $subtotal - $total_discount_amount;
 
-	$new_subtotal = $subtotal - $total_discount_amount;
-	
-	//sticky-enabled sticky-table
-	$body .= "<div class='uc-discounts-cart-pane-discount-amount'>" . $total_discount_amount . "</div>";
-	$body .= "<div class='uc-discounts-cart-pane-subtotal'>" . $subtotal . "</div>";
-	$body .= "<div class='uc-discounts-cart-pane-new-subtotal'>" . $new_subtotal . "</div>";
-	
-	$body .= "</div>";
+	//Add total discount message
+	$messages[] = "<strong>" . t("Total discount") . ":</strong>&nbsp;"
+		. uc_currency_format($total_discount_amount);
 
+	//Add new subtotal message
+	$messages[] = "<strong>" . t("Subtotal including discounts") . ":</strong>&nbsp;"
+		. uc_currency_format($subtotal_including_discounts);
+
+	//Start row index at item count + 2 (1 for subtotal row in cart form, 1 more for our first row)
+	$i = count($items) + 2;
+
+	//Create table to hold discount messages
+	$body = "<div class='uc-discounts-cart-pane-container'><table class='uc-discounts-cart-pane-table'>";
+	foreach ($messages as $message)
+	{
+		$evenOddClass = ( ($i % 2) == 0 ) ? "even" : "odd";
+		$body .= sprintf("<tr class='%s'><td class='%s'>", $evenOddClass, "uc-discounts-cart-pane-table-cell") 
+			. $message . "</td></tr>";
+		$i += 1;
+	}
+
+	//Close table
+	$body .= "</table></div>";
+
+	//Write table using javascript between items and cart form buttons
 	drupal_add_js(sprintf("$(document).ready(function()
 		{
-		
 			$(\"#cart-form-buttons\").before(\"%s\");
 		});", $body), "inline");
-
-return;
-
-	$panes[] = array(
-		"id" => "uc_discounts",
-		"title" => t("Discounts"),
-		"weight" => 1,
-		"body" => $body,
-	);
-	return $panes;
 }
 
 /**
@@ -434,7 +407,7 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2)
 				"uc_discounts" => array(
 					"line_item_key_name" => LINE_ITEM_KEY_NAME,
 					"line_item_weight" => LINE_ITEM_WEIGHT,
-					"total_discount_text" => t("Total Discount"),
+					"total_discount_text" => t("Total discount"),
 					"calculate_discount_response_line_items_key" => CALCULATE_DISCOUNT_RESPONSE_LINE_ITEMS_KEY,
 					"calculate_discount_response_errors_key" => CALCULATE_DISCOUNT_RESPONSE_ERRORS_KEY,
 					"calculate_discount_response_messages_key" => CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY,
@@ -1226,7 +1199,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		}
 
 		//If this discount has a maximum qualifying amount and the order exceeds it
-		if ( $discount->has_qualifying_amount_max && ($order_qualifying_amount >= $discount->qualifying_amount_max) )
+		if ( $discount->has_qualifying_amount_max && ($order_qualifying_amount > $discount->qualifying_amount_max) )
 		{
 			//If this is a coded discount, add error message
 			if ( !is_null($warnings) && !is_null($discount->code) )

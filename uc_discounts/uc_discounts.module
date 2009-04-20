@@ -295,7 +295,7 @@ function uc_discounts_cart_pane($items)
 {
 	global $user;
 
-	//Create phony order object to call to 
+	//Create phony order object to call to get_discounts_for_order
 	$order = new stdClass();
 	$order->uid = $user->uid;
 	$order->products = $items;
@@ -1374,6 +1374,38 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
  */
 function get_codeless_discounts_for_product($product_id, $sort_column = "weight", $is_ascending_sort = TRUE)
 {
+	return get_codeless_discounts_for_product_and_quantity($product_id, NULL, 
+		$sort_column, $is_ascending_sort);
+}
+
+/**
+ * Returns all codeless discounts for product when specified quantity is purchased.
+ * @param $product_id Node ID for product
+ */
+function get_codeless_discounts_for_product_and_quantity($product_id, $quantity = NULL, $sort_column = "weight", 
+	$is_ascending_sort = TRUE)
+{
+	//If quantity was specified
+	if ( !is_null($quantity) )
+	{
+		global $user;
+
+		//Create phony order and get discounts for order
+
+		$product = node_load($product_id);
+		if (is_null($product) || !$product)
+			return array();
+		$product->price = $product->sell_price;
+		$product->qty = $quantity;
+		$order = new stdClass();
+		$order->uid = $user->uid;
+		$order->products = array($product);
+
+		return get_discounts_for_order($order);
+	}
+
+	//Otherwise make special query
+
 	$product_ids = array(ALL_PRODUCTS, $product_id);
 	$product_ids_clause = sprintf( "d.filter_type<>%d OR dp.product_id IN(%s)", 
 		FILTER_TYPE_PRODUCTS, join(",", $product_ids) );

@@ -1,6 +1,6 @@
 ; $Id$
 name = Codeless Discounts Field
-description = Defines CCK-based field for displaying uc_discounts not requiring codes attached to nodes.
+description = Defines CCK-based field for displaying applicable uc_discounts_alt discounts not requiring codes attached to nodes.
 dependencies[] = uc_discounts
 dependencies[] = content
 package = CCK

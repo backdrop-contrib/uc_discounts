@@ -45,6 +45,19 @@ function uc_discounts_schema()
 				"default" => 0.0,
 				"description" => t("Minimum quantity or price required to qualify for this discount."),
 			),
+			"has_qualifying_amount_max" => array(
+				"type" => "int",
+				"size" => "tiny",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Whether or not this discount has a max qualifying amount."),
+			),
+			"qualifying_amount_max" => array(
+				"type" => "float",
+				"not null" => TRUE,
+				"default" => 0.0,
+				"description" => t("Maximum quantity or price required to qualify for this discount."),
+			),
 			"discount_type" => array(
 				"type" => "int",
 				"not null" => TRUE,
@@ -378,13 +391,46 @@ function uc_discounts_update_1()
 
 	$schema = uc_discounts_roles_schema();
 	db_create_table($queries, "uc_discounts_roles", $schema["uc_discounts_roles"]);
-	
-	$attributes = array(
-		"type" => "tinyint",
-		"size" => "tiny",
-		"not null" => TRUE,
-		"default" => 0,);
-	db_add_column($queries, "uc_discounts", "has_role_filter", $attributes["type"], $attributes);
+
+	switch ($GLOBALS["db_type"])
+	{
+		case "mysql":
+		case "mysqli":
+			$queries[] = update_sql("ALTER TABLE {uc_discounts} ADD has_role_filter tinyint NOT NULL default 0 AFTER filter_type");
+			break;
+
+		case "pgsql":
+			db_add_column( $queries, "uc_discounts", "has_role_filter", "tinyint", 
+				array("size" => "tiny", "not null" => TRUE, "default" => 0) );
+			break;
+	}
+
+	return $queries;
+}
+
+//Add has_qualifying_amount_max and qualifying_amount_max columns to uc_discounts table
+function uc_discounts_update_2()
+{
+	$queries = array();
+
+	switch ($GLOBALS["db_type"])
+	{
+		case "mysql":
+		case "mysqli":
+			$queries[] = update_sql("ALTER TABLE {uc_discounts} ADD has_qualifying_amount_max tinyint NOT NULL default 0 AFTER qualifying_amount");
+			$queries[] = update_sql("ALTER TABLE {uc_discounts} ADD qualifying_amount_max float NOT NULL default 0 AFTER has_qualifying_amount_max");
+
+			//Fixes update bug that existed in uc_discounts_update_1 (but is fixed now)
+			$queries[] = update_sql("ALTER TABLE uc_discounts MODIFY has_role_filter tinyint NOT NULL");
+			break;
+
+		case "pgsql":
+			db_add_column( $queries, "uc_discounts", "has_qualifying_amount_max", "tinyint", 
+				array("not null" => TRUE, "default" => 0) );
+			db_add_column( $queries, "uc_discounts", "qualifying_amount_max", "float", 
+				array("not null" => TRUE, "default" => 0) );
+			break;
+	}
 
 	return $queries;
 }

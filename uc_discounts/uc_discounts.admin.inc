@@ -120,6 +120,51 @@ function uc_discounts_form($form_state, $discount_id = 0)
 		"#required" => TRUE,
 	);
 
+
+	$has_qualifying_amount_max = isset($form_state["values"]["has_qualifying_amount_max"]) ? $form_state["values"]["has_qualifying_amount_max"] : HAS_QUALIFYING_AMOUNT_MAX_DEFAULT;
+	$display_string = ($has_qualifying_amount_max) ? "" : " style='display:none'";
+
+	$qualifying_amount_max_container_id = "qualifying-amount-max-container-" . $seed;
+	$qualifying_amount_max_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )"
+		. "{ jQuery(\"#%s .qualifying-amount-max-container\").slideDown(); }"
+		. "else { jQuery(\"#%s .qualifying-amount-max-container\").slideUp(); }'>", 
+		$qualifying_amount_max_container_id, $qualifying_amount_max_container_id, 
+		$qualifying_amount_max_container_id, $qualifying_amount_max_container_id, 
+		$qualifying_amount_max_container_id, $qualifying_amount_max_container_id);
+
+	$form["qualifying_amount_max_header"] = array(
+		"#type" => "hidden",
+		"#prefix" => $qualifying_amount_max_prefix,
+	);
+
+	$form["has_qualifying_amount_max"] = array(
+		"#type" => "checkbox",
+		"#title" => t("Has max qualifying amount."),
+		"#description" => t("Whether or not discount contains maximum qualifying amount."),
+		"#default_value" => $has_qualifying_amount_max,
+	);
+
+	//Get current discount qualifying_amount_max
+	$qualifying_amount_max = $form_state["values"]["role_ids"];
+
+	//Create qualifying_amount_max form element
+	$form["qualifying_amount_max"] = array(
+		"#type" => "textfield",
+		"#title" => t("Maximum qualifying amount"),
+		"#description" => t("Maximum amount to NOT exceed to qualify for the discount.  E.g. 50 (for $50), 5 (for 5 items)."),
+		"#default_value" => $form_state["values"]["qualifying_amount_max"],
+		"#size" => 15,
+		"#required" => FALSE,
+		"#prefix" => sprintf("<div class='qualifying-amount-max-container'%s>", $display_string),
+		"#suffix" => "</div>",
+	);
+
+	$form["qualifying_amount_max_footer"] = array(
+		"#type" => "hidden",
+		"#suffix" => "</div>",
+	);
+
+
 	$form["discount_type"] = array(
 		"#type" => "select",
 		"#title" => t("Discount type"),
@@ -445,6 +490,23 @@ function uc_discounts_form_validate($form, &$form_state)
 	    $has_errors = TRUE;
 	}
 
+
+	//Check qualifying_amount_max (if necessary)
+	if ($values["has_qualifying_amount_max"])
+	{
+		if (  ( $index = strpos($values["qualifying_amount_max"], "%") ) !== FALSE  )
+			$value = substr($values["qualifying_amount_max"], 0, $index);
+		else
+			$value = $values["qualifying_amount_max"];
+
+		if ( !is_numeric($value) )
+		{
+			form_set_error( "qualifying_amount_max", t("Max qualifying amount is required because 'Has max qualifying amount' is checked.") );
+			$has_errors = TRUE;
+		}
+	}
+
+
 	//Check discount_amount
 
 	if (  ( $index = strpos($values["discount_amount"], "%") ) !== FALSE  )
@@ -549,6 +611,8 @@ function uc_discounts_form_submit($form, &$form_state)
 				$form_state["values"]["description"], 
 				$form_state["values"]["qualifying_type"], 
 				$form_state["values"]["qualifying_amount"],
+				$form_state["values"]["has_qualifying_amount_max"],
+				$form_state["values"]["qualifying_amount_max"],
 				$form_state["values"]["discount_type"],
 				$discount_amount,
 				$form_state["values"]["requires_code"],
@@ -577,6 +641,8 @@ function uc_discounts_form_submit($form, &$form_state)
 				$form_state["values"]["description"], 
 				$form_state["values"]["qualifying_type"], 
 				$form_state["values"]["qualifying_amount"],
+				$form_state["values"]["has_qualifying_amount_max"],
+				$form_state["values"]["qualifying_amount_max"],
 				$form_state["values"]["discount_type"],
 				$discount_amount,
 				$form_state["values"]["requires_code"],
@@ -669,6 +735,8 @@ function uc_discounts_copy($original_discount_id)
 		$discount->description, 
 		$discount->qualifying_type, 
 		$discount->qualifying_amount,
+		$discount->has_qualifying_amount_max,
+		$discount->qualifying_amount_max,
 		$discount->discount_type,
 		$discount->discount_amount,
 		$discount->requires_code,

@@ -24,6 +24,7 @@ define("ALL_ROLES", "-1");
 
 define("REQUIRES_SINGLE_PRODUCT_TO_QUALIFY_DEFAULT", FALSE);
 define("REQUIRES_CODE_DEFAULT", TRUE);
+define("HAS_QUALIFYING_AMOUNT_MAX_DEFAULT", FALSE);
 define("FILTER_TYPE_DEFAULT", FILTER_TYPE_PRODUCTS);
 define("HAS_ROLE_FILTER_DEFAULT", FALSE);
 define("MAX_TIMES_APPLIED_DEFAULT", 1);
@@ -43,6 +44,14 @@ define("CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY", "messages");
 ///////////////////////////////////////////////////////////////////
 //Drupal Hooks
 ///////////////////////////////////////////////////////////////////
+
+/**
+ * Implementation of hook_init().
+ */
+function __test__uc_discounts_init()
+{
+	drupal_add_css(drupal_get_path("module", "uc_discounts") . "/uc_discounts.css");
+}
 
 function uc_discounts_help($path, $arg)
 {
@@ -280,6 +289,94 @@ function uc_discounts_line_item()
 }
 
 /**
+ * Implementation of hook_cart_pane().
+ */
+function __test__uc_discounts_cart_pane($items)
+{
+	global $user;
+
+	//Create phony order object to call to 
+	$order = new stdClass();
+	$order->uid = $user->uid;
+	$order->products = $items;
+	
+	$errors = array();
+	$warnings = array();
+	$messages = array();
+	$discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
+
+/*
+error_log("Start items:");
+	foreach ($items as $item)
+	{
+error_log("item:");
+foreach ($item as $name => $value)
+{
+	error_log("$name=$value");
+}
+error_log("");
+	}
+error_log("End items");
+*/
+
+	$subtotal = 0;
+	foreach ($items as $item)
+		$subtotal += $item->price * $item->qty;
+
+$item = new stdClass();
+$item->cart_id = 3;
+$item->nid = 0;
+$item->qty = 1;
+$item->changed = "";
+$item->data = NULL;
+$item->title = "test";
+$item->vid = 4;
+$item->cost = 0;
+$item->price = 100;
+$item->weight = 1;
+$items[] = $item;
+
+	//If there are no discounts, do not add a pane
+	if (count($discounts) == 0)
+		return array();
+	
+	$body = "<div class='uc-discounts-cart-pane'>";
+	foreach ($messages as $message)
+	{
+		$body .= "<div class='uc-discounts-cart-pane-message'>" . $message . "</div>";
+	}
+	
+	$total_discount_amount = 0;
+	foreach ($discounts as $discount)
+		$total_discount_amount += $discount->amount;
+
+	$new_subtotal = $subtotal - $total_discount_amount;
+	
+	//sticky-enabled sticky-table
+	$body .= "<div class='uc-discounts-cart-pane-discount-amount'>" . $total_discount_amount . "</div>";
+	$body .= "<div class='uc-discounts-cart-pane-subtotal'>" . $subtotal . "</div>";
+	$body .= "<div class='uc-discounts-cart-pane-new-subtotal'>" . $new_subtotal . "</div>";
+	
+	$body .= "</div>";
+
+	drupal_add_js(sprintf("$(document).ready(function()
+		{
+		
+			$(\"#cart-form-buttons\").before(\"%s\");
+		});", $body), "inline");
+
+return;
+
+	$panes[] = array(
+		"id" => "uc_discounts",
+		"title" => t("Discounts"),
+		"weight" => 1,
+		"body" => $body,
+	);
+	return $panes;
+}
+
+/**
  * Implementation of hook_checkout_pane().
  */
 function uc_discounts_checkout_pane()
@@ -509,10 +606,11 @@ function uc_discounts_js_calculate()
 function get_uc_discounts_column_names()
 {
 	return array("name", "short_description", "description", "qualifying_type", 
-		"qualifying_amount", "discount_type", "discount_amount", "requires_code", 
-		"filter_type", "has_role_filter", "requires_single_product_to_qualify", "max_times_applied", 
-		"can_be_combined_with_other_discounts", "max_uses", "max_uses_per_user", "has_expiration", 
-		"expiration", "is_published", "weight");
+		"qualifying_amount", "has_qualifying_amount_max", "qualifying_amount_max", "discount_type", 
+		"discount_amount", "requires_code", "filter_type", "has_role_filter", 
+		"requires_single_product_to_qualify", "max_times_applied", "can_be_combined_with_other_discounts", "max_uses", 
+		"max_uses_per_user", "has_expiration", "expiration", "is_published", 
+		"weight");
 }
 /**
  * Returns array of uc_discounts insert column names.
@@ -536,9 +634,10 @@ function get_uc_discounts_column_printf_wildcards()
 {
 	return array("'%s'", "'%s'", "'%s'", "%d", 
 		"%f", "%d", "%f", "%d", 
+		"%f", "%d", "%d", "%d", 
 		"%d", "%d", "%d", "%d", 
 		"%d", "%d", "%d", "%d", 
-		"%d", "%d", "%d");
+		"%d");
 }
 /**
  * Returns array of uc_discounts insert column printf wildcards.
@@ -559,10 +658,11 @@ function get_uc_discounts_column_update_printf_wildcards()
  * Inserts a uc_discounts row and returns its discount_id.
  */
 function uc_discounts_insert($name, $short_description, $description, $qualifying_type, 
-	$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-	$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
-	$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
-	$expiration, $is_published, $weight, $insert_timestamp = NULL)
+	$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
+	$discount_amount, $requires_code, $filter_type, $has_role_filter, 
+	$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
+	$max_uses_per_user, $has_expiration, $expiration, $is_published, 
+	$weight, $insert_timestamp = NULL)
 {
 	if ( is_null($insert_timestamp) )
 		$insert_timestamp = time();
@@ -572,10 +672,11 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
 	uc_discounts_log("query=" . $query);
 	db_query($query, 
 		$name, $short_description, $description, $qualifying_type, 
-		$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-		$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
-		$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
-		$expiration, $is_published, $weight, $insert_timestamp);
+		$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
+		$discount_amount, $requires_code, $filter_type, $has_role_filter, 
+		$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
+		$max_uses_per_user, $has_expiration, $expiration, $is_published, 
+		$weight, $insert_timestamp);
 	$discount_id = db_last_insert_id("uc_discounts", "discount_id");
 	uc_discounts_log("new discount_id=" . $discount_id);
 	return $discount_id;
@@ -586,10 +687,11 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
  */
 function uc_discounts_update($discount_id, 
 	$name, $short_description, $description, $qualifying_type, 
-	$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-	$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
-	$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
-	$expiration, $is_published, $weight)
+	$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
+	$discount_amount, $requires_code, $filter_type, $has_role_filter, 
+	$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
+	$max_uses_per_user, $has_expiration, $expiration, $is_published, 
+	$weight)
 {
 	$query = "UPDATE {uc_discounts} SET ";
 	
@@ -608,10 +710,11 @@ function uc_discounts_update($discount_id,
 	uc_discounts_log("query=" . $query);
 	db_query($query, 
 		$name, $short_description, $description, $qualifying_type, 
-		$qualifying_amount, $discount_type, $discount_amount, $requires_code, 
-		$filter_type, $has_role_filter, $requires_single_product_to_qualify, $max_times_applied, 
-		$can_be_combined_with_other_discounts, $max_uses, $max_uses_per_user, $has_expiration, 
-		$expiration, $is_published, $weight, $discount_id);
+		$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
+		$discount_amount, $requires_code, $filter_type, $has_role_filter, 
+		$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
+		$max_uses_per_user, $has_expiration, $expiration, $is_published, 
+		$weight, $discount_id);
 }
 
 /**
@@ -1116,6 +1219,29 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 					case QUALIFYING_TYPE_MINIMUM_QUANTITY:
 						$warnings[] = t( 'The discount for code "@code" requires a minimum quantity of @qualifying_amount to qualify.', 
 							array("@code" => $discount->code, "@qualifying_amount" => $discount->qualifying_amount) );
+						break;
+				}
+			}
+			continue;
+		}
+
+		//If this discount has a maximum qualifying amount and the order exceeds it
+		if ( $discount->has_qualifying_amount_max && ($order_qualifying_amount >= $discount->qualifying_amount_max) )
+		{
+			//If this is a coded discount, add error message
+			if ( !is_null($warnings) && !is_null($discount->code) )
+			{
+				$qualifying_amount_max = uc_currency_format($discount->qualifying_amount_max);
+				switch ($discount->qualifying_type)
+				{
+					case QUALIFYING_TYPE_MINIMUM_PRICE:
+						$warnings[] = t( 'The discount for code "@code" cannot exceed the price of @qualifying_amount_max to qualify.',
+							array("@code" => $discount->code, "@qualifying_amount_max" => $qualifying_amount_max) );
+						break;
+
+					case QUALIFYING_TYPE_MINIMUM_QUANTITY:
+						$warnings[] = t( 'The discount for code "@code" cannot exceed the quantity of @qualifying_amount_max to qualify.',
+							array("@code" => $discount->code, "@qualifying_amount_max" => $discount->qualifying_amount_max) );
 						break;
 				}
 			}

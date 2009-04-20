@@ -10,7 +10,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2009-03-10 01:15-0700\n"
+"POT-Creation-Date: 2009-04-19 23:52-0700\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -24,7 +24,7 @@ msgid "Codeless Discounts"
 msgstr ""
 
 #: codeless_discounts_field.module:16
-msgid "Displays uc_discounts for node without codes"
+msgid "Displays uc_discounts_alt for node without codes"
 msgstr ""
 
 #: codeless_discounts_field.module:130
@@ -40,7 +40,7 @@ msgid "Codeless Discounts Field"
 msgstr ""
 
 #: codeless_discounts_field.info:0
-msgid "Defines CCK-based field for displaying uc_discounts not requiring codes attached to nodes."
+msgid "Defines CCK-based field for displaying applicable uc_discounts_alt discounts not requiring codes attached to nodes."
 msgstr ""
 
 #: codeless_discounts_field.info:0

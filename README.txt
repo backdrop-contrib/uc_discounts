@@ -23,6 +23,28 @@ Installation:
    "sites/all/modules/" or "sites/all/modules/ubercart").
 2. Go to "administer" -> "modules" and enable the module.
 
+How to install the codeless_discounts_field:
+	Enable the module
+	go to <site>/admin/content/node-type/product/fields and under "Add" "New Field" enter:
+	Label: Codeless Discount
+	Field name: field_codeless_discount
+	Type of data: Codeless Discount
+	Form element: Default Display
+
+	Then you can reorder the fields as you like. You can also theme this 
+		field (see theme_codeless_discounts_field_get_codeless_discount_html_for_product).
+
+How to install the product_price_alterer_field:
+	Enable the module
+	go to <site>/admin/content/node-type/product/fields and under "Add" "New Field" enter:
+	Label: Product Price Alterer
+	Field name: field_product_price_alterer
+	Type of data: Product Price Alterer
+	Form element: Default Display
+
+	Then you can reorder the fields as you like. You can also theme this 
+		field (see theme_product_price_alterer_field_get_price_alterer_javascript_for_product).
+
 
 Configuration:
 -------------

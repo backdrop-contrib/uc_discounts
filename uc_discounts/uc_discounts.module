@@ -740,6 +740,7 @@ function uc_discounts_codes_delete($discount_id)
 
 /**
  * Returns product_ids for discount object.
+ * Note: this function correctly returns all products for term-based discounts.
  */
 function get_product_ids_for_discount_object($discount, $exclude_all_products = FALSE)
 {
@@ -767,6 +768,8 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
 
 /**
  * Returns product_ids for discount.
+ * Note: this function does not check filter_type so a discount with filter_type == FILTER_TYPE_TERMS
+ *   will return no values.
  */
 function get_product_ids_for_discount($discount_id, $exclude_all_products = FALSE)
 {
@@ -1307,7 +1310,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 //(but doesn't fix the problem where the products being discounted have already been discounted
 //in full, or the case where the cart consists only of the products included in this discount)
 				// Get qualifying products -- ignore "all products" selection
-				$discount_product_ids = get_product_ids_for_discount($discount->discount_id, TRUE);
+				$discount_product_ids = get_product_ids_for_discount_object($discount, TRUE);
 
 				// Do we have any products
 				if (count($discount_product_ids) > 0) {

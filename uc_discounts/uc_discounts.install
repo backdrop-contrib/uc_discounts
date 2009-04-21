@@ -421,7 +421,7 @@ function uc_discounts_update_2()
 			$queries[] = update_sql("ALTER TABLE {uc_discounts} ADD qualifying_amount_max float NOT NULL default 0 AFTER has_qualifying_amount_max");
 
 			//Fixes update bug that existed in uc_discounts_update_1 (but is fixed now)
-			$queries[] = update_sql("ALTER TABLE uc_discounts MODIFY has_role_filter tinyint NOT NULL");
+			$queries[] = update_sql("ALTER TABLE {uc_discounts} MODIFY has_role_filter tinyint NOT NULL");
 			break;
 
 		case "pgsql":

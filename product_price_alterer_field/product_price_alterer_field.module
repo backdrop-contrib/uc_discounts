@@ -87,7 +87,6 @@ function product_price_alterer_field_field($op, &$node, $field, &$items, $teaser
 {
 	switch ($op)
 	{
-		case "load":
 		case "sanitize":
 			//If items is empty, generate value by getting discounts that apply to this product
 			if ( empty($items) )

@@ -14,6 +14,7 @@ define("QUALIFYING_TYPE_MINIMUM_QUANTITY", 2);
 define("DISCOUNT_TYPE_FREE_ITEMS", 1);
 define("DISCOUNT_TYPE_PERCENTAGE_OFF", 2);
 define("DISCOUNT_TYPE_FIXED_AMOUNT_OFF", 3);
+define("DISCOUNT_TYPE_FIXED_AMOUNT_OFF_PER_QUALIFYING_ITEM", 4);
 
 define("FILTER_TYPE_PRODUCTS", 1);
 define("FILTER_TYPE_TERMS", 2);
@@ -1330,6 +1331,12 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			case DISCOUNT_TYPE_FIXED_AMOUNT_OFF:
 				$discount->amount = $discount->discount_amount * $discount->times_applied;
 				break;
+			
+			case DISCOUNT_TYPE_FIXED_AMOUNT_OFF_PER_QUALIFYING_ITEM:
+				//Discount is the total quantity of qualifying items in order (order_qualifying_amount)
+				//times the discount amount
+				$discount->amount = $discount->discount_amount * $order_qualifying_amount;
+				break;
 		}
 
 		if ( !is_null($messages) )
@@ -1589,6 +1596,7 @@ function discount_type_options()
 	{
 		$options = array( DISCOUNT_TYPE_PERCENTAGE_OFF => t("Percent off"), 
 			DISCOUNT_TYPE_FIXED_AMOUNT_OFF => t("Fixed amount off"),
+			DISCOUNT_TYPE_FIXED_AMOUNT_OFF_PER_QUALIFYING_ITEM => t("Fixed amount off per qualifying item"),
 			DISCOUNT_TYPE_FREE_ITEMS => t("Free items") );
 	}
 	

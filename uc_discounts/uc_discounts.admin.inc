@@ -98,7 +98,7 @@ function uc_discounts_form($form_state, $discount_id = 0)
 	$form["description"] = array(
 		"#type" => "textfield",
 		"#title" => t("Description"),
-		"#description" => t("Internal use only."),
+		"#description" => t("Internal description for discount administrators."),
 		"#default_value" => $form_state["values"]["description"],
 		"#size" => 75,
 	);
@@ -168,7 +168,7 @@ function uc_discounts_form($form_state, $discount_id = 0)
 	$form["discount_type"] = array(
 		"#type" => "select",
 		"#title" => t("Discount type"),
-		"#description" => t("Apply discounts to specific product types."),
+		"#description" => t("Type of discount to apply."),
 		"#options" => discount_type_options(), 
 		"#default_value" => $form_state["values"]["discount_type"],
 	);

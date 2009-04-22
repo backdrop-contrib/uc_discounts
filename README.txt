@@ -37,13 +37,16 @@ How to install the codeless_discounts_field:
 How to install the product_price_alterer_field:
 	Enable the module
 	go to <site>/admin/content/node-type/product/fields and under "Add" "New Field" enter:
-	Label: Product Price Alterer
-	Field name: field_product_price_alterer
-	Type of data: Product Price Alterer
+	Label: Discounted Price
+	Field name: field_discounted_price
+	Type of data: Discounted Price
 	Form element: Default Display
+	
+	go to <site>/admin/content/node-type/product/display and change the label for the field to "<Hidden>"
+	(the module adds its own label)
 
 	Then you can reorder the fields as you like. You can also theme this 
-		field (see theme_product_price_alterer_field_get_price_alterer_javascript_for_product).
+		field (see theme_product_price_alterer_field_get_price_alterer_html_for_discounts).
 
 
 Configuration:

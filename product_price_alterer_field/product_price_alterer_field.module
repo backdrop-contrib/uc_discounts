@@ -20,12 +20,8 @@ function product_price_alterer_field_field_info()
 {
 	return array(
 		"product_price_alterer" => array(
-			"label" => t("Discounts Product Price Alterer"),
+			"label" => t("Discounted Price"),
 			"description" => t("Alters price for products where uc_discounts_alt discounts apply when added with a quantity of one or less"),
-			"callbacks" => array(
-				"tables" => CONTENT_CALLBACK_DEFAULT,
-				"arguments" => CONTENT_CALLBACK_DEFAULT,
-			),
 		),
 	);
 }
@@ -87,14 +83,20 @@ function product_price_alterer_field_field($op, &$node, $field, &$items, $teaser
 {
 	switch ($op)
 	{
-		case "load":
+		case "sanitize":
+		case "view":
 			//If items is empty, generate value by getting discounts that apply to this product
 			if ( empty($items) )
 			{
-				$item = array();
-				$item["product_price_alterer"] = 
-					theme("product_price_alterer_field_get_price_alterer_javascript_for_product", $node);
-				$items[] = $item;
+				//Determine discounts that apply to product when ordering a quantity of 1 or less
+				$discounts = get_codeless_discounts_for_product_and_quantity($node, 1);
+				if ( !empty($discounts) )
+				{
+					$item = array();
+					$item["product_price_alterer"] = 
+						theme("product_price_alterer_field_get_price_alterer_html_for_discounts", $node, $discounts);
+					$items[] = $item;
+				}
 			}
 			break;
 	}
@@ -109,8 +111,8 @@ function product_price_alterer_field_theme()
 		"product_price_alterer_field_formatter_default" => array(
 			"arguments" => array("element"),
 		),
-		"product_price_alterer_field_get_price_alterer_javascript_for_product" => array(
-			"arguments" => array("node"),
+		"product_price_alterer_field_get_price_alterer_html_for_discounts" => array(
+			"arguments" => array("product", "discounts"),
 		),
 	);
 }
@@ -123,16 +125,11 @@ function theme_product_price_alterer_field_formatter_default($element)
 	return $element["#item"]["product_price_alterer"];
 }
 
-function theme_product_price_alterer_field_get_price_alterer_javascript_for_product($product)
+/**
+ * Theme function for producing dicounted price html and price altering javascript.
+ */
+function theme_product_price_alterer_field_get_price_alterer_html_for_discounts($product, $discounts)
 {
-	if (is_null($product) || !$product)
-		return NULL;
-
-	//Determine discounts that apply to product when ordering a quantity of 1 or less
-	$discounts = get_codeless_discounts_for_product_and_quantity($product, 1);
-	if ( empty($discounts) )
-		return NULL;
-
 	//Sum total discount and determine price with discounts
 	$total_discount_amount = 0;
 	foreach ($discounts as $discount)
@@ -156,11 +153,9 @@ function theme_product_price_alterer_field_get_price_alterer_javascript_for_prod
 						$(this).addClass(\"product_price_alterer_field-processed\")
 							.addClass(\"product-price-alterer-field-sell-price\")
 							.html(%s)
-							.after(%s);
 					}
 				});
-		});", drupal_to_js($sell_price_string), drupal_to_js($discount_price_string) ), "inline");
+		});", drupal_to_js($sell_price_string) ), "inline");
 
-	//Always return NULL to not display an actual field to user
-	return NULL;
+	return $discount_price_string;
 }

@@ -146,14 +146,12 @@ function theme_product_price_alterer_field_get_price_alterer_html_for_discounts(
 	//Alter price using javascript
 	drupal_add_js( sprintf("$(document).ready(function()
 		{
-			sell_price = $(\".sell-price:not(.product_price_alterer_field-processed)\").each(function()
+			$(\".sell-price:not(.product_price_alterer_field-processed):first\").each(function()
 				{
-					if ( $(this).hasClass(\"product-info\") )
-					{
-						$(this).addClass(\"product_price_alterer_field-processed\")
-							.addClass(\"product-price-alterer-field-sell-price\")
-							.html(%s)
-					}
+					$(this).addClass(\"product_price_alterer_field-processed\")
+						.addClass(\"product-price-alterer-field-sell-price\")
+						.html(%s)
+						.after( $(\".product-price-alterer-field-discounted-price:first\") );
 				});
 		});", drupal_to_js($sell_price_string) ), "inline");
 

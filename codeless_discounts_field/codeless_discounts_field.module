@@ -80,13 +80,12 @@ function codeless_discounts_field_field($op, &$node, $field, &$items, $teaser, $
 	switch ($op)
 	{
 		case "load":
-		case "sanitize":
 			//If items is empty, generate value by getting discounts that apply to this product
 			if ( empty($items) )
 			{
 				$item = array();
 				$item["codeless_discounts"] = 
-					theme("codeless_discounts_field_get_codeless_discount_html_for_product", $node->nid);
+					theme("codeless_discounts_field_get_codeless_discount_html_for_product", $node);
 				$items[] = $item;
 			}
 			break;
@@ -116,9 +115,9 @@ function theme_codeless_discounts_field_formatter_default($element)
 	return $element["#item"]["codeless_discounts"];
 }
 
-function theme_codeless_discounts_field_get_codeless_discount_html_for_product($product_id)
+function theme_codeless_discounts_field_get_codeless_discount_html_for_product($product)
 {
-	$discounts = get_codeless_discounts_for_product($product_id);
+	$discounts = get_codeless_discounts_for_product($product);
 	if ( empty($discounts) )
 		return "";
 		

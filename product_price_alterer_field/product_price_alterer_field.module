@@ -136,24 +136,25 @@ function theme_product_price_alterer_field_get_price_alterer_html_for_discounts(
 		$total_discount_amount += $discount->amount;
 	$discounted_price_with_discounts = $product->sell_price - $total_discount_amount;
 
-	$sell_price_string = "<div><strike>" . t("Price:") . "&nbsp;" 
-		. uc_currency_format($product->sell_price) . "</strike></div>";
 	$discount_price_string = 
-		"<div class='product-price-alterer-field-discounted-price'>" 
-			. t("Discounted price:") . "&nbsp;" . uc_currency_format($discounted_price_with_discounts)
+		"<div class='product-info product-price-alterer-field-discounted-price'>"
+			. "<div class='field-label'>" 
+				. t("Discounted price:") . "&nbsp;" . uc_currency_format($discounted_price_with_discounts)
+			. "</div>"
 		. "</div>";
 
 	//Alter price using javascript
-	drupal_add_js( sprintf("$(document).ready(function()
+	drupal_add_js("$(document).ready(function()
 		{
 			$(\".sell-price:not(.product_price_alterer_field-processed):first\").each(function()
 				{
-					$(this).addClass(\"product_price_alterer_field-processed\")
+					this_wrapped = $(this);
+					this_wrapped.addClass(\"product_price_alterer_field-processed\")
 						.addClass(\"product-price-alterer-field-sell-price\")
-						.html(%s)
+						.html(  $(\"<strike/>\").html( this_wrapped.html() )  )
 						.after( $(\".product-price-alterer-field-discounted-price:first\") );
 				});
-		});", drupal_to_js($sell_price_string) ), "inline");
+		});", "inline");
 
 	return $discount_price_string;
 }

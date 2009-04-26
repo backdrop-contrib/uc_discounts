@@ -523,14 +523,12 @@ function uc_discounts_js_calculate()
 			return;
 		}
 	}
-	//Otherwise create it
+	//Otherwise create phony order
 	else
 	{
-		$order = uc_order_new($user->uid);
-		$_SESSION['cart_order'] = $order->order_id;
-		
+		$order = new stdClass();
+		$order->uid = $user->uid;
 		$order->products = uc_cart_get_contents();
-		uc_order_save($order);
 	}
 
 	$order->uc_discounts_codes = get_codes($_POST["uc-discounts-codes"]);
@@ -541,16 +539,16 @@ function uc_discounts_js_calculate()
 	$messages = array();
 
 	$discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
-	add_discount_line_items_to_order($order, $discounts);
 
-	for ($i = 0; $i < count($order->uc_discounts_line_items); $i++)
+	$i = 0;
+	foreach ($discounts as $discount)
 	{
 		$line_item = array();
-		$line_item["id"] = LINE_ITEM_KEY_NAME . $i;
-		$line_item["type"] = $order->uc_discounts_line_items[$i]["type"];
-		$line_item["title"] = $order->uc_discounts_line_items[$i]["title"];
-		$line_item["amount"] = $order->uc_discounts_line_items[$i]["amount"];
-		$line_item["weight"] = $order->uc_discounts_line_items[$i]["weight"];
+		$line_item["id"] = LINE_ITEM_KEY_NAME . $i++;
+		$line_item["type"] = $discount->type;
+		$line_item["title"] = $discount->title;
+		$line_item["amount"] = $discount->amount;
+		$line_item["weight"] = $discount->weight;
 		$line_items[] = $line_item;
 	}
 

@@ -1,7 +1,13 @@
-.product-price-alterer-field-sell-price {
+.original-sell-price {
 	color: #777777;
+	text-decoration: line-through;
 }
 
-.product-price-alterer-field-discounted-price {
+.field-type-discounted-price .field-label-inline,
+.field-type-discounted-price .field-label-inline-first {
+  font-weight: normal;
+}
+
+.field-type-discounted-price {
 	color: Red;
 }

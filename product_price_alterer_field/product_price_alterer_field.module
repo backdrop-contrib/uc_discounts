@@ -6,20 +6,12 @@
  */
 
 /**
- * Implementation of hook_init().
- */
-function product_price_alterer_field_init()
-{
-	drupal_add_css(drupal_get_path("module", "product_price_alterer_field") . "/product_price_alterer_field.css");
-}
-
-/**
  * Implementation of hook_field_info().
  */
 function product_price_alterer_field_field_info()
 {
 	return array(
-		"product_price_alterer" => array(
+		"discounted_price" => array(
 			"label" => t("Discounted Price"),
 			"description" => t("Alters price for products where uc_discounts_alt discounts apply when added with a quantity of one or less"),
 		),
@@ -40,9 +32,9 @@ function product_price_alterer_field_content_is_empty($item, $field)
 function product_price_alterer_field_widget_info()
 {
 	return array(
-		"product_price_alterer" => array(
+		"discounted_price" => array(
 			"label" => "Default Display",
-			"field types" => array("product_price_alterer"),
+			"field types" => array("discounted_price"),
 			"multiple values" => CONTENT_HANDLE_CORE,
 			"callbacks" => array(
 				"default value" => CONTENT_CALLBACK_DEFAULT,
@@ -70,10 +62,18 @@ function product_price_alterer_field_field_formatter_info()
 {
 	return array(
 		"default" => array(
-			"label" => "Discount Description",
-			"field types" => array("product_price_alterer"),
+			"label" => "Discounted Price",
+			"field types" => array("discounted_price"),
 		),
 	);
+}
+
+/**
+ * Theme function for 'default' text field formatter.
+ */
+function theme_product_price_alterer_field_formatter_default($element)
+{
+	return $element["#item"]["discounted_price"];
 }
 
 /**
@@ -92,10 +92,24 @@ function product_price_alterer_field_field($op, &$node, $field, &$items, $teaser
 				$discounts = get_codeless_discounts_for_product_and_quantity($node, 1);
 				if ( !empty($discounts) )
 				{
+					$discounted_price = get_discounted_price($node, $discounts);
+
+					//Add field for discounted price
 					$item = array();
-					$item["product_price_alterer"] = 
-						theme("product_price_alterer_field_get_price_alterer_html_for_discounts", $node, $discounts);
+					$item["discounted_price"] = theme( "product_dicounted_price", $node, uc_currency_format($discounted_price) );
 					$items[] = $item;
+
+					global $product_price_alterer_field_touched;
+					if ( empty($product_price_alterer_field_touched) )
+					{
+						$product_price_alterer_field_touched = TRUE;
+
+						//Add css to page
+						drupal_add_css(drupal_get_path("module", "product_price_alterer_field") . "/product_price_alterer_field.css");
+
+						//Add javascript to page
+						theme("add_product_price_altering_javascript", $node);
+					}
 				}
 			}
 			break;
@@ -109,52 +123,51 @@ function product_price_alterer_field_theme()
 {
 	return array(
 		"product_price_alterer_field_formatter_default" => array(
-			"arguments" => array("element"),
+			"arguments" => array("element" => NULL),
 		),
-		"product_price_alterer_field_get_price_alterer_html_for_discounts" => array(
-			"arguments" => array("product", "discounts"),
+		"product_dicounted_price" => array(
+			"arguments" => array("product", "discounted_price"),
+		),
+		"add_product_price_altering_javascript" => array(
+			"arguments" => array("product"),
 		),
 	);
 }
 
 /**
- * Theme function for discounts product price alterer element.
+ * Theme function for producing product dicounted price html.
  */
-function theme_product_price_alterer_field_formatter_default($element)
+function theme_product_dicounted_price($product, $discounted_price_string)
 {
-	return $element["#item"]["product_price_alterer"];
+	return $discounted_price_string;
 }
 
 /**
- * Theme function for producing dicounted price html and price altering javascript.
+ * Theme function for writing javascript to product page.
  */
-function theme_product_price_alterer_field_get_price_alterer_html_for_discounts($product, $discounts)
+function theme_add_product_price_altering_javascript($product)
 {
-	//Sum total discount and determine price with discounts
-	$total_discount_amount = 0;
-	foreach ($discounts as $discount)
-		$total_discount_amount += $discount->amount;
-	$discounted_price_with_discounts = $product->sell_price - $total_discount_amount;
-
-	$discount_price_string = 
-		"<div class='product-info product-price-alterer-field-discounted-price'>"
-			. "<div class='field-label'>" 
-				. t("Discounted price:") . "&nbsp;" . uc_currency_format($discounted_price_with_discounts)
-			. "</div>"
-		. "</div>";
-
 	//Alter price using javascript
 	drupal_add_js("$(document).ready(function()
 		{
-			$(\".sell-price:not(.product_price_alterer_field-processed):first\").each(function()
+			$(\".sell-price:not(.original-sell-price):first\").each(function()
 				{
 					this_wrapped = $(this);
-					this_wrapped.addClass(\"product_price_alterer_field-processed\")
-						.addClass(\"product-price-alterer-field-sell-price\")
-						.html(  $(\"<strike/>\").html( this_wrapped.html() )  )
-						.after( $(\".product-price-alterer-field-discounted-price:first\") );
+					this_wrapped.addClass(\"original-sell-price\")
+						.after( $(\".field-type-discounted-price:first\") );
 				});
 		});", "inline");
+}
 
-	return $discount_price_string;
+/**
+ * Returns discounted price for product (based on passed discounts).
+ */
+function get_discounted_price($product, $discounts)
+{
+	//Sum discount amounts
+	$total_discount_amount = 0;
+	foreach ($discounts as $discount)
+		$total_discount_amount += $discount->amount;
+	
+	return $product->sell_price - $total_discount_amount;
 }

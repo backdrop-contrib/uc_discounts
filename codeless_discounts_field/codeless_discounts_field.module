@@ -14,10 +14,6 @@ function codeless_discounts_field_field_info()
 		"codeless_discounts" => array(
 			"label" => t("Codeless Discounts"),
 			"description" => t("Displays uc_discounts_alt discounts for node without codes"),
-			"callbacks" => array(
-				"tables" => CONTENT_CALLBACK_DEFAULT,
-				"arguments" => CONTENT_CALLBACK_DEFAULT,
-			),
 		),
 	);
 }

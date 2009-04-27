@@ -547,7 +547,7 @@ function uc_discounts_js_calculate()
 		$line_item["id"] = LINE_ITEM_KEY_NAME . $i++;
 		$line_item["type"] = $discount->type;
 		$line_item["title"] = $discount->title;
-		$line_item["amount"] = $discount->amount;
+		$line_item["amount"] = -$discount->amount;
 		$line_item["weight"] = $discount->weight;
 		$line_items[] = $line_item;
 	}

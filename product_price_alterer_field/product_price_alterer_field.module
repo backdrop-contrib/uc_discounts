@@ -6,6 +6,14 @@
  */
 
 /**
+ * Implementation of hook_init().
+ */
+function product_price_alterer_field_init()
+{
+	include_once drupal_get_path("module", "views") . "/views.module";
+}
+
+/**
  * Implementation of hook_field_info().
  */
 function product_price_alterer_field_field_info()
@@ -88,28 +96,19 @@ function product_price_alterer_field_field($op, &$node, $field, &$items, $teaser
 			//If items is empty, generate value by getting discounts that apply to this product
 			if ( empty($items) )
 			{
-				//Determine discounts that apply to product when ordering a quantity of 1 or less
-				$discounts = get_codeless_discounts_for_product_and_quantity($node, 1);
-				if ( !empty($discounts) )
+				$discounted_price = theme("get_discounted_price", $node);
+				if ( !is_null($discounted_price) )
 				{
-					$discounted_price = get_discounted_price($node, $discounts);
-
 					//Add field for discounted price
 					$item = array();
-					$item["discounted_price"] = theme( "product_dicounted_price", $node, uc_currency_format($discounted_price) );
+					$item["discounted_price"] = theme( "product_discounted_price", $node, uc_currency_format($discounted_price) );
 					$items[] = $item;
 
-					global $product_price_alterer_field_touched;
-					if ( empty($product_price_alterer_field_touched) )
-					{
-						$product_price_alterer_field_touched = TRUE;
+					//Add css to page
+					theme("add_product_price_altering_css", $node);
 
-						//Add css to page
-						drupal_add_css(drupal_get_path("module", "product_price_alterer_field") . "/product_price_alterer_field.css");
-
-						//Add javascript to page
-						theme("add_product_price_altering_javascript", $node);
-					}
+					//Add javascript to page
+					theme("add_product_price_altering_javascript", $node);
 				}
 			}
 			break;
@@ -125,8 +124,14 @@ function product_price_alterer_field_theme()
 		"product_price_alterer_field_formatter_default" => array(
 			"arguments" => array("element" => NULL),
 		),
-		"product_dicounted_price" => array(
+		"get_discounted_price" => array(
+			"arguments" => array("product"),
+		),
+		"product_discounted_price" => array(
 			"arguments" => array("product", "discounted_price"),
+		),
+		"add_product_price_altering_css" => array(
+			"arguments" => array("product"),
 		),
 		"add_product_price_altering_javascript" => array(
 			"arguments" => array("product"),
@@ -135,11 +140,44 @@ function product_price_alterer_field_theme()
 }
 
 /**
- * Theme function for producing product dicounted price html.
+ * Theme function for producing product discounted price html.
  */
-function theme_product_dicounted_price($product, $discounted_price_string)
+function theme_get_discounted_price($product)
+{
+	//Determine discounts that apply to product when ordering a quantity of 1 or less
+	$discounts = get_codeless_discounts_for_product_and_quantity($product, 1);
+	if ( empty($discounts) )
+		return NULL;
+
+	//Sum discount amounts
+	$total_discount_amount = 0;
+	foreach ($discounts as $discount)
+		$total_discount_amount += $discount->amount;
+	return $product->sell_price - $total_discount_amount;
+}
+
+/**
+ * Theme function for producing product discounted price html.
+ * Returns discounted price for product (based on passed discounts).
+ */
+function theme_product_discounted_price($product, $discounted_price_string)
 {
 	return $discounted_price_string;
+}
+
+/**
+ * Theme function for writing css to product page.
+ */
+function theme_add_product_price_altering_css($product)
+{
+	global $product_price_alterer_field_css_added;
+	if ( empty($product_price_alterer_field_css_added) )
+	{
+		$product_price_alterer_field_css_added = TRUE;
+
+		drupal_add_css(drupal_get_path("module", "product_price_alterer_field") 
+			. "/product_price_alterer_field.css");
+	}
 }
 
 /**
@@ -147,27 +185,65 @@ function theme_product_dicounted_price($product, $discounted_price_string)
  */
 function theme_add_product_price_altering_javascript($product)
 {
-	//Alter price using javascript
-	drupal_add_js("$(document).ready(function()
-		{
-			$(\".sell-price:not(.original-sell-price):first\").each(function()
-				{
-					this_wrapped = $(this);
-					this_wrapped.addClass(\"original-sell-price\")
-						.after( $(\".field-type-discounted-price:first\") );
-				});
-		});", "inline");
+	global $product_price_alterer_field_javascript_added;
+	if ( empty($product_price_alterer_field_javascript_added) )
+	{
+		$product_price_alterer_field_javascript_added = TRUE;
+
+		//Alter price using javascript
+		drupal_add_js("$(document).ready(function()
+			{
+				$(\".views-field-sell-price\").each(function()
+					{
+						if (this.tagName.toUpperCase() == \"TD\")
+							$(this).addClass(\"original-sell-price\");
+					});
+				$(\".sell-price:not(.original-sell-price):first\").each(function()
+					{
+						this_wrapped = $(this);
+						this_wrapped.addClass(\"original-sell-price\")
+							.after( $(\".field-type-discounted-price:first\") );
+					});
+			});", "inline");
+	}
 }
 
 /**
- * Returns discounted price for product (based on passed discounts).
+ * Implementation of hook_views_data()
+ * Register all of the basic handlers views uses.
  */
-function get_discounted_price($product, $discounts)
+function product_price_alterer_field_views_data()
 {
-	//Sum discount amounts
-	$total_discount_amount = 0;
-	foreach ($discounts as $discount)
-		$total_discount_amount += $discount->amount;
-	
-	return $product->sell_price - $total_discount_amount;
+	$data["uc_products"]["discounted_price"] = array(
+		"title" => t("Discounted price"),
+		"help" => t("Price after discounts (if any exist)."),
+		"real field" => "sell_price",
+		"argument" => array(
+			"handler" => "views_handler_argument_numeric"
+		),
+		"field" => array(
+			"handler" => "discounted_price_handler",
+			"click sortable" => FALSE,
+		),
+	);
+
+	return $data;
+}
+
+/**
+ * Implementation of hook_views_handlers()
+ * Register all of the basic handlers views uses.
+ */
+function product_price_alterer_field_views_handlers()
+{
+	return array(
+		"info" => array(
+			"path" => drupal_get_path("module", "product_price_alterer_field"),
+		),
+		"handlers" => array(
+			"discounted_price_handler" => array(
+				"parent" => "views_handler_field_numeric",
+			),
+		),
+	);
 }

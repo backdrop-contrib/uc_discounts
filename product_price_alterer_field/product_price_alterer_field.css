@@ -8,6 +8,6 @@
   font-weight: normal;
 }
 
-.field-type-discounted-price {
+.field-type-discounted-price, td.views-field-discounted-price {
 	color: Red;
 }

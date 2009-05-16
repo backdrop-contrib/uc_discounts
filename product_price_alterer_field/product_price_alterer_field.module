@@ -193,10 +193,10 @@ function theme_add_product_price_altering_javascript($product)
 		//Alter price using javascript
 		drupal_add_js("$(document).ready(function()
 			{
-				$(\".views-field-sell-price\").each(function()
+				$(\".views-field-discounted-price\").each(function()
 					{
-						if (this.tagName.toUpperCase() == \"TD\")
-							$(this).addClass(\"original-sell-price\");
+						$(this).parent().find(\".views-field-sell-price:not(th)\")
+							.addClass(\"original-sell-price\");
 					});
 				$(\".sell-price:not(.original-sell-price):first\").each(function()
 					{

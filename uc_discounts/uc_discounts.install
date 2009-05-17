@@ -121,6 +121,12 @@ function uc_discounts_schema()
 				"default" => 1,
 				"description" => t("Number of times this discount can be applied to a particular user (0 for unlimited)."),
 			),
+			"max_uses_per_code" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"default" => 0,
+				"description" => t("Number of times this discount can be applied for a particular code (0 for unlimited)."),
+			),
 			"has_expiration" => array(
 				"type" => "int",
 				"size" => "tiny",
@@ -428,6 +434,27 @@ function uc_discounts_update_2()
 			db_add_column( $queries, "uc_discounts", "has_qualifying_amount_max", "tinyint", 
 				array("not null" => TRUE, "default" => 0) );
 			db_add_column( $queries, "uc_discounts", "qualifying_amount_max", "float", 
+				array("not null" => TRUE, "default" => 0) );
+			break;
+	}
+
+	return $queries;
+}
+
+//Add max_uses_per_code column to uc_discounts table
+function uc_discounts_update_3()
+{
+	$queries = array();
+
+	switch ($GLOBALS["db_type"])
+	{
+		case "mysql":
+		case "mysqli":
+			$queries[] = update_sql("ALTER TABLE {uc_discounts} ADD max_uses_per_code int NOT NULL default 0 AFTER max_uses_per_user");
+			break;
+
+		case "pgsql":
+			db_add_column( $queries, "uc_discounts", "max_uses_per_code", "int", 
 				array("not null" => TRUE, "default" => 0) );
 			break;
 	}

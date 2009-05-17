@@ -32,6 +32,7 @@ define("MAX_TIMES_APPLIED_DEFAULT", 1);
 define("CAN_BE_COMBINED_WITH_OTHER_DISCOUNTS_DEFAULT", FALSE);
 define("MAX_USES_DEFAULT", 0);
 define("MAX_USES_PER_USER_DEFAULT", 0);
+define("MAX_USES_PER_CODE_DEFAULT", 0);
 define("HAS_EXPIRATION_DEFAULT", FALSE);
 define("IS_PUBLISHED_DEFAULT", FALSE);
 
@@ -581,8 +582,8 @@ function get_uc_discounts_column_names()
 		"qualifying_amount", "has_qualifying_amount_max", "qualifying_amount_max", "discount_type", 
 		"discount_amount", "requires_code", "filter_type", "has_role_filter", 
 		"requires_single_product_to_qualify", "max_times_applied", "can_be_combined_with_other_discounts", "max_uses", 
-		"max_uses_per_user", "has_expiration", "expiration", "is_published", 
-		"weight");
+		"max_uses_per_user", "max_uses_per_code", "has_expiration", "expiration", 
+		"is_published", "weight");
 }
 /**
  * Returns array of uc_discounts insert column names.
@@ -609,7 +610,7 @@ function get_uc_discounts_column_printf_wildcards()
 		"%f", "%d", "%d", "%d", 
 		"%d", "%d", "%d", "%d", 
 		"%d", "%d", "%d", "%d", 
-		"%d");
+		"%d", "%d");
 }
 /**
  * Returns array of uc_discounts insert column printf wildcards.
@@ -633,8 +634,8 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
 	$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
 	$discount_amount, $requires_code, $filter_type, $has_role_filter, 
 	$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
-	$max_uses_per_user, $has_expiration, $expiration, $is_published, 
-	$weight, $insert_timestamp = NULL)
+	$max_uses_per_user, $max_uses_per_code,$has_expiration, $expiration, 
+	$is_published, $weight, $insert_timestamp = NULL)
 {
 	if ( is_null($insert_timestamp) )
 		$insert_timestamp = time();
@@ -647,8 +648,8 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
 		$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
 		$discount_amount, $requires_code, $filter_type, $has_role_filter, 
 		$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
-		$max_uses_per_user, $has_expiration, $expiration, $is_published, 
-		$weight, $insert_timestamp);
+		$max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, 
+		$is_published, $weight, $insert_timestamp);
 	$discount_id = db_last_insert_id("uc_discounts", "discount_id");
 	uc_discounts_log("new discount_id=" . $discount_id);
 	return $discount_id;
@@ -662,8 +663,8 @@ function uc_discounts_update($discount_id,
 	$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
 	$discount_amount, $requires_code, $filter_type, $has_role_filter, 
 	$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
-	$max_uses_per_user, $has_expiration, $expiration, $is_published, 
-	$weight)
+	$max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, 
+	$is_published, $weight)
 {
 	$query = "UPDATE {uc_discounts} SET ";
 	
@@ -685,8 +686,8 @@ function uc_discounts_update($discount_id,
 		$qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type, 
 		$discount_amount, $requires_code, $filter_type, $has_role_filter, 
 		$requires_single_product_to_qualify, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses, 
-		$max_uses_per_user, $has_expiration, $expiration, $is_published, 
-		$weight, $discount_id);
+		$max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, 
+		$is_published, $weight, $discount_id);
 }
 
 /**
@@ -1060,7 +1061,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 				$discount->discount_id, $order->uid) );
 			if ($row["user_uses_count"] >= $discount->max_uses_per_user)
 			{
-				//If this is a coded discount, add error message
+				//If this is a coded discount, add warning message
 				if ( !is_null($warnings) && !is_null($discount->code) )
 				{
 					$warnings[] = t( 'The discount for code "@code" has reached its max number of uses.', 
@@ -1070,6 +1071,25 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			}
 			
 			$discount->user_uses_count = $row["user_uses_count"];
+		}
+
+		//If code exists and this discount has a max uses per code amount, check max uses per user
+		if ( !is_null($discount->code) && ($discount->max_uses_per_code > 0) )
+		{
+			$row = db_fetch_array( db_query("SELECT COUNT(*) as code_uses_count FROM {uc_discounts_uses} WHERE discount_id=%d AND code=%s", 
+				$discount->discount_id, $discount->code) );
+			if ($row["code_uses_count"] >= $discount->max_uses_per_code)
+			{
+				//Add warning message
+				if ( !is_null($warnings) )
+				{
+					$warnings[] = t( 'The discount code "@code" has reached its max number of uses.', 
+						array("@code" => $discount->code) );
+				}
+				continue;
+			}
+			
+			$discount->code_uses_count = $row["code_uses_count"];
 		}
 
 		//If there are applied discounts, check if discount is being combined and can be combined

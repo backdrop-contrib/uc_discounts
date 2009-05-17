@@ -411,6 +411,16 @@ function uc_discounts_form($form_state, $discount_id = 0)
 		"#required" => TRUE,
 	);
 
+	$form["max_uses_per_code"] = array(
+		"#type" => "textfield",
+		"#title" => t("Max uses per code"),
+		"#description" => t("Number of times this discount can be applied to a particular code (0 for unlimited).  Note: if 'Max uses' (if set) still applies as overall maximum number of uses for this discount."),
+		"#default_value" => isset($form_state["values"]["max_uses_per_code"]) 
+			? $form_state["values"]["max_uses_per_code"] : MAX_USES_PER_CODE_DEFAULT,
+		"#size" => 7,
+		"#required" => TRUE,
+	);
+
 	$has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : HAS_EXPIRATION_DEFAULT;
 	$display_string = ($has_expiration) ? "" : " style='display:none'";
 
@@ -623,6 +633,7 @@ function uc_discounts_form_submit($form, &$form_state)
 				$form_state["values"]["can_be_combined_with_other_discounts"],
 				$form_state["values"]["max_uses"],
 				$form_state["values"]["max_uses_per_user"],
+				$form_state["values"]["max_uses_per_code"],
 				$form_state["values"]["has_expiration"],
 				$expiration,
 				$form_state["values"]["is_published"],
@@ -653,6 +664,7 @@ function uc_discounts_form_submit($form, &$form_state)
 				$form_state["values"]["can_be_combined_with_other_discounts"],
 				$form_state["values"]["max_uses"],
 				$form_state["values"]["max_uses_per_user"],
+				$form_state["values"]["max_uses_per_code"],
 				$form_state["values"]["has_expiration"],
 				$expiration,
 				$form_state["values"]["is_published"],
@@ -746,6 +758,7 @@ function uc_discounts_copy($original_discount_id)
 		$discount->can_be_combined_with_other_discounts,
 		$discount->max_uses,
 		$discount->max_uses_per_user,
+		$discount->max_uses_per_code,
 		$discount->has_expiration,
 		$discount->expiration,
 		$discount->is_published,

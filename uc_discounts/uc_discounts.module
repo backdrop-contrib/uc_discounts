@@ -1076,7 +1076,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		//If code exists and this discount has a max uses per code amount, check max uses per user
 		if ( !is_null($discount->code) && ($discount->max_uses_per_code > 0) )
 		{
-			$row = db_fetch_array( db_query("SELECT COUNT(*) as code_uses_count FROM {uc_discounts_uses} WHERE discount_id=%d AND code=%s", 
+			$row = db_fetch_array( db_query("SELECT COUNT(*) as code_uses_count FROM {uc_discounts_uses} WHERE discount_id=%d AND code='%s'", 
 				$discount->discount_id, $discount->code) );
 			if ($row["code_uses_count"] >= $discount->max_uses_per_code)
 			{

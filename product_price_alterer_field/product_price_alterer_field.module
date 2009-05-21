@@ -5,13 +5,6 @@
  * See http://drupal.org/node/106716 for more information.
  */
 
-/**
- * Implementation of hook_init().
- */
-function product_price_alterer_field_init()
-{
-	include_once drupal_get_path("module", "views") . "/views.module";
-}
 
 /**
  * Implementation of hook_field_info().

@@ -198,10 +198,11 @@ function theme_add_product_price_altering_javascript($product)
 						self.parent().find(\".views-field-sell-price:not(th)\")
 							.addClass(\"original-sell-price\");
 					});
-				$(\".sell-price:not(.original-sell-price):first\").each(function()
+				$(\".sell-price:not(.original-sell-price)\").each(function()
 					{
-						self.addClass(\"original-sell-price\")
-							.after( $(\".field-type-discounted-price:first\") );
+						var self = $(this);
+						$(this).addClass(\"original-sell-price\")
+							.after( self.parent().find(\".field-type-discounted-price\") );
 					});
 			});", "inline");
 	}

@@ -201,7 +201,7 @@ function theme_add_product_price_altering_javascript($product)
 				$(\".sell-price:not(.original-sell-price)\").each(function()
 					{
 						var self = $(this);
-						$(this).addClass(\"original-sell-price\")
+						self.addClass(\"original-sell-price\")
 							.after( self.parent().find(\".field-type-discounted-price\") );
 					});
 			});", "inline");

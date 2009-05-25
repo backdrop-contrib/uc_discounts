@@ -1324,6 +1324,60 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 				//Always apply once
 				$discount->times_applied = 1;
 
+				//If this discount uses all products and previous discount is:
+				//	same weight as this discount
+				//	percentage off
+				//	products of discounts must match
+				//discount using same subtotal as last discount
+				if (count($discounts) > 0)
+				{
+					$last_discount = $discounts[count($discounts) - 1];
+					if ( ($last_discount->weight == $discount->weight) 
+						&& ($last_discount->discount_type == DISCOUNT_TYPE_PERCENTAGE_OFF) )
+					{
+						//Last discount's and this discount's products must match exactly
+						$are_equal = TRUE;
+						$last_discount_product_ids = get_product_ids_for_discount_object($last_discount);
+						$this_discount_product_ids = get_product_ids_for_discount_object($discount);
+						//If both contain "all products" they are equal
+						if ( in_array(ALL_PRODUCTS, $last_discount_product_ids) 
+							&& in_array(ALL_PRODUCTS, $this_discount_product_ids) )
+							$are_equal = TRUE;
+						//Otherwise check arrays for equality
+						else
+						{
+							foreach ($this_discount_product_ids as $product_id)
+							{
+								if ( !in_array($product_id, $last_discount_product_ids) )
+								{
+									$are_equal = FALSE;
+									break;
+								}
+							}
+							
+							if ($are_equal)
+							{
+								foreach ($last_discount_product_ids as $product_id)
+								{
+									if ( !in_array($product_id, $this_discount_product_ids) )
+									{
+										$are_equal = FALSE;
+										break;
+									}
+								}
+							}
+						}
+
+						if ($are_equal)
+						{
+							//($last_discount->amount / $last_discount->discount_amount) == last discount's subtotal
+							$local_order_subtotal = ($last_discount->amount / $last_discount->discount_amount);
+							$discount->amount = $local_order_subtotal * $discount->discount_amount;
+							break;
+						}
+					}
+				}
+
 //Start patch from lutegrass:
 //This fixes the problem where a percent discount does not apply to all products
 //(but doesn't fix the problem where the products being discounted have already been discounted

@@ -249,6 +249,34 @@ function uc_discounts_terms_schema()
 	return $schema;
 }
 
+function uc_discounts_skus_schema()
+{
+	$schema = array();
+
+	$schema["uc_discounts_skus"] = array(
+		"fields" => array(
+			"discount_sku_id" => array(
+				"type" => "serial",
+				"not null" => TRUE,
+			),
+			"discount_id" => array(
+				"type" => "int",
+				"not null" => TRUE,
+				"description" => t("The {uc_discounts}.discount_id of the discount."),
+			),
+			"sku" => array(
+				"type" => "varchar",
+				"length" => 255,
+				"not null" => TRUE,
+				"description" => t("The {uc_products}.model of the product being discounted."),
+			),
+		),
+		"primary key" => array("discount_sku_id"),
+	);
+
+	return $schema;
+}
+
 function uc_discounts_roles_schema()
 {
 	$schema = array();
@@ -459,5 +487,13 @@ function uc_discounts_update_3()
 			break;
 	}
 
+	return $queries;
+}
+
+//Add uc_discounts_skus table
+function uc_discounts_update_4()
+{
+	$schema = uc_discounts_skus_schema();
+	db_create_table($queries, "uc_discounts_skus", $schema["uc_discounts_skus"]);
 	return $queries;
 }

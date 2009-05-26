@@ -232,14 +232,19 @@ function uc_discounts_form($form_state, $discount_id = 0)
 
 	$filter_type = isset($form_state["values"]["filter_type"]) ? $form_state["values"]["filter_type"] : FILTER_TYPE_DEFAULT;
 	$products_display_string = ($filter_type == FILTER_TYPE_PRODUCTS) ? "" : " style='display:none'";
-	$terms_display_string = ($filter_type != FILTER_TYPE_PRODUCTS) ? "" : " style='display:none'";
+	$terms_display_string = ($filter_type == FILTER_TYPE_TERMS) ? "" : " style='display:none'";
+	$skus_display_string = ($filter_type == FILTER_TYPE_SKUS) ? "" : " style='display:none'";
 
 	$filter_type_container_id = "filter-type-container-" . $seed;
-	$filter_type_prefix = sprintf("<div id='%s' onclick='if (jQuery(\"#%s select\").val() == %d)"
-		. "{ jQuery(\"#%s .products-container\").slideDown(); jQuery(\"#%s .terms-container\").slideUp(); }"
-		. "else { jQuery(\"#%s .products-container\").slideUp(); jQuery(\"#%s .terms-container\").slideDown(); }'>", 
-		$filter_type_container_id, $filter_type_container_id, FILTER_TYPE_PRODUCTS, $filter_type_container_id, 
-		$filter_type_container_id, $filter_type_container_id, $filter_type_container_id);
+	$filter_type_prefix = sprintf(
+		"<div id='%s' onclick='value = jQuery(\"#%s select\").val();"
+		. "if (value == %d) { jQuery(\"#%s .products-container\").slideDown(); jQuery(\"#%s .terms-container\").slideUp(); jQuery(\"#%s .skus-container\").slideUp(); }"
+		. "if (value == %d) { jQuery(\"#%s .products-container\").slideUp(); jQuery(\"#%s .terms-container\").slideDown(); jQuery(\"#%s .skus-container\").slideUp(); }"
+		. "if (value == %d) { jQuery(\"#%s .products-container\").slideUp(); jQuery(\"#%s .terms-container\").slideUp(); jQuery(\"#%s .skus-container\").slideDown(); }'>",
+		$filter_type_container_id, $filter_type_container_id, 
+		FILTER_TYPE_PRODUCTS, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id, 
+		FILTER_TYPE_TERMS,  $filter_type_container_id, $filter_type_container_id, $filter_type_container_id, 
+		FILTER_TYPE_SKUS,  $filter_type_container_id, $filter_type_container_id, $filter_type_container_id);
 
 	$form["filter_type_header"] = array(
 		"#type" => "hidden",
@@ -250,10 +255,11 @@ function uc_discounts_form($form_state, $discount_id = 0)
 	$options = array();
 	$options[FILTER_TYPE_PRODUCTS] = t("Filter By Products");
 	$options[FILTER_TYPE_TERMS] = t("Filter By Terms");
+	$options[FILTER_TYPE_SKUS] = t("Filter By SKUs");
 	$form["filter_type"] = array(
 		"#type" => "select",
 		"#title" => t("Filter Type"),
-		"#description" => t("Determine whether to filter by products or by terms."),
+		"#description" => t("Determine whether to filter by products, terms or SKUs."),
 		"#options" => $options,
 		"#default_value" => $filter_type,
 		"#required" => TRUE,
@@ -307,6 +313,31 @@ function uc_discounts_form($form_state, $discount_id = 0)
 		"#default_value" => $term_ids,
 		"#multiple" => TRUE,
 		"#prefix" => sprintf("<div class='terms-container'%s>", $terms_display_string),
+		"#suffix" => "</div>",
+	);
+
+	//Get current discount SKUs
+	$skus = null;
+	if ( isset($form_state["values"]["skus"]) )
+		$skus = $form_state["values"]["skus"];
+	elseif ($is_edit)
+		$skus = get_skus_for_discount($discount_id, FALSE);
+
+	//Create SKUs form element
+	$options = array();
+	$result = db_query("SELECT p.model, n.title FROM {uc_products} p, {node} n WHERE p.nid=n.nid ORDER BY p.model");
+	$options[ALL_SKUS] = t("<All SKUs>");
+	while ( $row = db_fetch_object($result) )
+		$options[$row->model] = $row->model . " (" . $row->title . ")";
+	$form["skus"] = array(
+		"#type" => "select",
+		"#title" => t("SKUs")
+			. sprintf("<span title='" . t("This field is required.") . "' class='form-required'>*</span>"),
+		"#description" => t("Select all SKUs this discount applies to or &lt;All SKUs&gt; to apply to all SKUs.  Selections are <b>not</b> recursive."),
+		"#options" => $options,
+		"#default_value" => $skus,
+		"#multiple" => TRUE,
+		"#prefix" => sprintf("<div class='skus-container'%s>", $skus_display_string),
 		"#suffix" => "</div>",
 	);
 
@@ -547,6 +578,14 @@ function uc_discounts_form_validate($form, &$form_state)
 			$has_errors = TRUE;
 		}
 	}
+	elseif ($values["filter_type"] == FILTER_TYPE_SKUS)
+	{
+		if ( empty($values["skus"]) )
+		{
+			form_set_error( "skus", t("SKUs are required because of 'Filter Type' value") );
+			$has_errors = TRUE;
+		}
+	}
 	else
 	{
 		form_set_error( "filter_type", t("Invalid filter type value") );
@@ -593,6 +632,13 @@ function uc_discounts_form_submit($form, &$form_state)
 		//If terms container "all terms", insert only all terms row (term_id=<ALL_TERMS>)
 		if ( in_array(ALL_TERMS, $term_ids) )
 			$term_ids = array(ALL_TERMS);
+
+		$skus = ($form_state["values"]["filter_type"] == FILTER_TYPE_SKUS) 
+			? $form_state["values"]["skus"] : array();
+
+		//If skus container "all SKUs", insert only all SKUs row (sku=<ALL_SKUS>)
+		if ( in_array(ALL_SKUS, $skus) )
+			$skus = array(ALL_SKUS);
 
 		$role_ids = ($form_state["values"]["has_role_filter"]) 
 			? $form_state["values"]["role_ids"] : array();
@@ -679,6 +725,9 @@ function uc_discounts_form_submit($form, &$form_state)
 			//Delete existing database terms
 			uc_discounts_terms_delete($discount_id);
 
+			//Delete existing database SKUs
+			uc_discounts_skus_delete($discount_id);
+
 			//Delete existing database roles
 			uc_discounts_roles_delete($discount_id);
 		}
@@ -715,8 +764,17 @@ function uc_discounts_form_submit($form, &$form_state)
 				uc_discounts_terms_insert($discount_id, $term_id);
 			}
 		}
+		//Insert SKUs (if necessary)
+		elseif ($form_state["values"]["filter_type"] == FILTER_TYPE_SKUS)
+		{
+			foreach ($skus as $sku)
+			{
+				//Empty SKU is ALL_SKUS
+				uc_discounts_skus_insert($discount_id, $sku);
+			}
+		}
 
-		//Insert terms
+		//Insert roles
 		if ($form_state["values"]["has_role_filter"])
 		{
 			foreach ($role_ids as $role_id)
@@ -753,6 +811,7 @@ function uc_discounts_copy($original_discount_id)
 		$discount->discount_amount,
 		$discount->requires_code,
 		$discount->filter_type,
+		$discount->has_role_filter,
 		$discount->requires_single_product_to_qualify,
 		$discount->max_times_applied,
 		$discount->can_be_combined_with_other_discounts,
@@ -778,6 +837,11 @@ function uc_discounts_copy($original_discount_id)
 	$term_ids = get_term_ids_for_discount($original_discount_id);
 	foreach ($term_ids as $term_id)
 		uc_discounts_terms_insert($discount_id, $term_id);
+
+	//Copy discount's SKUs
+	$skus = get_skus_for_discount($original_discount_id);
+	foreach ($skus as $sku)
+		uc_discounts_skus_insert($discount_id, $sku);
 
 	//Copy discount's roles
 	$role_ids = get_role_ids_for_discount($original_discount_id);

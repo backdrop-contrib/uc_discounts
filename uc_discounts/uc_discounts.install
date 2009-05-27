@@ -395,6 +395,7 @@ function uc_discounts_install()
 	drupal_install_schema("uc_discounts_codes");
 	drupal_install_schema("uc_discounts_products");
 	drupal_install_schema("uc_discounts_terms");
+	drupal_install_schema("uc_discounts_skus");
 	drupal_install_schema("uc_discounts_roles");
 	drupal_install_schema("uc_discounts_uses");
 	drupal_install_schema("uc_discounts_order_codes");
@@ -412,6 +413,7 @@ function uc_discounts_uninstall()
 	drupal_uninstall_schema("uc_discounts_uses");
 	drupal_uninstall_schema("uc_discounts_products");
 	drupal_uninstall_schema("uc_discounts_terms");
+	drupal_uninstall_schema("uc_discounts_skus");
 	drupal_uninstall_schema("uc_discounts_roles");
 	drupal_uninstall_schema("uc_discounts_codes");
 	drupal_uninstall_schema("uc_discounts");

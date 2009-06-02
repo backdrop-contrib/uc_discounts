@@ -198,6 +198,13 @@ function theme_add_product_price_altering_javascript($product)
 						self.parent().find(\".views-field-sell-price:not(th)\")
 							.addClass(\"original-sell-price\");
 					});
+				$(\".uc-price-sell:not(.original-sell-price)\").each(function()
+					{
+						var self = $(this);
+						self.addClass(\"original-sell-price\")
+							.after(	$( \".field-type-discounted-price:first\", self.parent() )	);
+					});
+				//Legacy
 				$(\".sell-price:not(.original-sell-price)\").each(function()
 					{
 						var self = $(this);

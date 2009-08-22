@@ -16,6 +16,7 @@ define("DISCOUNT_TYPE_FREE_ITEMS", 1);
 define("DISCOUNT_TYPE_PERCENTAGE_OFF", 2);
 define("DISCOUNT_TYPE_FIXED_AMOUNT_OFF", 3);
 define("DISCOUNT_TYPE_FIXED_AMOUNT_OFF_PER_QUALIFYING_ITEM", 4);
+define("DISCOUNT_TYPE_PERCENTAGE_OFF_PER_QUALIFYING_ITEM", 5);
 
 define("FILTER_TYPE_PRODUCTS", 1);
 define("FILTER_TYPE_TERMS", 2);
@@ -1264,8 +1265,17 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       }
     }
 
-    //Calculate discount amount
     switch ($discount->discount_type) {
+      case DISCOUNT_TYPE_PERCENTAGE_OFF_PER_QUALIFYING_ITEM:
+        $order_and_discount_product_ids = array_intersect($discount_product_ids, $order_product_ids);
+        foreach ($order->products as $this_product) {
+          if (in_array($this_product->nid, $order_and_discount_product_ids)) {
+            $this_product_price = $this_product->price;
+            $product_sum = $product_sum + $this_product_price;
+          }
+          $discount->amount = $product_sum - ($product_sum * $discount->discount_amount);
+        }
+        break;
       case DISCOUNT_TYPE_FREE_ITEMS:
         //The variable discount_amount is the monitary amount of discount
         $discount_amount = 0;
@@ -1316,7 +1326,6 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
         $discount->amount = $discount_amount;
         break;
-
       case DISCOUNT_TYPE_PERCENTAGE_OFF:
         //Always apply once
         $discount->times_applied = 1;
@@ -1665,6 +1674,7 @@ function discount_type_options() {
       DISCOUNT_TYPE_FIXED_AMOUNT_OFF => t("Fixed amount off"),
       DISCOUNT_TYPE_FIXED_AMOUNT_OFF_PER_QUALIFYING_ITEM => t("Fixed amount off per qualifying item"),
       DISCOUNT_TYPE_FREE_ITEMS => t("Free items"),
+      DISCOUNT_TYPE_PERCENTAGE_OFF_PER_QUALIFYING_ITEM => t("Percentage off per qualifying item"),
     );
   }
 

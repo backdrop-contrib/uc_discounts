@@ -1,6 +1,7 @@
 <?php
 //$Id$
 
+
 /**
  * @file
  * Install hooks for product_price_alterer_field.module.
@@ -9,19 +10,17 @@
 /**
  * Implementation of hook_install().
  */
-function product_price_alterer_field_install()
-{
-	drupal_load("module", "content");
-	content_notify("install", "product_price_alterer");
+function product_price_alterer_field_install() {
+  drupal_load("module", "content");
+  content_notify("install", "product_price_alterer");
 }
 
 /**
  * Implementation of hook_uninstall().
  */
-function product_price_alterer_field_uninstall()
-{
-	drupal_load("module", "content");
-	content_notify("uninstall", "product_price_alterer");
+function product_price_alterer_field_uninstall() {
+  drupal_load("module", "content");
+  content_notify("uninstall", "product_price_alterer");
 }
 
 /**
@@ -29,10 +28,9 @@ function product_price_alterer_field_uninstall()
  *
  * Notify content module when this module is disabled.
  */
-function product_price_alterer_field_enable()
-{
-	drupal_load("module", "content");
-	content_notify("enable", "product_price_alterer");
+function product_price_alterer_field_enable() {
+  drupal_load("module", "content");
+  content_notify("enable", "product_price_alterer");
 }
 
 /**
@@ -40,8 +38,8 @@ function product_price_alterer_field_enable()
  *
  * Notify content module when this module is disabled.
  */
-function product_price_alterer_field_disable()
-{
-	drupal_load("module", "content");
-	content_notify("disable", "product_price_alterer");
+function product_price_alterer_field_disable() {
+  drupal_load("module", "content");
+  content_notify("disable", "product_price_alterer");
 }
+

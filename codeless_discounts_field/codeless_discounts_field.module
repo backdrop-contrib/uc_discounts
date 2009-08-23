@@ -111,8 +111,8 @@ function theme_codeless_discounts_field_get_codeless_discount_html_for_product($
   $descriptions = array();
   foreach ($discounts as $discount) {
     $description = $discount->short_description;
-    if ($discount->has_expiration) $description .= " (". t("Expires:") ." ". date("Y-m-d H:i", $discount->expiration) {
-      .")";
+    if ($discount->has_expiration) {
+      $description .= " (". t("Expires:") ." ". date("Y-m-d H:i", $discount->expiration) .")";
     }
     $descriptions[] = $description;
   }

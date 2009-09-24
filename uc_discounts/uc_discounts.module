@@ -1273,8 +1273,8 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
             $this_product_price = $this_product->price;
             $product_sum = $product_sum + $this_product_price;
           }
-          $discount->amount = $product_sum - ($product_sum * $discount->discount_amount);
         }
+        $discount->amount = $product_sum * $discount->discount_amount;
         break;
       case DISCOUNT_TYPE_FREE_ITEMS:
         //The variable discount_amount is the monitary amount of discount

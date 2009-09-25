@@ -128,7 +128,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $display_string = ($has_qualifying_amount_max) ? "" : " style='display:none'";
 
   $qualifying_amount_max_container_id = "qualifying-amount-max-container-". $seed;
-  $qualifying_amount_max_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") {  )" . "{ jQuery(\"#%s .qualifying-amount-max-container\").slideDown(); }" . "else { jQuery(\"#%s .qualifying-amount-max-container\").slideUp();} }'>",
+  $qualifying_amount_max_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .qualifying-amount-max-container\").slideDown(); }" . "else { jQuery(\"#%s .qualifying-amount-max-container\").slideUp();} '>",
     $qualifying_amount_max_container_id, $qualifying_amount_max_container_id,
     $qualifying_amount_max_container_id, $qualifying_amount_max_container_id,
     $qualifying_amount_max_container_id, $qualifying_amount_max_container_id
@@ -188,7 +188,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $display_string = ($requires_code) ? "" : " style='display:none'";
 
   $codes_container_id = "codes-container-". $seed;
-  $codes_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") {  )" . "{ jQuery(\"#%s .codes-container\").slideDown(); }" . "else { jQuery(\"#%s .codes-container\").slideUp();} }'>",
+  $codes_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .codes-container\").slideDown(); }" . "else { jQuery(\"#%s .codes-container\").slideUp();} '>",
     $codes_container_id, $codes_container_id, $codes_container_id, $codes_container_id, $codes_container_id, $codes_container_id
   );
 
@@ -343,7 +343,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $display_string = ($has_role_filter) ? "" : " style='display:none'";
 
   $roles_container_id = "roles-container-". $seed;
-  $roles_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") {  )" . "{ jQuery(\"#%s .roles-container\").slideDown(); }" . "else { jQuery(\"#%s .roles-container\").slideUp();} }'>",
+  $roles_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .roles-container\").slideDown(); }" . "else { jQuery(\"#%s .roles-container\").slideUp();} '>",
     $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id
   );
 
@@ -446,7 +446,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $display_string = ($has_expiration) ? "" : " style='display:none'";
 
   $expiration_container_id = "expiration-container-". $seed;
-  $expiration_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") {  )" . "{ jQuery(\"#%s .expiration-container\").slideDown(); }" . "else { jQuery(\"#%s .expiration-container\").slideUp();} }'>",
+  $expiration_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .expiration-container\").slideDown(); }" . "else { jQuery(\"#%s .expiration-container\").slideUp();} '>",
     $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id
   );
 

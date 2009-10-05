@@ -6,3 +6,4 @@ dependencies[] = uc_store
 dependencies[] = uc_product
 package = "Ubercart - core (optional)"
 core = 6.x
+

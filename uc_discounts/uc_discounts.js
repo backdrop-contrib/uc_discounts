@@ -1,5 +1,6 @@
 //$Id$
 
+
 var uc_discountsLineItems = [];
 var uc_discountsisUpdating = false;
 
@@ -193,3 +194,4 @@ function uc_discountsUpdateTotal()
     if (window.getTax)
         getTax();
 }
+

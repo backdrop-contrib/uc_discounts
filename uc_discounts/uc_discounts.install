@@ -95,6 +95,12 @@ function uc_discounts_schema() {
         "default" => 1,
         "description" => t("Requires qualifying amount to come from a single product."),
       ),
+      "required_product" => array(
+        "type" => "varchar",
+        "length" => 255,
+        "not null" => TRUE,
+        "default" => "",
+      ),
       "max_times_applied" => array(
         "type" => "int",
         "not null" => TRUE,
@@ -272,6 +278,33 @@ function uc_discounts_skus_schema() {
   return $schema;
 }
 
+function uc_discounts_classes_schema() {
+  $schema = array();
+
+  $schema["uc_discounts_classes"] = array(
+    "fields" => array(
+      "discount_class_id" => array(
+        "type" => "serial",
+        "no null" => TRUE,
+      ),
+      "discount_id" => array(
+        "type" => "int",
+        "not null" => TRUE,
+        "description" => t("The {uc_discounts}.discount_id of the discount."),
+      ),
+      "class" => array(
+        "type" => "varchar",
+        "length" => 32,
+        "not null" => TRUE,
+        "description" => t("The {node_type}.type of the product being discounted."),
+      ),
+    ),
+    "primary key" => array("discount_class_id"),
+  );
+
+  return $schema;
+}
+
 function uc_discounts_roles_schema() {
   $schema = array();
 
@@ -390,15 +423,22 @@ function uc_discounts_install() {
   drupal_install_schema("uc_discounts_roles");
   drupal_install_schema("uc_discounts_uses");
   drupal_install_schema("uc_discounts_order_codes");
+  drupal_install_schema("uc_discounts_classes");
 
   //Weight must be less than uc_payment's
   db_query("UPDATE {system} SET weight=-10 WHERE name='uc_discounts'");
+
+  //Print out a nice message directing administrators towards the configuration screen.
+  drupal_set_message(st("UC Discounts (Alternative) settings are available under !link",
+      array("!link" => l("Administer > Store administration > Configuration", "admin/store/settings/uc_discounts"))
+    ));
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function uc_discounts_uninstall() {
+  drupal_uninstall_schema("uc_discounts_classes");
   drupal_uninstall_schema("uc_discounts_order_codes");
   drupal_uninstall_schema("uc_discounts_uses");
   drupal_uninstall_schema("uc_discounts_products");
@@ -484,6 +524,33 @@ function uc_discounts_update_3() {
 function uc_discounts_update_4() {
   $schema = uc_discounts_skus_schema();
   db_create_table($queries, "uc_discounts_skus", $schema["uc_discounts_skus"]);
+  return $queries;
+}
+
+//Add required_product column to uc_discounts table
+function uc_discounts_update_5() {
+  $queries = array();
+
+  switch ($GLOBALS["db_type"]) {
+    case "mysql":
+    case "mysqli":
+      $queries[] = update_sql("ALTER TABLE {uc_discounts} ADD required_product varchar(255) NOT NULL default '' AFTER requires_single_product_to_qualify");
+      break;
+
+    case "pgsql":
+      db_add_column($queries, "uc_discounts", "required_product", "varchar(255)",
+        array("not null" => TRUE, "default" => "")
+      );
+      break;
+  }
+
+  return $queries;
+}
+
+//Add uc_discounts_classes table
+function uc_discounts_update_6() {
+  $schema = uc_discounts_classes_schema();
+  db_create_table($queries, "uc_discounts_classes", $schema["uc_discounts_classes"]);
   return $queries;
 }
 

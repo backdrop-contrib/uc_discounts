@@ -651,6 +651,7 @@ function uc_discounts_update($discount_id,
   $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
   $is_published, $weight
 ) {
+
   $query = "UPDATE {uc_discounts} SET ";
 
   $column_names = get_uc_discounts_update_column_names();
@@ -780,7 +781,6 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
  */
 function get_product_ids_for_discount($discount_id, $exclude_all_products = FALSE) {
   $product_ids = array();
-
   //Get products from database
   if ($exclude_all_products) {
     $result = db_query("SELECT product_id FROM {uc_discounts_products} WHERE discount_id=%d AND product_id<>%d",
@@ -987,8 +987,12 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
   if (is_array($order->products) && !empty($order->products)) {
     foreach ($order->products as $product) {
       $nid = $product->nid;
-
       $order_product_ids_set[$nid] = TRUE;
+      if (!empty($product->data['kit_id'])) {
+        $kit_id = $product->data['kit_id'];
+        $order_product_ids_set[$kit_id] = TRUE;
+        $kits[$kit_id]['product_qty'] += $product->qty;
+      }
 
       uc_discounts_add_to_existing_map_number_value($order_product_id_subtotal_map,
         $nid, $product->price * $product->qty
@@ -1004,11 +1008,22 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
       $order_subtotal += $product->price * $product->qty;
     }
+    foreach ($kits as $kit_id => $value) {
+      $kit_node = node_load($kit_id);
+      foreach ($kit_node->products as $product_in_kit) {
+        $pik_nid = $product_in_kit->nid;
+        foreach ($order->products as $key => $product) {
+          if ($product->nid == $pik_nid && $product->data['kit_id'] == $kit_id) {
+            $kits[$kit_id]['kit_qty'] = $product->qty / $product_in_kit->qty;
+            break;
+          }
+        }
+      }
+      uc_discounts_add_to_existing_map_number_value($order_product_id_quantity_map, $kit_id, $kits[$kit_id]['kit_qty']);
+    }
   }
-
   // Populate product NID array with NIDs from the order
   $order_product_ids = array_keys($order_product_ids_set);
-
   $temp_product_ids   = $order_product_ids;
   $temp_product_ids[] = ALL_PRODUCTS;
   $product_ids_clause = sprintf("d.filter_type<>%d OR dp.product_id IN(%s)",
@@ -1114,11 +1129,11 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		ORDER BY weight", $codes_clause, $roles_clause, $product_ids_clause,
     $term_ids_clause, $skus_clause, $classes_clause, time()
   );
-  uc_discounts_log("query=". $query);
+  
   $result = db_query($query);
-
   $total_discount_amount = 0;
   $discounts = array();
+
   // Appears to check if order qualifies for each discount then applies discount.  Functionality should be separated, no?
   while ($discount = db_fetch_object($result)) {
     //Get code for discount (if one exists)
@@ -1219,7 +1234,6 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     }
 
     //Check if order qualifies for this discount (check type, requires_single_product_to_qualify, required_product)
-
     //Get product IDs for discount
     $discount_product_ids = get_product_ids_for_discount_object($discount);
     if (in_array(ALL_PRODUCTS, $discount_product_ids)) {
@@ -1642,7 +1656,6 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
 
   $discounts = array();
   while ($discount = db_fetch_object($result)) $discounts[] = $discount;
-
   return $discounts;
 }
 

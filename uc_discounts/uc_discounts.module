@@ -180,7 +180,7 @@ function uc_discounts_order($op, &$arg1, $arg2) {
         //Add discount line items
         foreach ($arg1->uc_discounts_line_items as $line_item) {
           uc_order_line_item_add($arg1->order_id, $line_item["type"], $line_item["title"],
-            $line_item["amount"], $line_item["weight"]
+          $line_item["amount"], $line_item["weight"], $line_item["data"]
           );
           $new_order_line_items[] = $line_item;
         }
@@ -313,9 +313,13 @@ function uc_discounts_cart_pane($items) {
 
   //Calculate subtotal with discounts
   $subtotal = 0;
-  foreach ($items as $item) $subtotal += $item->price * $item->qty;
+  if (is_array($items)) {
+    foreach ($items as $item) $subtotal += $item->price * $item->qty;
+  }
   $total_discount_amount = 0;
-  foreach ($discounts as $discount) $total_discount_amount += $discount->amount;
+  if (is_array($discounts)) {
+    foreach ($discounts as $discount) $total_discount_amount += $discount->amount;
+  }
   $subtotal_including_discounts = $subtotal - $total_discount_amount;
 
   //Add total discount message
@@ -466,6 +470,7 @@ function add_discount_line_items_to_order($order, $discounts) {
       "title" => $discount->short_description,
       "amount" => -$discount->amount,
       "weight" => LINE_ITEM_WEIGHT,
+    	"data" => array('discount_id' => $discount->discount_id),
     );
 
     $line_items[] = $line_item;
@@ -1656,9 +1661,10 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
 		AND (%s)
 		AND (%s)
 		AND (%s)
+		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)
 		ORDER BY d.%s %s", $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause, time(),
-    $sort_column, $sort_order_string
+  $sort_column, $sort_order_string
   );
   uc_discounts_log("query=". $query);
   $result = db_query($query);

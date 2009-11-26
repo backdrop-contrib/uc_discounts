@@ -1246,40 +1246,32 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     $order_qualifying_amount = 0;
     $order_qualifying_subtotal = 0;
 
-    //If discount requires a single product
-    if ($discount->requires_single_product_to_qualify) {
-      // Check if required_product is set or trust that form validation did the right thing?  Check anyway...
-      if ($discount->required_product) {
-
-        // Get nid of required_product
-        $required_product_result = db_query("SELECT DISTINCT nid from {uc_products} WHERE model=('%s')", $discount->required_product);
-        $required_product_id = db_result($required_product_result);
-
-        // Check if required_product nid is in cart
-        if (in_array($required_product_id, $order_product_ids)) {
-          switch ($discount->qualifying_type) {
-            // Buy $50 of X product
-
-            case QUALIFYING_TYPE_MINIMUM_PRICE:
-              //Determine the maximum product subtotal
-              $order_qualifying_amount = max($order_qualifying_amount, $order_product_id_subtotal_map[$required_product_id]);
-
-              //Subtract already discounted amount
-              $order_qualifying_amount -= $total_discount_amount;
-              //TO DO: keep track of each item's subtotal and decrement upon applying discount
-              break;
-
+    // Check if required_product is set.
+    if (isset($discount->required_product) && $discount->required_product != 'none') {
+      // Get nid of required_product
+      $required_product_result = db_query("SELECT DISTINCT nid from {uc_products} WHERE model='%s'", $discount->required_product);
+      $required_product_id = db_result($required_product_result);
+      // Check if required_product nid is in cart
+      if (in_array($required_product_id, $order_product_ids)) {
+        switch ($discount->qualifying_type) {
+          // Buy $50 of X product
+          case QUALIFYING_TYPE_MINIMUM_PRICE:
+            //Determine the maximum product subtotal
+            $order_qualifying_amount = max($order_qualifying_amount, $order_product_id_subtotal_map[$required_product_id]);
+            //Subtract already discounted amount
+            $order_qualifying_amount -= $total_discount_amount;
+            //TO DO: keep track of each item's subtotal and decrement upon applying discount
+            break;
             // Buy 5 of X product...
-
-            case QUALIFYING_TYPE_MINIMUM_QUANTITY:
-              //Determine the maximum product quantity
-              $order_qualifying_amount = max($order_qualifying_amount, $order_product_id_quantity_map[$required_product_id]);
-              //TO DO: keep track of each item's quantity and decrement upon applying discount
-              break;
-          }
+          case QUALIFYING_TYPE_MINIMUM_QUANTITY:
+            //Determine the maximum product quantity
+            $order_qualifying_amount = max($order_qualifying_amount, $order_product_id_quantity_map[$required_product_id]);
+            //TO DO: keep track of each item's quantity and decrement upon applying discount
+            break;
         }
       }
     }
+
     //Otherwise sum product subtotals or quantities
     else {
       switch ($discount->qualifying_type) {
@@ -1287,10 +1279,17 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
           //Determine the total subtotal of discount's products
           foreach ($discount_product_ids as $product_id) {
             if (isset($order_product_id_subtotal_map[$product_id])) {
-              $order_qualifying_amount += $order_product_id_subtotal_map[$product_id];
+              if ($discount->requires_single_product_to_qualify) {
+                if ($order_product_id_subtotal_map[$product_id] >= $order->qualifying_amount) {
+                  //In this case, $order_qualifying amount should be the sum of prices of products that both qualify and meet the minimum qualification amount based on their individual price.
+                  $order_qualifying_amount += $order_product_id_subtotal_map[$product_id];
+                }
+              }
+              else {
+                $order_qualifying_amount += $order_product_id_subtotal_map[$product_id];
+              }
             }
           }
-
           //Subtract already discounted amount
           $order_qualifying_amount -= $total_discount_amount;
           break;
@@ -1299,7 +1298,15 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
           //Determine the total quantity of discount's products
           foreach ($discount_product_ids as $product_id) {
             if (isset($order_product_id_quantity_map[$product_id])) {
-              $order_qualifying_amount += $order_product_id_quantity_map[$product_id];
+              if ($discount->requires_single_product_to_qualify) {
+                if ($order_product_id_quantity_map[$product_id] >= $discount->qualifying_amount) {
+                  //In this case, $order_qualifying amount should be the sum of products that both qualify and meet the minimum qualification amount based on their quantity.  
+                  $order_qualifying_amount += $order_product_id_quantity_map[$product_id];
+                }
+              }
+              else {
+                $order_qualifying_amount += $order_product_id_quantity_map[$product_id];
+              }
             }
           }
           //TO DO: keep track of each item's subtotal and decrement upon applying discount

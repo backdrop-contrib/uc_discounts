@@ -483,21 +483,21 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 
   $form["qualifications"]["requires_single_product_to_qualify"] = array(
     "#type" => "checkbox",
-    "#title" => t("Require single product to qualify."),
-    "#description" => t("Requires a single product to meet the qualifying requirements to receive discount.	Otherwise qualifying requirements may be met by the combination of selected products."),
+    "#title" => t("Require single product SKU to qualify."),
+    "#description" => t("Requires products with unique SKUs to meet the qualifying requirements. Otherwise, qualifying requirements can be met by a combination of different products."),
     "#default_value" => isset($form_state["values"]["requires_single_product_to_qualify"]) ? $form_state["values"]["requires_single_product_to_qualify"] : REQUIRES_SINGLE_PRODUCT_TO_QUALIFY_DEFAULT,
   );
 
   //Create SKUs form element
   $options          = array();
   $result           = db_query("SELECT p.model, n.title FROM {uc_products} p, {node} n WHERE p.nid=n.nid ORDER BY p.model");
-  $options[NO_SKUS] = t("Select a single SKU...");
+  $options['none'] = t("No specific product required.");
   while ($row = db_fetch_object($result)) $options[$row->model] = $row->model ." (". $row->title .")";
 
   $form["qualifications"]["required_product"] = array(
     "#type" => "select",
     "#title" => t("Required product"),
-    "#description" => t("Select a single product that the cart must contain."),
+    "#description" => t("The discount will only be applied if the cart contains this product"),
     "#options" => $options,
     "#default_value" => $form_state["values"]["required_product"],
   );
@@ -602,12 +602,6 @@ function uc_discounts_form_validate($form, &$form_state) {
 
   if ($values["requires_code"] && empty($values["codes"])) {
     form_set_error("codes", t("Discounts codes are required because 'Require(s) code' is checked"));
-    $has_errors = TRUE;
-  }
-
-  //Check for required_product if requires_single checked
-  if ($values["requires_single_product_to_qualify"] && empty($values["required_product"])) {
-    form_set_error("required_product", t("Please select a single SKU for 'Require single product to qualify'."));
     $has_errors = TRUE;
   }
 

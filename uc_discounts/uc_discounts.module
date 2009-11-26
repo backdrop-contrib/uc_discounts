@@ -1008,18 +1008,20 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
       $order_subtotal += $product->price * $product->qty;
     }
-    foreach ($kits as $kit_id => $value) {
-      $kit_node = node_load($kit_id);
-      foreach ($kit_node->products as $product_in_kit) {
-        $pik_nid = $product_in_kit->nid;
-        foreach ($order->products as $key => $product) {
-          if ($product->nid == $pik_nid && $product->data['kit_id'] == $kit_id) {
-            $kits[$kit_id]['kit_qty'] = $product->qty / $product_in_kit->qty;
-            break;
+    if (!empty($kits)) {
+      foreach ($kits as $kit_id => $value) {
+        $kit_node = node_load($kit_id);
+        foreach ($kit_node->products as $product_in_kit) {
+          $pik_nid = $product_in_kit->nid;
+          foreach ($order->products as $key => $product) {
+            if ($product->nid == $pik_nid && $product->data['kit_id'] == $kit_id) {
+              $kits[$kit_id]['kit_qty'] = $product->qty / $product_in_kit->qty;
+              break;
+            }
           }
         }
+        uc_discounts_add_to_existing_map_number_value($order_product_id_quantity_map, $kit_id, $kits[$kit_id]['kit_qty']);
       }
-      uc_discounts_add_to_existing_map_number_value($order_product_id_quantity_map, $kit_id, $kits[$kit_id]['kit_qty']);
     }
   }
   // Populate product NID array with NIDs from the order

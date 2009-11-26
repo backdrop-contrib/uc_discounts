@@ -975,11 +975,17 @@ function uc_discounts_report() {
     array("data" => t("Weight"), "field" => "d.weight", "sort" => "asc"),
     array("data" => t("Uses"), "field" => "use_count"),
     array("data" => t("Times Applied"), "field" => "total_times_applied"),
-    array("data" => t("Total Amount"), "field" => "total_amount"),
+    array("data" => t("Discounted Amount"), "field" => "total_amount"),
+    array("data" => t("Revenue Amount"), "field" => "total_revenue"),
     array("data" => t("Operations"), "colspan" => 3),
   );
 
-  $query     = "SELECT d.*, COUNT(du.discount_use_id) total_use_count, SUM(du.times_applied) total_times_applied" . ", SUM(du.amount) total_amount FROM {uc_discounts} d" . " LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id" . " GROUP BY d.discount_id";
+  $query     = "SELECT d.*, COUNT(du.discount_use_id) total_use_count,
+                  SUM(du.times_applied) total_times_applied, SUM(du.amount) total_amount, SUM(o.order_total) total_revenue
+                FROM {uc_discounts} d
+                LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
+                LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = 'completed' AND o.order_total > 0
+                GROUP BY d.discount_id";
   $tablesort = tablesort_sql($header);
   $result    = pager_query($query . $tablesort, 50);
 
@@ -999,6 +1005,7 @@ function uc_discounts_report() {
         $total_use_count,
         $total_times_applied,
         uc_currency_format($discount->total_amount),
+        uc_currency_format($discount->total_revenue),
         l(t("view usage"), "admin/reports/uc_discounts/discount/". $discount->discount_id),
         l(t("edit"), "admin/store/settings/uc_discounts/edit/". $discount->discount_id),
         l(t("delete"), "admin/store/settings/uc_discounts/delete/". $discount->discount_id),
@@ -1034,11 +1041,18 @@ function uc_discounts_report_for_discount($discount_id) {
     t("Name"),
     t("Uses"),
     t("Times Applied"),
-    t("Total Amount"),
+    t("Discounted Amount"),
+    t("Revenue Amount"),
     array("data" => t("Operations"), "colspan" => 3),
   );
 
-  $query               = "SELECT d.*, COUNT(du.discount_use_id) total_use_count, SUM(du.times_applied) total_times_applied" . ", SUM(du.amount) total_amount FROM {uc_discounts} d" . " LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id" . " WHERE d.discount_id=%d" . " GROUP BY d.discount_id";
+  $query               = "SELECT d.*, COUNT(du.discount_use_id) total_use_count,
+                            SUM(du.times_applied) total_times_applied, SUM(du.amount) total_amount, SUM(o.order_total) total_revenue
+                          FROM {uc_discounts} d
+                          LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
+                          LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = 'completed' AND o.order_total > 0
+                          WHERE d.discount_id=%d
+                          GROUP BY d.discount_id";
   $discount            = db_fetch_object(db_query($query, $discount_id));
   $total_use_count     = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
   $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
@@ -1047,6 +1061,7 @@ function uc_discounts_report_for_discount($discount_id) {
     $total_use_count,
     $total_times_applied,
     uc_currency_format($discount->total_amount),
+    uc_currency_format($discount->total_revenue),
     l(t("edit"), "admin/store/settings/uc_discounts/edit/". $discount->discount_id),
     l(t("copy"), "admin/store/settings/uc_discounts/copy/". $discount->discount_id),
     l(t("delete"), "admin/store/settings/uc_discounts/delete/". $discount->discount_id),

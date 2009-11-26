@@ -1008,7 +1008,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
       $order_subtotal += $product->price * $product->qty;
     }
-    if (!empty($kits)) {
+    if (is_array($kits) && !empty($kits)) {
       foreach ($kits as $kit_id => $value) {
         $kit_node = node_load($kit_id);
         foreach ($kit_node->products as $product_in_kit) {

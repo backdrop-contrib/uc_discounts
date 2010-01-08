@@ -414,9 +414,11 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 
   //Create Classes form element
   $options = array();
-  $result = db_query("SELECT pc.pcid, pc.name FROM {uc_product_classes} pc ORDER BY pc.pcid");
+  $result = uc_product_types();
   $options[ALL_CLASSES] = t("<All Product Classes>");
-  while ($row = db_fetch_object($result)) $options[$row->pcid] = $row->pcid ." (". $row->name .")";
+  foreach($result as $type) {
+    $options[$type] = $type;
+  }
   $form["discount_set"]["classes"] = array(
     "#type" => "select",
     "#title" => t("Classes") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),

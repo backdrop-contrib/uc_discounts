@@ -1,6 +1,5 @@
 //$Id$
 
-
 var uc_discountsLineItems = [];
 var uc_discountsisUpdating = false;
 
@@ -12,14 +11,14 @@ function uc_discountsOnLoad(context)
 
     uc_discountsProcessCodes(context);
 
-  //Add click event listener to discounts pane button once
-  $("input[@id*=uc-discounts-button]:not(.uc_discountsOnLoad-processed)", 
-    context).addClass("uc_discountsOnLoad-processed").click(function()
-    {
-      uc_discountsProcessCodes(context);
-      //Return false to prevent default actions and propogation
-      return false;
-    });
+	//Add click event listener to discounts pane button once
+	$("input[@id*=uc-discounts-button]:not(.uc_discountsOnLoad-processed)", 
+		context).addClass("uc_discountsOnLoad-processed").click(function()
+		{
+			uc_discountsProcessCodes(context);
+			//Return false to prevent default actions and propogation
+			return false;
+		});
 }
 
 //Processes currently entered discounts
@@ -32,56 +31,56 @@ function uc_discountsProcessCodes(context)
         return;
     }
 
-  var parameterMap = {};
-  parameterMap["uc-discounts-codes"] = $("textarea[@id*=uc-discounts-codes]", context).val();
+	var parameterMap = {};
+	parameterMap["uc-discounts-codes"] = $("textarea[@id*=uc-discounts-codes]", context).val();
 
-  //Show loading container
-  var progress = new Drupal.progressBar("uc_discountsProgress");
-  progress.setProgress(-1, Drupal.settings.uc_discounts.progress_msg);
-  var messages_container = $(".uc-discounts-messages-container");
-  messages_container.empty().append(progress.element);
-  messages_container.addClass("solid-border");
+	//Show loading container
+	var progress = new Drupal.progressBar("uc_discountsProgress");
+	progress.setProgress(-1, Drupal.settings.uc_discounts.progress_msg);
+	var messages_container = $(".uc-discounts-messages-container");
+	messages_container.empty().append(progress.element);
+	messages_container.addClass("solid-border");
 
-  $.ajax({
-    type: "POST",
-    url: Drupal.settings.basePath + "?q=cart/checkout/uc_discounts/calculate",
-    data: parameterMap,
-    complete : function(xmlHttpRequest, textStatus)
-      {
+	$.ajax({
+		type: "POST",
+		url: Drupal.settings.basePath + "?q=cart/checkout/uc_discounts/calculate",
+		data: parameterMap,
+		complete : function(xmlHttpRequest, textStatus)
+			{
                 //Hide loading container
                 $(".uc-discounts-messages-container").removeClass("solid-border").empty();
 
-        //If status is not 2XX
-        if ( parseInt(xmlHttpRequest.status / 100) != 2)
-        {
-          alert(Drupal.settings.uc_discounts.err_msg);
-          return;
-        }
+				//If status is not 2XX
+				if ( parseInt(xmlHttpRequest.status / 100) != 2)
+				{
+					alert(Drupal.settings.uc_discounts.err_msg);
+					return;
+				}
 
                 var responseText = xmlHttpRequest.responseText;
                 var calculateDiscountResponse = null;
-        try
-        {
-            responseText = xmlHttpRequest.responseText;
-            calculateDiscountResponse = Drupal.parseJson(responseText);
+				try
+				{
+				    responseText = xmlHttpRequest.responseText;
+				    calculateDiscountResponse = Drupal.parseJson(responseText);
                 }
-        catch (e)
-        {
-          alert(Drupal.settings.uc_discounts.response_parse_err_msg + responseText);
-          return;
-        }
+				catch (e)
+				{
+					alert(Drupal.settings.uc_discounts.response_parse_err_msg + responseText);
+					return;
+				}
 
-        try
-        {
-            uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse, context);
+				try
+				{
+				    uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse, context);
                 }
-        catch (e)
-        {
-          alert(Drupal.settings.uc_discounts.err_msg);
-          return;
-        }
-      }
-  });
+				catch (e)
+				{
+					alert(Drupal.settings.uc_discounts.err_msg);
+					return;
+				}
+			}
+	});
 }
 
 //Processes calculateDiscountResponse from drupal
@@ -96,10 +95,10 @@ function uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse,
         var i;
 
         if (calculateDiscountResponse == null)
-      {
-        alert(Drupal.settings.uc_discounts.err_msg);
-        return;
-      }
+	    {
+		    alert(Drupal.settings.uc_discounts.err_msg);
+		    return;
+	    }
 
         var line_items = null;
         var errors = null;
@@ -194,4 +193,3 @@ function uc_discountsUpdateTotal()
     if (window.getTax)
         getTax();
 }
-

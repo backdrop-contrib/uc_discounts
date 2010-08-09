@@ -731,13 +731,17 @@ function uc_discounts_form_submit($form, &$form_state) {
     if (isset($form_state["values"]["expiration"])) {
       $expiration = date_convert(date_make_date($form_state["values"]["expiration"]), DATE_OBJECT, DATE_UNIX);
     }
-    else $expiration = 0;
+    else {
+      $expiration = 0;
+    }
 
     //Set discount_amount
-    if (($index = strpos($form_state["values"]["discount_amount"], "%")) !== FALSE)
+    if (($index = strpos($form_state["values"]["discount_amount"], "%")) !== FALSE) {
       $discount_amount = floatval(substr($form_state["values"]["discount_amount"], 0, $index)) / 100;
     }
-    else $discount_amount = floatval($form_state["values"]["discount_amount"]);
+    else {
+      $discount_amount = floatval($form_state["values"]["discount_amount"]);
+    }
 
     if (empty($form_state["values"]["discount_id"])) {
       //Insert base discount
@@ -781,7 +785,7 @@ function uc_discounts_form_submit($form, &$form_state) {
         $form_state["values"]["has_qualifying_amount_max"],
         $form_state["values"]["qualifying_amount_max"],
         $form_state["values"]["discount_type"],
-        $form_state["values"]["discount_amount"],
+        $discount_amount,
         $form_state["values"]["requires_code"],
         $form_state["values"]["filter_type"],
         $form_state["values"]["has_role_filter"],
@@ -874,6 +878,7 @@ function uc_discounts_form_submit($form, &$form_state) {
 
     drupal_set_message(t("%name settings have been saved.", array("%name" => $form_state["values"]["name"])));
   }
+}
 
 /**
  * Copy a discount.

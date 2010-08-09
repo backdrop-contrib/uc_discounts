@@ -12,6 +12,7 @@
  */
 function uc_discounts_admin_settings() {
   $header = array(
+    array("data" => t("Active"), "field" => "active"),
     array("data" => t("Name"), "field" => "name"),
     array("data" => t("Short Description"), "field" => "short_description"),
     array("data" => t("Qualifying Type"), "field" => "qualifying_type"),
@@ -32,6 +33,7 @@ function uc_discounts_admin_settings() {
     $rows[] = array("data" =>
       //Cell data
       array(
+        $discount->is_active,
         $discount->name,
         $discount->short_description,
         qualifying_type_name($discount->qualifying_type),
@@ -581,12 +583,12 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#suffix" => "</div>",
   );
 
-  $is_published = isset($form_state["values"]["is_published"]) ? $form_state["values"]["is_published"] : IS_PUBLISHED_DEFAULT;
-  $form["is_published"] = array(
+  $is_active = isset($form_state["values"]["is_active"]) ? $form_state["values"]["is_active"] : IS_ACTIVE_DEFAULT;
+  $form["is_active"] = array(
     "#type" => "checkbox",
-    "#title" => t("Is published"),
-    "#description" => t("Convenience flag to state whether code is published on site or not."),
-    "#default_value" => $is_published,
+    "#title" => t("Is active"),
+    "#description" => t("Convenience flag to state whether code is active on site or not."),
+    "#default_value" => $is_active,
   );
 
 
@@ -760,7 +762,7 @@ function uc_discounts_form_submit($form, &$form_state) {
         $form_state["values"]["max_uses_per_code"],
         $form_state["values"]["has_expiration"],
         $expiration,
-        $form_state["values"]["is_published"],
+        $form_state["values"]["is_active"],
         $form_state["values"]["weight"]
       );
 
@@ -792,7 +794,7 @@ function uc_discounts_form_submit($form, &$form_state) {
         $form_state["values"]["max_uses_per_code"],
         $form_state["values"]["has_expiration"],
         $expiration,
-        $form_state["values"]["is_published"],
+        $form_state["values"]["is_active"],
         $form_state["values"]["weight"]
       );
 
@@ -902,7 +904,7 @@ function uc_discounts_copy($original_discount_id) {
     $discount->max_uses_per_code,
     $discount->has_expiration,
     $discount->expiration,
-    $discount->is_published,
+    $discount->is_active,
     $discount->weight
   );
 

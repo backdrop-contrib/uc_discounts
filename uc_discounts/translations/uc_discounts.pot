@@ -258,11 +258,11 @@ msgid "Date and time when the discount expires."
 msgstr ""
 
 #: uc_discounts.admin.inc:457
-msgid "Is published"
+msgid "Is active"
 msgstr ""
 
 #: uc_discounts.admin.inc:458 uc_discounts.install:142
-msgid "Convenience flag to state whether code is published on site or not."
+msgid "Convenience flag to state whether code is active on site or not."
 msgstr ""
 
 #: uc_discounts.admin.inc:469

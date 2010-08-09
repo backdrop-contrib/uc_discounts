@@ -40,7 +40,8 @@ define("MAX_USES_DEFAULT", 0);
 define("MAX_USES_PER_USER_DEFAULT", 0);
 define("MAX_USES_PER_CODE_DEFAULT", 0);
 define("HAS_EXPIRATION_DEFAULT", FALSE);
-define("IS_PUBLISHED_DEFAULT", FALSE);
+define("IS_ACTIVE_DEFAULT", FALSE);
+define("IS_ACTIVE", TRUE);
 
 define("LINE_ITEM_KEY_NAME", "uc_discounts");
 // (1 to follow subtotal)
@@ -571,7 +572,7 @@ function get_uc_discounts_column_names() {
     "discount_amount", "requires_code", "filter_type", "has_role_filter",
     "requires_single_product_to_qualify", "required_product", "max_times_applied", "can_be_combined_with_other_discounts", "max_uses",
     "max_uses_per_user", "max_uses_per_code", "has_expiration", "expiration",
-    "is_published", "weight",
+    "is_active", "weight",
   );
 }
 
@@ -624,7 +625,7 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
   $discount_amount, $requires_code, $filter_type, $has_role_filter,
   $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
   $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
-  $is_published, $weight, $insert_timestamp = NULL
+  $is_active, $weight, $insert_timestamp = NULL
 ) {
   if (is_null($insert_timestamp)) {
     $insert_timestamp = time();
@@ -638,7 +639,7 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
     $discount_amount, $requires_code, $filter_type, $has_role_filter,
     $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
     $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
-    $is_published, $weight, $insert_timestamp
+    $is_active, $weight, $insert_timestamp
   );
   $discount_id = db_last_insert_id("uc_discounts", "discount_id");
   uc_discounts_log("new discount_id=". $discount_id);
@@ -654,7 +655,7 @@ function uc_discounts_update($discount_id,
   $discount_amount, $requires_code, $filter_type, $has_role_filter,
   $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
   $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
-  $is_published, $weight
+  $is_active, $weight
 ) {
 
   $query = "UPDATE {uc_discounts} SET ";
@@ -678,7 +679,7 @@ function uc_discounts_update($discount_id,
     $discount_amount, $requires_code, $filter_type, $has_role_filter,
     $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
     $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
-    $is_published, $weight, $discount_id
+    $is_active, $weight, $discount_id
   );
 }
 
@@ -1111,8 +1112,9 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			AND (%s)
 			AND (%s)
 			AND (d.has_expiration<>0 AND d.expiration<=%d)
+			AND (d.is_active=%d)
 			ORDER BY weight", $escaped_codes_string, $roles_clause, $product_ids_clause,
-      $term_ids_clause, $skus_clause, $classes_clause, time()
+      $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE
     );
     uc_discounts_log("query=". $query);
     $result = db_query($query);
@@ -1133,8 +1135,9 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		AND (%s)
 		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)
+		AND (d.is_active=%d)
 		ORDER BY weight", $codes_clause, $roles_clause, $product_ids_clause,
-    $term_ids_clause, $skus_clause, $classes_clause, time()
+    $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE
   );
   
   $result = db_query($query);

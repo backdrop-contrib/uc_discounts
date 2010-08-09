@@ -1093,7 +1093,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
   //Create roles clause
   $auth_rid = ($order->uid != 0) ? DRUPAL_AUTHENTICATED_RID : DRUPAL_ANONYMOUS_RID;
-  $roles_clause = sprintf(" OR d.discount_id IN(SELECT dr.discount_id FROM {uc_discounts_roles} dr" . ", {users_roles} ur WHERE (dr.role_id=ur.rid AND ur.uid=%d) OR dr.role_id=%d OR dr.role_id=%d)",
+  $roles_clause = sprintf(" OR d.discount_id IN(SELECT dr.discount_id FROM {uc_discounts_roles} dr LEFT JOIN {users_roles} ur ON (dr.role_id=ur.rid AND ur.uid=%d) WHERE ur.uid IS NOT NULL OR dr.role_id=%d OR dr.role_id=%d)",
     $order->uid, ALL_ROLES, $auth_rid
   );
 

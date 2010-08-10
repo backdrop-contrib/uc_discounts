@@ -1111,6 +1111,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 			AND (%s)
 			AND (%s)
 			AND (%s)
+			AND (%s)
 			AND (d.has_expiration<>0 AND d.expiration<=%d)
 			AND (d.is_active=%d)
 			ORDER BY weight", $escaped_codes_string, $roles_clause, $product_ids_clause,
@@ -1132,6 +1133,8 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id
 		WHERE (d.requires_code=0%s)
 		AND (d.has_role_filter=0%s)
+		AND (%s)
+		AND (%s)
 		AND (%s)
 		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)

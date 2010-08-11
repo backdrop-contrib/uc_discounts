@@ -145,7 +145,7 @@ function uc_discounts_schema() {
         "default" => 0,
         "description" => t("The exipration date and time as a unix timestamp."),
       ),
-      "is_published" => array(
+      "is_active" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => FALSE,

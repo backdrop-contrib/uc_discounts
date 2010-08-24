@@ -1669,6 +1669,7 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
 		AND (%s)
 		AND (%s)
 		AND (d.has_expiration=0 OR d.expiration>%d)
+		AND (d.is_active=%d)
 		ORDER BY d.%s %s", $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE, $sort_column, $sort_order_string
   );
   uc_discounts_log("query=". $query);

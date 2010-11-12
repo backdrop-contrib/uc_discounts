@@ -51,7 +51,7 @@ function uc_discountsProcessCodes(context)
                 $(".uc-discounts-messages-container").removeClass("solid-border").empty();
 
 				//If status is not 2XX
-				if ( parseInt(xmlHttpRequest.status / 100) != 2)
+        if ( parseInt(xmlHttpRequest.status) != 0 && parseInt(xmlHttpRequest.status / 100) != 2)
 				{
 					alert(Drupal.settings.uc_discounts.err_msg);
 					return;

@@ -8,6 +8,7 @@
  *
  * Allows discount rules to be set up and applied to orders.
  */
+module_load_include('inc', 'uc_discounts', 'uc_discounts.ca');
 
 define("QUALIFYING_TYPE_MINIMUM_PRICE", 1);
 define("QUALIFYING_TYPE_MINIMUM_QUANTITY", 2);
@@ -259,6 +260,9 @@ function uc_discounts_order($op, &$arg1, $arg2) {
 
       //Add discount messages to order
       uc_order_log_changes($arg1->order_id, $messages);
+
+      // Don't allow user to re-use codes on another order without re-entering them
+      unset($_SESSION['uc_discounts_codes']);
       break;
 
     case "delete":
@@ -524,7 +528,8 @@ function uc_discounts_js_calculate() {
     $order->products = uc_cart_get_contents();
   }
 
-  $order->uc_discounts_codes = get_codes($_POST["uc-discounts-codes"]);
+  // Session var gets used by conditional action
+  $order->uc_discounts_codes = $_SESSION['uc_discounts_codes'] = get_codes($_POST['uc-discounts-codes']);
 
   $line_items = array();
   $errors     = array();
@@ -1545,20 +1550,26 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
         "@time_string" => $time_string,
       );
       if (!is_null($discount->code)) {
-        if ($discount->times_applied == 1) $messages[] = t("The discount, '@short_description', with code '@code' was applied for a discount of @discount_amount.",
-          $options
-        );
-        else $messages[] = t("The discount, '@short_description', with code '@code' was applied @times_applied times for a discount of @discount_amount.",
-          $options
-        );
+        if (empty($discount->amount)) {
+          $messages[] = t("The discount, '@short_description', with code '@code' was applied.", $options);
+        }
+        elseif ($discount->times_applied == 1) {
+          $messages[] = t("The discount, '@short_description', with code '@code' was applied for a discount of @discount_amount.", $options);
+        }
+        else {
+          $messages[] = t("The discount, '@short_description', with code '@code' was applied @times_applied times for a discount of @discount_amount.", $options);
+        }
       }
       else {
-        if ($discount->times_applied == 1) $messages[] = t("The discount, '@short_description', was applied for a discount of @discount_amount.",
-          $options
-        );
-        else $messages[] = t("The discount, '@short_description', was applied @times_applied times for a discount of @discount_amount.",
-          $options
-        );
+        if (empty($discount->amount)) {
+          $messages[] = t("The discount, '@short_description' was applied.", $options);
+        }
+        elseif ($discount->times_applied == 1) {
+          $messages[] = t("The discount, '@short_description', was applied for a discount of @discount_amount.", $options);
+        }
+        else {
+          $messages[] = t("The discount, '@short_description', was applied @times_applied times for a discount of @discount_amount.", $options);
+        }
       }
     }
 

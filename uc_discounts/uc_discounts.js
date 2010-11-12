@@ -73,6 +73,8 @@ function uc_discountsProcessCodes(context)
 				try
 				{
 				    uc_discountsProcessCalculateDiscountResponse(calculateDiscountResponse, context);
+            // Re-process shipping quotes since discount codes can affect shipping via conditional actions
+            $("input[id*=quote-button]").click();
                 }
 				catch (e)
 				{
@@ -155,7 +157,7 @@ function uc_discountsRenderLineItems(line_items, show_message)
     }
 
     //Add total discount line item
-    if (line_items.length > 0)
+    if (line_items.length > 0 && total_amount > 0)
     {
         set_line_item(Drupal.settings.uc_discounts.line_item_key_name, 
             Drupal.settings.uc_discounts.total_discount_text, total_amount, 

@@ -1837,6 +1837,18 @@ function discount_type_name($discount_type) {
   return $options[$discount_type];
 }
 
+function discount_amount_formatted($discount) {
+  if (in_array($discount->discount_type, array(DISCOUNT_TYPE_PERCENTAGE_OFF, DISCOUNT_TYPE_PERCENTAGE_OFF_PER_QUALIFYING_ITEM))) {
+    return ($discount->discount_amount * 100) . '%';
+  }
+  elseif (in_array($discount->discount_type, array(DISCOUNT_TYPE_FIXED_AMOUNT_OFF, DISCOUNT_TYPE_FIXED_AMOUNT_OFF_PER_QUALIFYING_ITEM))) {
+    return uc_currency_format($discount->discount_amount);
+  }
+  else {
+    return $discount->discount_amount;
+  }
+}
+
 function uc_discounts_add_to_existing_map_number_value(&$a, $key, $value) {
   $a[$key] = (array_key_exists($key, $a)) ? $a[$key] + $value : $value;
 }

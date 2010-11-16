@@ -159,6 +159,15 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#size" => 75,
   );
 
+  $is_active = isset($form_state["values"]["is_active"]) ? $form_state["values"]["is_active"] : IS_ACTIVE_DEFAULT;
+  $form["is_active"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Is active"),
+    "#description" => t("Is this discount active for use on the site?"),
+    "#default_value" => $is_active,
+  );
+
+
   $form["can_be_combined_with_other_discounts"] = array(
     "#type" => "checkbox",
     "#title" => t("Can be combined with other discounts"),
@@ -632,15 +641,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "hidden",
     "#suffix" => "</div>",
   );
-
-  $is_active = isset($form_state["values"]["is_active"]) ? $form_state["values"]["is_active"] : IS_ACTIVE_DEFAULT;
-  $form["is_active"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Is active"),
-    "#description" => t("Convenience flag to state whether code is active on site or not."),
-    "#default_value" => $is_active,
-  );
-
 
   $form["submit"] = array("#type" => "submit", "#value" => t("Submit"));
 

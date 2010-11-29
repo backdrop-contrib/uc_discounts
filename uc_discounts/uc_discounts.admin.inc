@@ -126,11 +126,10 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $seed           = rand(1, 1000000);
 
   if (!$form_submitted && $is_edit) {
-
     $form_state["values"] = db_fetch_array(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
-
   }
 
+  $form["#attributes"] = array('class' => 'uc-discounts-form');
   $form["discount_id"] = array("#type" => "hidden", "#value" => $form_state["values"]["discount_id"]);
 
   $form["name"] = array(
@@ -366,20 +365,11 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $skus_display_string = ($filter_type == FILTER_TYPE_SKUS) ? "" : " style='display:none'";
   $classes_display_string = ($filter_type == FILTER_TYPE_CLASS) ? "" : " style='display:none'";
 
-  $filter_type_container_id = "filter-type-container-". $seed;
-  $filter_type_prefix = sprintf(
-    "<div id='%s' onclick='value = jQuery(\"#%s select\").val();" . "if (value == %d) { jQuery(\"#%s .products-container\").slideDown(); jQuery(\"#%s .terms-container\").slideUp(); jQuery(\"#%s .skus-container\").slideUp(); jQuery(\"#%s .classes-container\").slideUp(); }" . "if (value == %d) { jQuery(\"#%s .products-container\").slideUp(); jQuery(\"#%s .terms-container\").slideDown(); jQuery(\"#%s .skus-container\").slideUp(); jQuery(\"#%s .classes-container\").slideUp(); }" . "if (value == %d) { jQuery(\"#%s .products-container\").slideUp(); jQuery(\"#%s .terms-container\").slideUp(); jQuery(\"#%s .skus-container\").slideDown(); jQuery(\"#%s .classes-container\").slideUp(); }" . "if (value == %d) { jQuery(\"#%s .products-container\").slideUp(); jQuery(\"#%s .terms-container\").slideUp(); jQuery(\"#%s .skus-container\").slideUp(); jQuery(\"#%s .classes-container\").slideDown(); }'>",
-    $filter_type_container_id, $filter_type_container_id,
-    FILTER_TYPE_PRODUCTS, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id,
-    FILTER_TYPE_TERMS, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id,
-    FILTER_TYPE_SKUS, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id,
-    FILTER_TYPE_CLASS, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id, $filter_type_container_id
-  );
-
-  $form["discount_set"]["filter_type_header"] = array(
-    "#type" => "hidden",
-    "#prefix" => $filter_type_prefix,
-  );
+  $filter_type_onchange = 'value = $("this").val();';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_PRODUCTS . ') { $(".uc-discounts-form .products-container").slideDown(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_TERMS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideDown(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_SKUS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideDown(); $(".uc-discounts-form .classes-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_CLASS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideDown(); }';
 
   //Create filter_type form element
   $options = array();
@@ -394,6 +384,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#options" => $options,
     "#default_value" => $filter_type,
     "#required" => TRUE,
+    '#attributes' => array('onchange' => $filter_type_onchange),
   );
 
   //Get current discount products
@@ -488,11 +479,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#default_value" => $classes,
     "#multiple" => TRUE,
     "#prefix" => sprintf("<div class='classes-container'%s", $classes_display_string),
-    "#suffix" => "</div>",
-  );
-
-  $form["discount_set"]["filter_type_footer"] = array(
-    "#type" => "hidden",
     "#suffix" => "</div>",
   );
 

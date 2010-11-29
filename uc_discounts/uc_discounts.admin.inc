@@ -175,6 +175,27 @@ function uc_discounts_form($form_state, $discount_id = 0) {
      ? $form_state["values"]["can_be_combined_with_other_discounts"] : CAN_BE_COMBINED_WITH_OTHER_DISCOUNTS_DEFAULT,
   );
 
+  $has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : HAS_EXPIRATION_DEFAULT;
+  $form["has_expiration"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Discount expires"),
+    "#description" => t("Whether or not this discount rule will expire on a given date."),
+    "#default_value" => $has_expiration,
+    '#attributes' => array('onchange' => '$("#edit-expiration-display-wrapper").toggle();'),
+  );
+
+  $expiration = isset($form_state["values"]["expiration"]) ? $form_state["values"]["expiration"] : time();
+  $display_string = $has_expiration ? "" : " style='display:none'";
+  $form["expiration"] = array(
+    "#type" => "date_popup",
+    "#date_type" => "DATE_UNIX",
+    "#title" => t("Discount expiration") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#description" => t("Date and time when the discount expires."),
+    "#default_value" => date("Y-m-d H:i:s", $expiration),
+    '#prefix' => "<div id=\"edit-expiration-display-wrapper\"$display_string>",
+    '#suffix' => "</div>",
+  );
+
   //Add custom weight range [-50, 50]
   $options = array();
   for ($i = -50; $i <= 50; $i++) $options[$i] = $i;
@@ -184,42 +205,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#description" => t("Lighter discounts are applied to an order first. This value is unimportant if there are no discounts on discount line items."),
     "#options" => $options,
     "#default_value" => isset($form_state["values"]["weight"]) ? $form_state["values"]["weight"] : 0,
-  );
-
-  $has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : HAS_EXPIRATION_DEFAULT;
-  $display_string = ($has_expiration) ? "" : " style='display:none'";
-
-  $expiration_container_id = "expiration-container-". $seed;
-  $expiration_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") {  )" . "{ jQuery(\"#%s .expiration-container\").slideDown(); }" . "else { jQuery(\"#%s .expiration-container\").slideUp();} }'>",
-    $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id
-  );
-
-  $form["expiration_header"] = array(
-    "#type" => "hidden",
-    "#prefix" => $expiration_prefix,
-  );
-
-  $form["has_expiration"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Discount expires"),
-    "#description" => t("Whether or not this discount rule will expire on a given date."),
-    "#default_value" => $has_expiration,
-  );
-
-  $expiration = isset($form_state["values"]["expiration"]) ? $form_state["values"]["expiration"] : time();
-  $form["expiration"] = array(
-    "#type" => "date_popup",
-    "#date_type" => "DATE_UNIX",
-    "#title" => t("Discount expiration") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
-    "#description" => t("Date and time when the discount expires."),
-    "#default_value" => date("Y-m-d H:i:s", $expiration),
-    "#prefix" => sprintf("<div class='expiration-container'%s>", $display_string),
-    "#suffix" => "</div>",
-  );
-
-  $form["expiration_footer"] = array(
-    "#type" => "hidden",
-    "#suffix" => "</div>",
   );
 
   $form["qualifications"] = array(
@@ -588,42 +573,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
      ? $form_state["values"]["max_uses_per_code"] : MAX_USES_PER_CODE_DEFAULT,
     "#size" => 7,
     "#required" => TRUE,
-  );
-
-  $has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : HAS_EXPIRATION_DEFAULT;
-  $display_string = ($has_expiration) ? "" : " style='display:none'";
-
-  $expiration_container_id = "expiration-container-". $seed;
-  $expiration_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .expiration-container\").slideDown(); }" . "else { jQuery(\"#%s .expiration-container\").slideUp();} '>",
-    $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id, $expiration_container_id
-  );
-
-  $form["expiration_header"] = array(
-    "#type" => "hidden",
-    "#prefix" => $expiration_prefix,
-  );
-
-  $form["has_expiration"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Discount expires"),
-    "#description" => t("Whether or not this discount will be applied if other discounts are."),
-    "#default_value" => $has_expiration,
-  );
-
-  $expiration = isset($form_state["values"]["expiration"]) ? $form_state["values"]["expiration"] : time();
-  $form["expiration"] = array(
-    "#type" => "date_popup",
-    "#date_type" => "DATE_UNIX",
-    "#title" => t("Discount expiration") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
-    "#description" => t("Date and time when the discount expires."),
-    "#default_value" => date("Y-m-d H:i:s", $expiration),
-    "#prefix" => sprintf("<div class='expiration-container'%s>", $display_string),
-    "#suffix" => "</div>",
-  );
-
-  $form["expiration_footer"] = array(
-    "#type" => "hidden",
-    "#suffix" => "</div>",
   );
 
   $form["submit"] = array("#type" => "submit", "#value" => t("Submit"));

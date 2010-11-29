@@ -419,10 +419,8 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   elseif ($is_edit) {  $term_ids = get_term_ids_for_discount($discount_id, FALSE);}
 
   //Create terms form element
-  $options            = array();
-  $result             = db_query("SELECT tid, name FROM {term_data} ORDER BY weight");
-  $options[ALL_TERMS] = t("<All Terms>");
-  while ($row = db_fetch_object($result)) $options[$row->tid] = $row->name;
+  $options = array(ALL_TERMS => t("<All Terms>"));
+  $options += taxonomy_form_all();
   $form["discount_set"]["term_ids"] = array(
     "#type" => "select",
     "#title" => t("Terms") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),

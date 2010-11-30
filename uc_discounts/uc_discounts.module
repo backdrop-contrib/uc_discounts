@@ -427,7 +427,7 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
           ),
         ), "setting");
 
-      drupal_add_js("$(document).ready(function() { uc_discountsOnLoad(); });", "inline");
+      drupal_add_js("$(document).ready(function(e) { uc_discountsOnLoad(e); });", "inline");
       drupal_add_js("misc/progress.js");
       drupal_add_js(drupal_get_path("module", "uc_discounts") ."/uc_discounts.js");
 

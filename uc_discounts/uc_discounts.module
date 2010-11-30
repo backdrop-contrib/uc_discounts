@@ -41,6 +41,7 @@ define("MAX_USES_DEFAULT", 0);
 define("MAX_USES_PER_USER_DEFAULT", 0);
 define("MAX_USES_PER_CODE_DEFAULT", 0);
 define("HAS_EXPIRATION_DEFAULT", FALSE);
+define("HAS_ACTIVATION_DEFAULT", FALSE);
 define("IS_ACTIVE_DEFAULT", FALSE);
 define("IS_ACTIVE", TRUE);
 
@@ -576,7 +577,7 @@ function get_uc_discounts_column_names() {
     "qualifying_amount", "has_qualifying_amount_max", "qualifying_amount_max", "discount_type",
     "discount_amount", "requires_code", "filter_type", "has_role_filter",
     "requires_single_product_to_qualify", "required_product", "max_times_applied", "can_be_combined_with_other_discounts", "max_uses",
-    "max_uses_per_user", "max_uses_per_code", "has_expiration", "expiration",
+    "max_uses_per_user", "max_uses_per_code", "has_expiration", "expiration", "has_activation", "activates_on",
     "is_active", "weight",
   );
 }
@@ -603,7 +604,7 @@ function get_uc_discounts_column_printf_wildcards() {
     "%f", "%d", "%f", "%d",
     "%f", "%d", "%d", "%d",
     "%d", "'%s'", "%d", "%d", "%d",
-    "%d", "%d", "%d", "%d",
+    "%d", "%d", "%d", "%d", "%d", "%d",
     "%d", "%d",
   );
 }
@@ -629,7 +630,7 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
   $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
   $discount_amount, $requires_code, $filter_type, $has_role_filter,
   $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-  $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
+  $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
   $is_active, $weight, $insert_timestamp = NULL
 ) {
   if (is_null($insert_timestamp)) {
@@ -643,7 +644,7 @@ function uc_discounts_insert($name, $short_description, $description, $qualifyin
     $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
     $discount_amount, $requires_code, $filter_type, $has_role_filter,
     $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-    $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
+    $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
     $is_active, $weight, $insert_timestamp
   );
   $discount_id = db_last_insert_id("uc_discounts", "discount_id");
@@ -659,7 +660,7 @@ function uc_discounts_update($discount_id,
   $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
   $discount_amount, $requires_code, $filter_type, $has_role_filter,
   $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-  $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
+  $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
   $is_active, $weight
 ) {
 
@@ -683,7 +684,7 @@ function uc_discounts_update($discount_id,
     $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
     $discount_amount, $requires_code, $filter_type, $has_role_filter,
     $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-    $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration,
+    $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
     $is_active, $weight, $discount_id
   );
 }
@@ -1142,10 +1143,11 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 		AND (%s)
 		AND (%s)
 		AND (%s)
+		AND (d.has_activation=0 OR d.activates_on<%d)
 		AND (d.has_expiration=0 OR d.expiration>%d)
 		AND (d.is_active=%d)
 		ORDER BY weight", $codes_clause, $roles_clause, $product_ids_clause,
-    $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE
+    $term_ids_clause, $skus_clause, $classes_clause, time(), time(), IS_ACTIVE
   );
   
   $result = db_query($query);
@@ -1679,9 +1681,12 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
 		AND (%s)
 		AND (%s)
 		AND (%s)
+		AND (d.has_activation=0 OR d.activates_on<%d)
 		AND (d.has_expiration=0 OR d.expiration>%d)
 		AND (d.is_active=%d)
-		ORDER BY d.%s %s", $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE, $sort_column, $sort_order_string
+		ORDER BY d.%s %s",
+    $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause,
+    time(), time(), IS_ACTIVE, $sort_column, $sort_order_string
   );
   uc_discounts_log("query=". $query);
   $result = db_query($query);

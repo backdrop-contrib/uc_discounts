@@ -175,6 +175,27 @@ function uc_discounts_form($form_state, $discount_id = 0) {
      ? $form_state["values"]["can_be_combined_with_other_discounts"] : CAN_BE_COMBINED_WITH_OTHER_DISCOUNTS_DEFAULT,
   );
 
+  $has_activation = isset($form_state["values"]["has_activation"]) ? $form_state["values"]["has_activation"] : HAS_ACTIVATION_DEFAULT;
+  $form["has_activation"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Discount activates"),
+    "#description" => t("Whether or not this discount rule will only become active after a given date."),
+    "#default_value" => $has_activation,
+    '#attributes' => array('onchange' => '$("#edit-activates-on-display-wrapper").toggle();'),
+  );
+
+  $activates_on = isset($form_state["values"]["activates_on"]) ? $form_state["values"]["activates_on"] : time();
+  $display_string = $has_activation ? "" : " style='display:none'";
+  $form["activates_on"] = array(
+    "#type" => "date_popup",
+    "#date_type" => "DATE_UNIX",
+    "#title" => t("Discount activation date") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#description" => t("Date and time when the discount will become active.  Note that if the 'Is active' field is not checked, this will be ignored."),
+    "#default_value" => date("Y-m-d H:i:s", $activates_on),
+    '#prefix' => "<div id=\"edit-activates-on-display-wrapper\"$display_string>",
+    '#suffix' => "</div>",
+  );
+
   $has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : HAS_EXPIRATION_DEFAULT;
   $form["has_expiration"] = array(
     "#type" => "checkbox",
@@ -711,12 +732,8 @@ function uc_discounts_form_submit($form, &$form_state) {
     }
 
     //Set expiration to a valid value because it is not nullable
-    if (isset($form_state["values"]["expiration"])) {
-      $expiration = date_convert(date_make_date($form_state["values"]["expiration"]), DATE_OBJECT, DATE_UNIX);
-    }
-    else {
-      $expiration = 0;
-    }
+    $expiration = isset($form_state["values"]["expiration"]) ? date_convert(date_make_date($form_state["values"]["expiration"]), DATE_OBJECT, DATE_UNIX) : 0;
+    $activates_on = isset($form_state["values"]["activates_on"]) ? date_convert(date_make_date($form_state["values"]["activates_on"]), DATE_OBJECT, DATE_UNIX) : 0;
 
     //Set discount_amount
     if (($index = strpos($form_state["values"]["discount_amount"], "%")) !== FALSE) {
@@ -749,6 +766,8 @@ function uc_discounts_form_submit($form, &$form_state) {
         $form_state["values"]["max_uses_per_code"],
         $form_state["values"]["has_expiration"],
         $expiration,
+        $form_state["values"]["has_activation"],
+        $activates_on,
         $form_state["values"]["is_active"],
         $form_state["values"]["weight"]
       );
@@ -781,6 +800,8 @@ function uc_discounts_form_submit($form, &$form_state) {
         $form_state["values"]["max_uses_per_code"],
         $form_state["values"]["has_expiration"],
         $expiration,
+        $form_state["values"]["has_activation"],
+        $activates_on,
         $form_state["values"]["is_active"],
         $form_state["values"]["weight"]
       );
@@ -892,6 +913,8 @@ function uc_discounts_copy($original_discount_id) {
     $discount->max_uses_per_code,
     $discount->has_expiration,
     $discount->expiration,
+    $discount->has_activation,
+    $discount->activates_on,
     $discount->is_active,
     $discount->weight
   );

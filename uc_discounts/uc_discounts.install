@@ -132,6 +132,19 @@ function uc_discounts_schema() {
         "default" => 0,
         "description" => t("Number of times this discount can be applied for a particular code (0 for unlimited)."),
       ),
+      "has_activation" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 0,
+        "description" => t("Whether or not discount has an activation date."),
+      ),
+      "activates_on" => array(
+        "type" => "int",
+        "not null" => TRUE,
+        "default" => 0,
+        "description" => t("The activation date and time as a unix timestamp."),
+      ),
       "has_expiration" => array(
         "type" => "int",
         "size" => "tiny",
@@ -558,5 +571,16 @@ function uc_discounts_update_6() {
 function uc_discounts_update_7() {
   db_change_field($ret, 'uc_discounts', 'is_published', 'is_active',array('type' => 'int', 'size' => 'tiny', 'not null' => FALSE, 'default' => 0, ));
   
+  return $ret;
+}
+
+/**
+ * #984718, Add an activates_on date to discounts.
+ */
+function uc_discounts_update_6001() {
+  $schema = uc_discounts_schema();
+  $ret = array();
+  db_add_field($ret, 'uc_discounts', 'has_activation', $schema['uc_discounts']['fields']['has_activation']);
+  db_add_field($ret, 'uc_discounts', 'activates_on', $schema['uc_discounts']['fields']['activates_on']);
   return $ret;
 }

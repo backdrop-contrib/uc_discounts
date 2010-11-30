@@ -51,7 +51,7 @@ function uc_discountsProcessCodes(context)
                 $(".uc-discounts-messages-container").removeClass("solid-border").empty();
 
 				//If status is not 2XX
-        if ( parseInt(xmlHttpRequest.status) != 0 && parseInt(xmlHttpRequest.status / 100) != 2)
+				if ( parseInt(xmlHttpRequest.status) != 0 && parseInt(xmlHttpRequest.status / 100) != 2)
 				{
 					alert(Drupal.settings.uc_discounts.err_msg);
 					return;
@@ -157,7 +157,7 @@ function uc_discountsRenderLineItems(line_items, show_message)
     }
 
     //Add total discount line item
-    if (line_items.length > 0 && total_amount > 0)
+    if (line_items.length > 0 && total_amount != 0)
     {
         set_line_item(Drupal.settings.uc_discounts.line_item_key_name, 
             Drupal.settings.uc_discounts.total_discount_text, total_amount, 

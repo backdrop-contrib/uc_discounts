@@ -25,12 +25,6 @@ function uc_discountsProcessCodes(context, e) {
     return;
   }
 
-  var codes = $.trim($("textarea[@id*=uc-discounts-codes]", context).val());
-  // No need to post if there are no codes
-  if (codes == '') {
-    return;
-  }
-
   var parameterMap = {};
   parameterMap["uc-discounts-codes"] = codes;
 

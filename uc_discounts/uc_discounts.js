@@ -26,7 +26,7 @@ function uc_discountsProcessCodes(context, e) {
   }
 
   var parameterMap = {};
-  parameterMap["uc-discounts-codes"] = codes;
+  parameterMap["uc-discounts-codes"] = $("textarea[@id*=uc-discounts-codes]", context).val();
 
   //Show loading container
   var progress = new Drupal.progressBar("uc_discountsProgress");

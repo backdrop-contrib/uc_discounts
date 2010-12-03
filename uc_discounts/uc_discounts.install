@@ -88,6 +88,13 @@ function uc_discounts_schema() {
         "default" => 0,
         "description" => t("Whether or not this discount filters based on role."),
       ),
+      "use_only_discounted_products_to_qualify" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 0,
+        "description" => t("Calculate the order subtotal using only discounted products."),
+      ),
       "requires_single_product_to_qualify" => array(
         "type" => "int",
         "size" => "tiny",
@@ -181,12 +188,6 @@ function uc_discounts_schema() {
     "primary key" => array("discount_id"),
   );
 
-  return $schema;
-}
-
-function uc_discounts_codes_schema() {
-  $schema = array();
-
   $schema["uc_discounts_codes"] = array(
     "fields" => array(
       "discount_code_id" => array(
@@ -209,12 +210,6 @@ function uc_discounts_codes_schema() {
     "primary key" => array("discount_code_id"),
   );
 
-  return $schema;
-}
-
-function uc_discounts_products_schema() {
-  $schema = array();
-
   $schema["uc_discounts_products"] = array(
     "fields" => array(
       "discount_product_id" => array(
@@ -235,12 +230,6 @@ function uc_discounts_products_schema() {
     "primary key" => array("discount_product_id"),
   );
 
-  return $schema;
-}
-
-function uc_discounts_terms_schema() {
-  $schema = array();
-
   $schema["uc_discounts_terms"] = array(
     "fields" => array(
       "discount_term_id" => array(
@@ -260,12 +249,6 @@ function uc_discounts_terms_schema() {
     ),
     "primary key" => array("discount_term_id"),
   );
-
-  return $schema;
-}
-
-function uc_discounts_skus_schema() {
-  $schema = array();
 
   $schema["uc_discounts_skus"] = array(
     "fields" => array(
@@ -288,12 +271,6 @@ function uc_discounts_skus_schema() {
     "primary key" => array("discount_sku_id"),
   );
 
-  return $schema;
-}
-
-function uc_discounts_classes_schema() {
-  $schema = array();
-
   $schema["uc_discounts_classes"] = array(
     "fields" => array(
       "discount_class_id" => array(
@@ -315,12 +292,6 @@ function uc_discounts_classes_schema() {
     "primary key" => array("discount_class_id"),
   );
 
-  return $schema;
-}
-
-function uc_discounts_roles_schema() {
-  $schema = array();
-
   $schema["uc_discounts_roles"] = array(
     "fields" => array(
       "discount_role_id" => array(
@@ -340,12 +311,6 @@ function uc_discounts_roles_schema() {
     ),
     "primary key" => array("discount_role_id"),
   );
-
-  return $schema;
-}
-
-function uc_discounts_uses_schema() {
-  $schema = array();
 
   $schema["uc_discounts_uses"] = array(
     "fields" => array(
@@ -400,12 +365,6 @@ function uc_discounts_uses_schema() {
     "primary key" => array("discount_use_id"),
   );
 
-  return $schema;
-}
-
-function uc_discounts_order_codes_schema() {
-  $schema = array();
-
   $schema["uc_discounts_order_codes"] = array(
     "fields" => array(
       "order_id" => array(
@@ -429,14 +388,6 @@ function uc_discounts_order_codes_schema() {
  */
 function uc_discounts_install() {
   drupal_install_schema("uc_discounts");
-  drupal_install_schema("uc_discounts_codes");
-  drupal_install_schema("uc_discounts_products");
-  drupal_install_schema("uc_discounts_terms");
-  drupal_install_schema("uc_discounts_skus");
-  drupal_install_schema("uc_discounts_roles");
-  drupal_install_schema("uc_discounts_uses");
-  drupal_install_schema("uc_discounts_order_codes");
-  drupal_install_schema("uc_discounts_classes");
 
   //Weight must be less than uc_payment's
   db_query("UPDATE {system} SET weight=-10 WHERE name='uc_discounts'");
@@ -451,17 +402,8 @@ function uc_discounts_install() {
  * Implementation of hook_uninstall().
  */
 function uc_discounts_uninstall() {
-  drupal_uninstall_schema("uc_discounts_classes");
-  drupal_uninstall_schema("uc_discounts_order_codes");
-  drupal_uninstall_schema("uc_discounts_uses");
-  drupal_uninstall_schema("uc_discounts_products");
-  drupal_uninstall_schema("uc_discounts_terms");
-  drupal_uninstall_schema("uc_discounts_skus");
-  drupal_uninstall_schema("uc_discounts_roles");
-  drupal_uninstall_schema("uc_discounts_codes");
   drupal_uninstall_schema("uc_discounts");
 }
-
 
 //Add {uc_discounts_roles} table
 function uc_discounts_update_1() {
@@ -582,5 +524,16 @@ function uc_discounts_update_6001() {
   $ret = array();
   db_add_field($ret, 'uc_discounts', 'has_activation', $schema['uc_discounts']['fields']['has_activation']);
   db_add_field($ret, 'uc_discounts', 'activates_on', $schema['uc_discounts']['fields']['activates_on']);
+  return $ret;
+}
+/**
+ * #919730, Add the ability for a discount to qualify based on subtotal of all products
+ */
+function uc_discounts_update_6002() {
+  $schema = uc_discounts_schema();
+  $ret = array();
+  db_add_field($ret, 'uc_discounts', 'use_only_discounted_products_to_qualify', $schema['uc_discounts']['fields']['use_only_discounted_products_to_qualify']);
+  // This was the default before this feature was added
+  db_query("UPDATE {uc_discounts} SET use_only_discounted_products_to_qualify=1");
   return $ret;
 }

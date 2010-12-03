@@ -71,10 +71,6 @@ function uc_discounts_admin_settings() {
   $output = drupal_get_form('uc_discounts_search_form', $search_params);
   $output .= theme("table", $header, $rows, array("id" => "uc_discounts_table"));
   $output .= theme("pager", NULL, 50, 0);
-
-  $output .= "<br/>";
-  $output .= l(t("Create a new discount."), "admin/store/settings/uc_discounts/edit");
-
   return $output;
 }
 
@@ -246,7 +242,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $form["qualifications"]["qualifying_amount"] = array(
     "#type" => "textfield",
     "#title" => t("Qualification amount"),
-    "#description" => t("The amount of qualification type required. E.g. 50 (for $50), 5 (for 5 items). Remember for a discount like 'buy 4 get 1 free' the qualifying amount is '5'."),
+    "#description" => t("The amount of qualification type required. E.g. 50 (for $50), 5 (for 5 items). Remember for a discount like 'buy 4 get 1 free' the qualifying amount is '5'.  For a discount like 'spend at least $25, get $5 off' the qualifying amount is '30'."),
     "#default_value" => $form_state["values"]["qualifying_amount"],
     "#size" => 15,
     "#required" => TRUE,
@@ -466,22 +462,11 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   );
 
   $has_role_filter = isset($form_state["values"]["has_role_filter"]) ? $form_state["values"]["has_role_filter"] : HAS_ROLE_FILTER_DEFAULT;
-  $display_string = ($has_role_filter) ? "" : " style='display:none'";
-
-  $roles_container_id = "roles-container-". $seed;
-  $roles_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .roles-container\").slideDown(); }" . "else { jQuery(\"#%s .roles-container\").slideUp();} '>",
-    $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id, $roles_container_id
-  );
-
-  $form["qualifications"]["roles_header"] = array(
-    "#type" => "hidden",
-    "#prefix" => $roles_prefix,
-  );
-
   $form["qualifications"]["has_role_filter"] = array(
     "#type" => "checkbox",
     "#title" => t("Qualification by Role(s)."),
     "#default_value" => $has_role_filter,
+    '#attributes' => array('onchange' => "$('#discount-role-ids-wrapper').toggle();"),
   );
 
   //Get current discount roles
@@ -497,6 +482,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $result = db_query("SELECT rid, name FROM {role} ORDER BY rid");
   $options[ALL_ROLES] = t("<All Roles>");
   while ($row = db_fetch_object($result)) $options[$row->rid] = $row->name;
+  $display_string = ($has_role_filter) ? "" : " style='display:none'";
   $form["qualifications"]["role_ids"] = array(
     "#type" => "select",
     "#title" => t("Roles") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
@@ -504,13 +490,15 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#options" => $options,
     "#default_value" => $role_ids,
     "#multiple" => TRUE,
-    "#prefix" => sprintf("<div class='roles-container'%s>", $display_string),
+    "#prefix" => "<div id='discount-role-ids-wrapper'$display_string>",
     "#suffix" => "</div>",
   );
 
-  $form["qualifications"]["roles_footer"] = array(
-    "#type" => "markup",
-    "#value" => "</div>",
+  $form["qualifications"]["use_only_discounted_products_to_qualify"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Calculate the order subtotal using only discounted products."),
+    "#description" => t("If checked, uses only the products included by the 'Filter type' below in determining if the order meets the qualifying amount.  Otherwise it will be based off all products in the cart."),
+    "#default_value" => isset($form_state["values"]["use_only_discounted_products_to_qualify"]) ? $form_state["values"]["use_only_discounted_products_to_qualify"] : USE_ONLY_DISCOUNTED_PRODUCTS_TO_QUALIFY_DEFAULT,
   );
 
   $form["qualifications"]["requires_single_product_to_qualify"] = array(
@@ -722,86 +710,47 @@ function uc_discounts_form_submit($form, &$form_state) {
       $discount_amount = floatval($form_state["values"]["discount_amount"]);
     }
 
-    if (empty($form_state["values"]["discount_id"])) {
-      //Insert base discount
-      $discount_id = uc_discounts_insert($form_state["values"]["name"],
-        $form_state["values"]["short_description"],
-        $form_state["values"]["description"],
-        $form_state["values"]["qualifying_type"],
-        $form_state["values"]["qualifying_amount"],
-        $form_state["values"]["has_qualifying_amount_max"],
-        $form_state["values"]["qualifying_amount_max"],
-        $form_state["values"]["discount_type"],
-        $discount_amount,
-        $form_state["values"]["requires_code"],
-        $form_state["values"]["filter_type"],
-        $form_state["values"]["has_role_filter"],
-        $form_state["values"]["requires_single_product_to_qualify"],
-        $form_state["values"]["required_product"],
-        $form_state["values"]["max_times_applied"],
-        $form_state["values"]["can_be_combined_with_other_discounts"],
-        $form_state["values"]["max_uses"],
-        $form_state["values"]["max_uses_per_user"],
-        $form_state["values"]["max_uses_per_code"],
-        $form_state["values"]["has_expiration"],
-        $expiration,
-        $form_state["values"]["has_activation"],
-        $activates_on,
-        $form_state["values"]["is_active"],
-        $form_state["values"]["weight"]
-      );
-
-      db_last_insert_id("uc_discounts", "discount_id");
+    $discount = new stdClass();
+    $discount->name = $form_state['values']['name'];
+    $discount->short_description = $form_state['values']['short_description'];
+    $discount->description = $form_state['values']['description'];
+    $discount->qualifying_type = $form_state['values']['qualifying_type'];
+    $discount->qualifying_amount = $form_state['values']['qualifying_amount'];
+    $discount->has_qualifying_amount_max = $form_state['values']['has_qualifying_amount_max'];
+    $discount->qualifying_amount_max = $form_state['values']['qualifying_amount_max'];
+    $discount->discount_type = $form_state['values']['discount_type'];
+    $discount->discount_amount = $discount_amount;
+    $discount->requires_code = $form_state['values']['requires_code'];
+    $discount->filter_type = $form_state['values']['filter_type'];
+    $discount->has_role_filter = $form_state['values']['has_role_filter'];
+    $discount->use_only_discounted_products_to_qualify = $form_state['values']['use_only_discounted_products_to_qualify'];
+    $discount->requires_single_product_to_qualify = $form_state['values']['requires_single_product_to_qualify'];
+    $discount->required_product = $form_state['values']['required_product'];
+    $discount->max_times_applied = $form_state['values']['max_times_applied'];
+    $discount->can_be_combined_with_other_discounts = $form_state['values']['can_be_combined_with_other_discounts'];
+    $discount->max_uses = $form_state['values']['max_uses'];
+    $discount->max_uses_per_user = $form_state['values']['max_uses_per_user'];
+    $discount->max_uses_per_code = $form_state['values']['max_uses_per_code'];
+    $discount->has_expiration = $form_state['values']['has_expiration'];
+    $discount->expiration = $expiration;
+    $discount->has_activation = $form_state['values']['has_activation'];
+    $discount->activates_on = $activates_on;
+    $discount->is_active = $form_state['values']['is_active'];
+    $discount->weight = $form_state['values']['weight'];
+    if (empty($form_state['values']['discount_id'])) {
+      $discount->insert_timestamp = time();
+      drupal_write_record('uc_discounts', $discount);
     }
     else {
-      $discount_id = $form_state["values"]["discount_id"];
-
-      //Update base discount
-      uc_discounts_update($discount_id,
-        $form_state["values"]["name"],
-        $form_state["values"]["short_description"],
-        $form_state["values"]["description"],
-        $form_state["values"]["qualifying_type"],
-        $form_state["values"]["qualifying_amount"],
-        $form_state["values"]["has_qualifying_amount_max"],
-        $form_state["values"]["qualifying_amount_max"],
-        $form_state["values"]["discount_type"],
-        $discount_amount,
-        $form_state["values"]["requires_code"],
-        $form_state["values"]["filter_type"],
-        $form_state["values"]["has_role_filter"],
-        $form_state["values"]["requires_single_product_to_qualify"],
-        $form_state["values"]["required_product"],
-        $form_state["values"]["max_times_applied"],
-        $form_state["values"]["can_be_combined_with_other_discounts"],
-        $form_state["values"]["max_uses"],
-        $form_state["values"]["max_uses_per_user"],
-        $form_state["values"]["max_uses_per_code"],
-        $form_state["values"]["has_expiration"],
-        $expiration,
-        $form_state["values"]["has_activation"],
-        $activates_on,
-        $form_state["values"]["is_active"],
-        $form_state["values"]["weight"]
-      );
-
-      //Delete existing database codes
-      uc_discounts_codes_delete($discount_id);
-
-      //Delete existing database products
-      uc_discounts_products_delete($discount_id);
-
-      //Delete existing database terms
-      uc_discounts_terms_delete($discount_id);
-
-      //Delete existing database SKUs
-      uc_discounts_skus_delete($discount_id);
-
-      //Delete existing database classes
-      uc_discounts_classes_delete($discount_id);
-
-      //Delete existing database roles
-      uc_discounts_roles_delete($discount_id);
+      $discount->discount_id = $form_state["values"]["discount_id"];
+      drupal_write_record('uc_discounts', $discount, 'discount_id');
+      //Delete existing related fields
+      uc_discounts_codes_delete($discount->discount_id);
+      uc_discounts_products_delete($discount->discount_id);
+      uc_discounts_terms_delete($discount->discount_id);
+      uc_discounts_skus_delete($discount->discount_id);
+      uc_discounts_classes_delete($discount->discount_id);
+      uc_discounts_roles_delete($discount->discount_id);
     }
 
     //Insert codes (if necessary)
@@ -811,7 +760,8 @@ function uc_discounts_form_submit($form, &$form_state) {
         if (empty($code)) {
           continue;
         }
-        uc_discounts_codes_insert($discount_id, $code);
+        $new_code = array('discount_id' => $discount->discount_id, 'code' => $code);
+        drupal_write_record('uc_discounts_codes', $new_code);
       }
     }
 
@@ -821,7 +771,8 @@ function uc_discounts_form_submit($form, &$form_state) {
         if (empty($product_id)) {
           continue;
         }
-        uc_discounts_products_insert($discount_id, $product_id);
+        $new_product = array('discount_id' => $discount->discount_id, 'product_id' => $product_id);
+        drupal_write_record('uc_discounts_products', $new_product);
       }
     }
     //Insert terms (if necessary)
@@ -830,22 +781,24 @@ function uc_discounts_form_submit($form, &$form_state) {
         if (empty($term_id)) {
           continue;
         }
-        uc_discounts_terms_insert($discount_id, $term_id);
+        $new_term = array('discount_id' => $discount->discount_id, 'term_id' => $term_id);
+        drupal_write_record('uc_discounts_terms', $new_term);
       }
     }
     //Insert SKUs (if necessary)
     elseif ($form_state["values"]["filter_type"] == FILTER_TYPE_SKUS) {
       foreach ($skus as $sku) {
         //Empty SKU is ALL_SKUS
-        uc_discounts_skus_insert($discount_id, $sku);
+        $new_sku = array('discount_id' => $discount->discount_id, 'sku' => $sku);
+        drupal_write_record('uc_discounts_skus', $new_sku);
       }
     }
     //Insert Classes (if necessary)
     elseif ($form_state["values"]["filter_type"] == FILTER_TYPE_CLASS) {
       foreach ($classes as $class) {
-        
         //Empty Class is ALL_CLASSES
-        uc_discounts_classes_insert($discount_id, $class);
+        $new_class = array('discount_id' => $discount->discount_id, 'class' => $class);
+        drupal_write_record('uc_discounts_classes', $new_class);
       }
     }
 
@@ -855,7 +808,8 @@ function uc_discounts_form_submit($form, &$form_state) {
         if (empty($role_id)) {
           continue;
         }
-        uc_discounts_roles_insert($discount_id, $role_id);
+        $new_role = array('discount_id' => $discount->discount_id, 'role_id' => $role_id);
+        drupal_write_record('uc_discounts_roles', $new_role);
       }
     }
 
@@ -869,59 +823,53 @@ function uc_discounts_form_submit($form, &$form_state) {
 function uc_discounts_copy($original_discount_id) {
   //Should be transactional
   $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $original_discount_id));
-
-  $discount_id = uc_discounts_insert(
-    t("Copy of @discount", array("@discount" => $discount->name)),
-    $discount->short_description,
-    $discount->description,
-    $discount->qualifying_type,
-    $discount->qualifying_amount,
-    $discount->has_qualifying_amount_max,
-    $discount->qualifying_amount_max,
-    $discount->discount_type,
-    $discount->discount_amount,
-    $discount->requires_code,
-    $discount->filter_type,
-    $discount->has_role_filter,
-    $discount->requires_single_product_to_qualify,
-    $discount->required_product,
-    $discount->max_times_applied,
-    $discount->can_be_combined_with_other_discounts,
-    $discount->max_uses,
-    $discount->max_uses_per_user,
-    $discount->max_uses_per_code,
-    $discount->has_expiration,
-    $discount->expiration,
-    $discount->has_activation,
-    $discount->activates_on,
-    $discount->is_active,
-    $discount->weight
-  );
+  $discount->name = t("Copy of @discount", array("@discount" => $discount->name));
+  $discount->insert_timestamp = time();
+  drupal_write_record('uc_discounts', $discount);
 
   //Copy discount's codes
   $codes = get_codes_for_discount($original_discount_id);
-  foreach ($codes as $code) uc_discounts_codes_insert($discount_id, $code);
+  foreach ($codes as $code) {
+    $new_code = array('discount_id' => $discount->discount_id, 'code' => $code);
+    drupal_write_record('uc_discounts_codes', $new_code);
+  }
 
   //Copy discount's products
   $product_ids = get_product_ids_for_discount($original_discount_id);
-  foreach ($product_ids as $product_id) uc_discounts_products_insert($discount_id, $product_id);
+  foreach ($product_ids as $product_id) {
+    $new_product = array('discount_id' => $discount->discount_id, 'product_id' => $product_id);
+    drupal_write_record('uc_discounts_products', $new_product);
+  }
 
   //Copy discount's terms
   $term_ids = get_term_ids_for_discount($original_discount_id);
-  foreach ($term_ids as $term_id) uc_discounts_terms_insert($discount_id, $term_id);
+  foreach ($term_ids as $term_id) {
+    $new_term = array('discount_id' => $discount->discount_id, 'term_id' => $term_id);
+    drupal_write_record('uc_discounts_terms', $new_term);
+  }
 
   //Copy discount's SKUs
   $skus = get_skus_for_discount($original_discount_id);
-  foreach ($skus as $sku) uc_discounts_skus_insert($discount_id, $sku);
+  foreach ($skus as $sku) {
+    $new_sku = array('discount_id' => $discount->discount_id, 'sku' => $sku);
+    drupal_write_record('uc_discounts_skus', $new_sku);
+  }
 
   //Copy discount's Classes
   $classes = get_classes_for_discount($original_discount_id);
-  foreach ($classes as $class) uc_discounts_classes_insert($discount_id, $class);
+  foreach ($classes as $class) {
+    $new_class = array('discount_id' => $discount->discount_id, 'class' => $class);
+    drupal_write_record('uc_discounts_classes', $new_class);
+  }
 
   //Copy discount's roles
   $role_ids = get_role_ids_for_discount($original_discount_id);
-  foreach ($role_ids as $role_id) uc_discounts_roles_insert($discount_id, $role_id);
+  foreach ($role_ids as $role_id) {
+    $new_role = array('discount_id' => $discount->discount_id, 'role_id' => $role_id);
+    drupal_write_record('uc_discounts_roles', $new_role);
+  }
 
+  drupal_set_message(t("The discount was successfully copied as %name.", array('%name' => $discount->name)));
   drupal_goto("admin/store/settings/uc_discounts");
 }
 
@@ -935,9 +883,7 @@ function uc_discounts_delete($form_state, $discount_id = 0) {
   if ($discount_id != 0) {
     $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
     $form     = array("discount_id" => array("#type" => "value", "#value" => $discount_id));
-    $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)),
-      "admin/store/settings/uc_discounts", "", t("Continue"), t("Cancel")
-    );
+    $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/settings/uc_discounts');
     return $output;
   }
   else drupal_goto("admin/store/settings/uc_discounts");

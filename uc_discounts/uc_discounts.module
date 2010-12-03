@@ -30,6 +30,7 @@ define("ALL_SKUS", "");
 define("ALL_CLASSES", "");
 define("ALL_ROLES", "-1");
 
+define("USE_ONLY_DISCOUNTED_PRODUCTS_TO_QUALIFY_DEFAULT", FALSE);
 define("REQUIRES_SINGLE_PRODUCT_TO_QUALIFY_DEFAULT", FALSE);
 define("REQUIRES_CODE_DEFAULT", TRUE);
 define("HAS_QUALIFYING_AMOUNT_MAX_DEFAULT", FALSE);
@@ -85,53 +86,69 @@ function uc_discounts_perm() {
 function uc_discounts_menu() {
   $items = array();
 
-  $items["admin/store/settings/uc_discounts"] = array(
-    "title" => "Discount settings",
-    "description" => "Configure discount settings.",
-    "page callback" => "uc_discounts_admin_settings",
-    "access arguments" => array("configure discounts"),
-    "file" => "uc_discounts.admin.inc",
+  $items['admin/store/settings/uc_discounts'] = array(
+    'title' => 'Discount settings',
+    'description' => 'Configure discount settings.',
+    'page callback' => 'uc_discounts_admin_settings',
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'uc_discounts.admin.inc',
   );
-  $items["admin/store/settings/uc_discounts/edit"] = array(
-    "title" => "Edit discount rule",
-    "page callback" => "drupal_get_form",
-    "page arguments" => array("uc_discounts_form"),
-    "access arguments" => array("configure discounts"),
-    "type" => MENU_CALLBACK,
-    "file" => "uc_discounts.admin.inc",
+  $items['admin/store/settings/uc_discounts/list'] = array(
+    'title' => 'List',
+    'description' => 'View list of discounts.',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
   );
-  $items["admin/store/settings/uc_discounts/copy"] = array(
-    "page callback" => "uc_discounts_copy",
-    "access arguments" => array("configure discounts"),
-    "type" => MENU_CALLBACK,
-    "file" => "uc_discounts.admin.inc",
+  $items['admin/store/settings/uc_discounts/add'] = array(
+    'title' => 'Add discount',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_discounts_form'),
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+    'file' => 'uc_discounts.admin.inc',
   );
-  $items["admin/store/settings/uc_discounts/delete"] = array(
-    "title" => "Delete discount rule",
-    "page callback" => "drupal_get_form",
-    "page arguments" => array("uc_discounts_delete"),
-    "access arguments" => array("configure discounts"),
-    "type" => MENU_CALLBACK,
-    "file" => "uc_discounts.admin.inc",
+  $items['admin/store/settings/uc_discounts/edit'] = array(
+    'title' => 'Edit discount rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_discounts_form'),
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
   );
-  $items["cart/checkout/uc_discounts/calculate"] = array(
-    "page callback" => "uc_discounts_js_calculate",
-    "access arguments" => array("access content"),
-    "type" => MENU_CALLBACK,
+  $items['admin/store/settings/uc_discounts/copy'] = array(
+    'page callback' => 'uc_discounts_copy',
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
   );
-  $items["admin/reports/uc_discounts/all"] = array(
-    "title" => "Ubercart discounts usage data",
-    "description" => "View usage data for each Ubercart discount.",
-    "page callback" => "uc_discounts_report",
-    "access arguments" => array("access site reports"),
-    "file" => "uc_discounts.admin.inc",
+  $items['admin/store/settings/uc_discounts/delete'] = array(
+    'title' => 'Delete discount rule',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_discounts_delete'),
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
   );
-  $items["admin/reports/uc_discounts/discount"] = array(
-    "title" => "Ubercart discount usage data",
-    "page callback" => "uc_discounts_report_for_discount",
-    "access arguments" => array("access site reports"),
-    "type" => MENU_CALLBACK,
-    "file" => "uc_discounts.admin.inc",
+  $items['cart/checkout/uc_discounts/calculate'] = array(
+    'page callback' => 'uc_discounts_js_calculate',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/reports/uc_discounts/all'] = array(
+    'title' => 'Ubercart discounts usage data',
+    'description' => 'View usage data for each Ubercart discount.',
+    'page callback' => 'uc_discounts_report',
+    'access arguments' => array('access site reports'),
+    'file' => 'uc_discounts.admin.inc',
+  );
+  $items['admin/reports/uc_discounts/discount'] = array(
+    'title' => 'Ubercart discount usage data',
+    'page callback' => 'uc_discounts_report_for_discount',
+    'access arguments' => array('access site reports'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
   );
 
   return $items;
@@ -158,7 +175,8 @@ function uc_discounts_order($op, &$arg1, $arg2) {
 
         //Save order's codes as string
         $codes_string = create_codes_string($arg1->uc_discounts_codes);
-        uc_discounts_order_codes_insert($arg1->order_id, $codes_string);
+        $new_discount_order_code = array('order_id' => $arg1->order_id, 'codes' => $codes_string);
+        drupal_write_record('uc_discounts_order_codes', $new_discount_order_code);
 
         //Get order line items
         if (is_array($arg1->line_items)) {
@@ -232,7 +250,9 @@ function uc_discounts_order($op, &$arg1, $arg2) {
       add_discount_line_items_to_order($arg1, $discounts);
 
       $new_discount_amounts = array();
-      foreach ($arg1->uc_discounts_line_items as $line_item) $new_discount_amounts[] = uc_currency_format($line_item["amount"]);
+      foreach ($arg1->uc_discounts_line_items as $line_item) {
+        $new_discount_amounts[] = uc_currency_format($line_item["amount"]);
+      }
 
       $discount_intersection = array_intersect($existing_discount_amounts, $new_discount_amounts);
       if (count($discount_intersection) != count($existing_discount_amounts)) {
@@ -254,9 +274,15 @@ function uc_discounts_order($op, &$arg1, $arg2) {
         $times_applied = (is_numeric($discount->times_applied)) ? $discount->times_applied : 1;
         $amount        = (is_numeric($discount->amount)) ? $discount->amount : 0;
 
-        uc_discounts_uses_insert($discount->discount_id, $arg1->uid,
-          $arg1->order_id, $code, $times_applied, $amount
-        );
+        $discount_use = new stdClass();
+        $discount_use->discount_id = $discount->discount_id;
+        $discount->user_id = $arg1->uid;
+        $discount->order_id = $arg1->order_id;
+        $discount->code = $code;
+        $discount->times_applied = $times_applied;
+        $discount->amount = $amount;
+        $discount->insert_timestamp = time();
+        drupal_write_record('uc_discounts_uses', $discount_use);
       }
 
       //Add discount messages to order
@@ -570,126 +596,6 @@ function uc_discounts_js_calculate() {
 ///////////////////////////////////////////////////////////////////
 
 /**
- * Returns array of uc_discounts column names.
- */
-function get_uc_discounts_column_names() {
-  return array("name", "short_description", "description", "qualifying_type",
-    "qualifying_amount", "has_qualifying_amount_max", "qualifying_amount_max", "discount_type",
-    "discount_amount", "requires_code", "filter_type", "has_role_filter",
-    "requires_single_product_to_qualify", "required_product", "max_times_applied", "can_be_combined_with_other_discounts", "max_uses",
-    "max_uses_per_user", "max_uses_per_code", "has_expiration", "expiration", "has_activation", "activates_on",
-    "is_active", "weight",
-  );
-}
-
-/**
- * Returns array of uc_discounts insert column names.
- */
-function get_uc_discounts_insert_column_names() {
-  return array_merge(get_uc_discounts_column_names(), array("insert_timestamp"));
-}
-
-/**
- * Returns array of uc_discounts update column names.
- */
-function get_uc_discounts_update_column_names() {
-  return get_uc_discounts_column_names();
-}
-
-/**
- * Returns array of uc_discounts column printf wildcards.
- */
-function get_uc_discounts_column_printf_wildcards() {
-  return array("'%s'", "'%s'", "'%s'", "%d",
-    "%f", "%d", "%f", "%d",
-    "%f", "%d", "%d", "%d",
-    "%d", "'%s'", "%d", "%d", "%d",
-    "%d", "%d", "%d", "%d", "%d", "%d",
-    "%d", "%d",
-  );
-}
-
-/**
- * Returns array of uc_discounts insert column printf wildcards.
- */
-function get_uc_discounts_column_insert_printf_wildcards() {
-  return array_merge(get_uc_discounts_column_printf_wildcards(), array("%d"));
-}
-
-/**
- * Returns array of uc_discounts update column printf wildcards.
- */
-function get_uc_discounts_column_update_printf_wildcards() {
-  return get_uc_discounts_column_printf_wildcards();
-}
-
-/**
- * Inserts a uc_discounts row and returns its discount_id.
- */
-function uc_discounts_insert($name, $short_description, $description, $qualifying_type,
-  $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
-  $discount_amount, $requires_code, $filter_type, $has_role_filter,
-  $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-  $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
-  $is_active, $weight, $insert_timestamp = NULL
-) {
-  if (is_null($insert_timestamp)) {
-    $insert_timestamp = time();
-  }
-
-  $query = "INSERT INTO {uc_discounts}(". join(",", get_uc_discounts_insert_column_names()) .") VALUES(". join(",", get_uc_discounts_column_insert_printf_wildcards()) .")";
-  uc_discounts_log("query=". $query);
-  db_query($query,
-    $name, $short_description, $description, $qualifying_type,
-    $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
-    $discount_amount, $requires_code, $filter_type, $has_role_filter,
-    $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-    $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
-    $is_active, $weight, $insert_timestamp
-  );
-  $discount_id = db_last_insert_id("uc_discounts", "discount_id");
-  uc_discounts_log("new discount_id=". $discount_id);
-  return $discount_id;
-}
-
-/**
- * Updates a uc_discounts row.
- */
-function uc_discounts_update($discount_id,
-  $name, $short_description, $description, $qualifying_type,
-  $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
-  $discount_amount, $requires_code, $filter_type, $has_role_filter,
-  $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-  $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
-  $is_active, $weight
-) {
-
-  $query = "UPDATE {uc_discounts} SET ";
-
-  $column_names = get_uc_discounts_update_column_names();
-  $printf_wildcards = get_uc_discounts_column_update_printf_wildcards();
-
-  for ($i = 0; $i < count($column_names); $i++) {
-    if ($i != 0) {
-      $query .= ", ";
-    }
-    $query .= $column_names[$i] ."=". $printf_wildcards[$i];
-  }
-
-  $query .= " WHERE discount_id=%d";
-
-  uc_discounts_log("query=". $query);
-  db_query($query,
-    $name, $short_description, $description, $qualifying_type,
-    $qualifying_amount, $has_qualifying_amount_max, $qualifying_amount_max, $discount_type,
-    $discount_amount, $requires_code, $filter_type, $has_role_filter,
-    $requires_single_product_to_qualify, $required_product, $max_times_applied, $can_be_combined_with_other_discounts, $max_uses,
-    $max_uses_per_user, $max_uses_per_code, $has_expiration, $expiration, $has_activation, $activates_on,
-    $is_active, $weight, $discount_id
-  );
-}
-
-/**
  * Deletes a uc_discounts row and all dependencies.
  */
 function uc_discounts_delete_all($discount_id) {
@@ -712,16 +618,6 @@ function get_codes_for_discount($discount_id) {
   $result = db_query("SELECT code FROM {uc_discounts_codes} WHERE discount_id=%d", $discount_id);
   while ($row = db_fetch_array($result)) $codes[] = $row["code"];
   return $codes;
-}
-
-/**
- * Inserts a uc_discounts_codes row and returns its discount_code_id.
- */
-function uc_discounts_codes_insert($discount_id, $code) {
-  $query = "INSERT INTO {uc_discounts_codes}(discount_id, code) VALUES(%d, '%s')";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $code);
-  return db_last_insert_id("uc_discounts_codes", "discount_code_id");
 }
 
 /**
@@ -806,16 +702,6 @@ function get_product_ids_for_discount($discount_id, $exclude_all_products = FALS
 }
 
 /**
- * Inserts a uc_discounts_products row and returns its discount_product_id.
- */
-function uc_discounts_products_insert($discount_id, $product_id) {
-  $query = "INSERT INTO {uc_discounts_products}(discount_id, product_id) VALUES(%d, %d)";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $product_id);
-  return db_last_insert_id("uc_discounts_products", "discount_product_id");
-}
-
-/**
  * Deletes all uc_discounts_products rows for a discount.
  */
 function uc_discounts_products_delete($discount_id) {
@@ -897,32 +783,12 @@ function get_role_ids_for_discount($discount_id, $exclude_all_roles = FALSE) {
 }
 
 /**
- * Inserts a uc_discounts_terms row and returns its discount_term_id.
- */
-function uc_discounts_terms_insert($discount_id, $term_id) {
-  $query = "INSERT INTO {uc_discounts_terms}(discount_id, term_id) VALUES(%d, %d)";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $term_id);
-  return db_last_insert_id("uc_discounts_terms", "discount_term_id");
-}
-
-/**
  * Deletes all uc_discounts_terms rows for a discount.
  */
 function uc_discounts_terms_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_terms} WHERE discount_id=%d";
   uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
-}
-
-/**
- * Inserts a uc_discounts_skus row and returns its discount_sku_id.
- */
-function uc_discounts_skus_insert($discount_id, $sku) {
-  $query = "INSERT INTO {uc_discounts_skus}(discount_id, sku) VALUES(%d, '%s')";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $sku);
-  return db_last_insert_id("uc_discounts_skus", "discount_sku_id");
 }
 
 /**
@@ -935,32 +801,12 @@ function uc_discounts_skus_delete($discount_id) {
 }
 
 /**
- * Inserts a uc_discounts_classes row and returns its discount_class_id.
- */
-function uc_discounts_classes_insert($discount_id, $class) {
-  $query = "INSERT INTO {uc_discounts_classes}(discount_id, class) VALUES(%d, '%s')";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $class);
-  return db_last_insert_id("uc_discounts_classes", "discount_class_id");
-}
-
-/**
  * Deletes all uc_discounts_classes rows for a discount.
  */
 function uc_discounts_classes_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_classes} WHERE discount_id=%d";
   uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
-}
-
-/**
- * Inserts a uc_discounts_roles row and returns its discount_role_id.
- */
-function uc_discounts_roles_insert($discount_id, $role_id) {
-  $query = "INSERT INTO {uc_discounts_roles}(discount_id, role_id) VALUES(%d, %d)";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $role_id);
-  return db_last_insert_id("uc_discounts_roles", "discount_role_id");
 }
 
 /**
@@ -1254,11 +1100,14 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     }
 
     //Check if order qualifies for this discount (check type, requires_single_product_to_qualify, required_product)
-    //Get product IDs for discount
+    //Get product IDs for determining discount application
     $discount_product_ids = get_product_ids_for_discount_object($discount);
     if (in_array(ALL_PRODUCTS, $discount_product_ids)) {
       $discount_product_ids = $order_product_ids;
     }
+
+    // Get product IDs for determining discount qualification
+    $qualification_product_ids = $discount->use_only_discounted_products_to_qualify ? $discount_product_ids : $order_product_ids;
 
     //Determine total qualifying amount of order (store in order_qualifying_amount)
     //and qualifying subtotal of order (store in order_qualifying_subtotal)
@@ -1297,7 +1146,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       switch ($discount->qualifying_type) {
         case QUALIFYING_TYPE_MINIMUM_PRICE:
           //Determine the total subtotal of discount's products
-          foreach ($discount_product_ids as $product_id) {
+          foreach ($qualification_product_ids as $product_id) {
             if (isset($order_product_id_subtotal_map[$product_id])) {
               if ($discount->requires_single_product_to_qualify) {
                 if ($order_product_id_subtotal_map[$product_id] >= $order->qualifying_amount) {
@@ -1316,7 +1165,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
         case QUALIFYING_TYPE_MINIMUM_QUANTITY:
           //Determine the total quantity of discount's products
-          foreach ($discount_product_ids as $product_id) {
+          foreach ($qualification_product_ids as $product_id) {
             if (isset($order_product_id_quantity_map[$product_id])) {
               if ($discount->requires_single_product_to_qualify) {
                 if ($order_product_id_quantity_map[$product_id] >= $discount->qualifying_amount) {
@@ -1341,7 +1190,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
         switch ($discount->qualifying_type) {
           case QUALIFYING_TYPE_MINIMUM_PRICE:
             $qualifying_amount = uc_currency_format($discount->qualifying_amount);
-            $warnings[] = t('The discount for code "@code" requires a minimum price of @qualifying_amount to qualify.',
+            $warnings[] = t('The discount for code "@code" requires a minimum amount of @qualifying_amount to qualify.',
               array("@code" => $discount->code, "@qualifying_amount" => $qualifying_amount)
             );
             break;
@@ -1697,22 +1546,6 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
 }
 
 /**
- * Inserts a uc_discounts_uses row and returns its discount_use_id.
- */
-function uc_discounts_uses_insert($discount_id, $user_id, $order_id, $code, $times_applied, $amount,
-  $insert_timestamp = NULL
-) {
-  if (is_null($insert_timestamp)) {
-    $insert_timestamp = time();
-  }
-
-  $query = "INSERT INTO {uc_discounts_uses}(discount_id, user_id, order_id, code, times_applied, amount, insert_timestamp)" . " VALUES(%d, %d, %d, '%s', %d, %f, %d)";
-  uc_discounts_log("query=". $query);
-  db_query($query, $discount_id, $user_id, $order_id, $code, $times_applied, $amount, $insert_timestamp);
-  return db_last_insert_id("uc_discounts_uses", "discount_use_id");
-}
-
-/**
  * Deletes all uc_discounts_uses rows for a discount.
  */
 function uc_discounts_uses_delete_for_discount($discount_id) {
@@ -1739,15 +1572,6 @@ function uc_discounts_order_codes_get($order_id) {
       "SELECT codes FROM {uc_discounts_order_codes} WHERE order_id=%d", $order_id
     ));
   return (!empty($row)) ? $row["codes"] : NULL;
-}
-
-/**
- * Inserts a uc_discounts_order_codes row.
- */
-function uc_discounts_order_codes_insert($order_id, $codes_string) {
-  $query = "INSERT INTO {uc_discounts_order_codes}(order_id, codes) VALUES(%d, '%s')";
-  uc_discounts_log("query=". $query);
-  db_query($query, $order_id, $codes_string);
 }
 
 /**

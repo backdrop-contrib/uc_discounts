@@ -181,7 +181,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#title" => t("Discount activates"),
     "#description" => t("Whether or not this discount rule will only become active after a given date."),
     "#default_value" => $has_activation,
-    '#attributes' => array('onchange' => '$("#edit-activates-on-display-wrapper").toggle();'),
+    '#attributes' => array('onchange' => "$('#discount-activates-on-wrapper').toggle();"),
   );
 
   $activates_on = isset($form_state["values"]["activates_on"]) ? $form_state["values"]["activates_on"] : time();
@@ -192,7 +192,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#title" => t("Discount activation date") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
     "#description" => t("Date and time when the discount will become active.  Note that if the 'Is active' field is not checked, this will be ignored."),
     "#default_value" => date("Y-m-d H:i:s", $activates_on),
-    '#prefix' => "<div id=\"edit-activates-on-display-wrapper\"$display_string>",
+    '#prefix' => "<div id=\"discount-activates-on-wrapper\"$display_string>",
     '#suffix' => "</div>",
   );
 
@@ -202,7 +202,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#title" => t("Discount expires"),
     "#description" => t("Whether or not this discount rule will expire on a given date."),
     "#default_value" => $has_expiration,
-    '#attributes' => array('onchange' => '$("#edit-expiration-display-wrapper").toggle();'),
+    '#attributes' => array('onchange' => "$('#discount-expiration-wrapper').toggle();"),
   );
 
   $expiration = isset($form_state["values"]["expiration"]) ? $form_state["values"]["expiration"] : time();
@@ -213,7 +213,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#title" => t("Discount expiration") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
     "#description" => t("Date and time when the discount expires."),
     "#default_value" => date("Y-m-d H:i:s", $expiration),
-    '#prefix' => "<div id=\"edit-expiration-display-wrapper\"$display_string>",
+    '#prefix' => "<div id=\"discount-expiration-wrapper\"$display_string>",
     '#suffix' => "</div>",
   );
 
@@ -253,44 +253,23 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   );
 
   $has_qualifying_amount_max = isset($form_state["values"]["has_qualifying_amount_max"]) ? $form_state["values"]["has_qualifying_amount_max"] : HAS_QUALIFYING_AMOUNT_MAX_DEFAULT;
-  $display_string = ($has_qualifying_amount_max) ? "" : " style='display:none'";
-
-  $qualifying_amount_max_container_id = "qualifying-amount-max-container-". $seed;
-  $qualifying_amount_max_prefix = sprintf("<div id='%s' onclick='if ( jQuery(\"#%s input[type=\\\"checkbox\\\"]\").attr(\"checked\") )" . "{ jQuery(\"#%s .qualifying-amount-max-container\").slideDown(); }" . "else { jQuery(\"#%s .qualifying-amount-max-container\").slideUp();} '>",
-    $qualifying_amount_max_container_id, $qualifying_amount_max_container_id,
-    $qualifying_amount_max_container_id, $qualifying_amount_max_container_id,
-    $qualifying_amount_max_container_id, $qualifying_amount_max_container_id
-  );
-
-  $form["discount_set"]["qualifying_amount_max_header"] = array(
-    "#type" => "hidden",
-    "#prefix" => $qualifying_amount_max_prefix,
-  );
-
-  $form["discount_set"]["has_qualifying_amount_max"] = array(
+  $form["qualifications"]["has_qualifying_amount_max"] = array(
     "#type" => "checkbox",
     "#title" => t("Has max qualifying amount."),
     "#description" => t("Whether or not discount contains maximum qualifying amount."),
     "#default_value" => $has_qualifying_amount_max,
+    '#attributes' => array('onchange' => "$('#discount-qualifying-amount-max-wrapper').toggle();"),
   );
 
-  //Get current discount qualifying_amount_max
-  $qualifying_amount_max = $form_state["values"]["role_ids"];
-
-  //Create qualifying_amount_max form element
-  $form["discount_set"]["qualifying_amount_max"] = array(
+  $display_string = ($has_qualifying_amount_max) ? "" : " style='display:none'";
+  $form["qualifications"]["qualifying_amount_max"] = array(
     "#type" => "textfield",
     "#title" => t("Maximum qualifying amount"),
     "#description" => t("Maximum amount to NOT exceed to qualify for the discount.  E.g. 50 (for $50), 5 (for 5 items)."),
     "#default_value" => $form_state["values"]["qualifying_amount_max"],
     "#size" => 15,
     "#required" => FALSE,
-    "#prefix" => sprintf("<div class='qualifying-amount-max-container'%s>", $display_string),
-    "#suffix" => "</div>",
-  );
-
-  $form["discount_set"]["qualifying_amount_max_footer"] = array(
-    "#type" => "hidden",
+    "#prefix" => "<div id='discount-qualifying-amount-max-wrapper'$display_string>",
     "#suffix" => "</div>",
   );
 

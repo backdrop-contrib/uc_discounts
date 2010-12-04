@@ -9,7 +9,7 @@ function uc_discountsOnLoad(e) {
   uc_discountsProcessCodes(context, e);
 
   //Add click event listener to discounts pane button once
-  $("input[@id*=uc-discounts-button]:not(.uc_discountsOnLoad-processed)", 
+  $("input[id*=uc-discounts-button]:not(.uc_discountsOnLoad-processed)", 
     context).addClass("uc_discountsOnLoad-processed").click(function(e) {
       uc_discountsProcessCodes(context, e);
       //Return false to prevent default actions and propogation
@@ -26,7 +26,7 @@ function uc_discountsProcessCodes(context, e) {
   }
 
   var parameterMap = {};
-  parameterMap["uc-discounts-codes"] = $("textarea[@id*=uc-discounts-codes]", context).val();
+  parameterMap["uc-discounts-codes"] = $("textarea[id*=uc-discounts-codes]", context).val();
 
   //Show loading container
   var progress = new Drupal.progressBar("uc_discountsProgress");

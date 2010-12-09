@@ -276,12 +276,12 @@ function uc_discounts_order($op, &$arg1, $arg2) {
 
         $discount_use = new stdClass();
         $discount_use->discount_id = $discount->discount_id;
-        $discount->user_id = $arg1->uid;
-        $discount->order_id = $arg1->order_id;
-        $discount->code = $code;
-        $discount->times_applied = $times_applied;
-        $discount->amount = $amount;
-        $discount->insert_timestamp = time();
+        $discount_use->user_id = $arg1->uid;
+        $discount_use->order_id = $arg1->order_id;
+        $discount_use->code = $code;
+        $discount_use->times_applied = $times_applied;
+        $discount_use->amount = $amount;
+        $discount_use->insert_timestamp = time();
         drupal_write_record('uc_discounts_uses', $discount_use);
       }
 

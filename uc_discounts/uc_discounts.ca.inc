@@ -19,28 +19,9 @@ function uc_discounts_ca_condition() {
 function uc_discounts_condition_discount_applied($order, $settings) {
   global $user;
 
-  if (!empty($_SESSION['cart_order'])) {
-    $order_id = $_SESSION['cart_order'];
-    $order = uc_order_load($order_id);
-    if (is_null($order)) {
-      return FALSE;
-    }
-  }
-  else {
-    $order           = new stdClass();
-    $order->uid      = $user->uid;
-    $order->products = uc_cart_get_contents();
-  }
-
   // Session var populated by uc_discounts_js_calculate()
-  $order->uc_discounts_codes = $_SESSION['uc_discounts_codes'];
-
-  $errors     = array();
-  $warnings   = array();
-  $messages   = array();
-  $discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
-  foreach ($discounts as $discount) {
-    if (in_array($discount->discount_id, $settings['discount_id'])) {
+  foreach ($_SESSION['uc_discounts_applied'] as $discount_id) {
+    if (in_array($discount_id, $settings['discount_id'])) {
       return TRUE;
     }
   }

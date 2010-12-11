@@ -145,7 +145,7 @@ function uc_discountsRenderLineItems(line_items, show_message) {
   }
 
   //Add total discount line item
-  if (line_items.length > 0 && total_amount != 0) {
+  if (line_items.length > 0) {
     set_line_item(Drupal.settings.uc_discounts.line_item_key_name,
     Drupal.settings.uc_discounts.total_discount_text, total_amount,
     parseFloat(Drupal.settings.uc_discounts.line_item_weight) + 0.5, 1, false);

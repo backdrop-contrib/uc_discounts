@@ -182,7 +182,9 @@ function uc_discounts_order($op, &$arg1, $arg2) {
         if (is_array($arg1->line_items)) {
           $existing_line_items = $arg1->line_items;
         }
-        else $existing_line_items = uc_order_load_line_items($arg1->order_id, TRUE);
+        else {
+          $existing_line_items = uc_order_load_line_items($arg1->order_id, TRUE);
+        }
 
         //Use new_order_line_items to populate $arg1->line_items by:
         //	Storing all non-discounts line items
@@ -195,15 +197,17 @@ function uc_discounts_order($op, &$arg1, $arg2) {
             uc_order_delete_line_item($line_item["line_item_id"]);
           }
           //Otherwise store non-discount line item
-          else $new_order_line_items[] = $line_item;
+          else {
+            $new_order_line_items[] = $line_item;
+          }
         }
 
         //Add discount line items
         foreach ($arg1->uc_discounts_line_items as $line_item) {
-          uc_order_line_item_add($arg1->order_id, $line_item["type"], $line_item["title"],
-          $line_item["amount"], $line_item["weight"], $line_item["data"]
-          );
-          $new_order_line_items[] = $line_item;
+          if ($line_item['amount'] != 0) {
+            uc_order_line_item_add($arg1->order_id, $line_item['type'], $line_item['title'], $line_item['amount'], $line_item['weight'], $line_item['data']);
+            $new_order_line_items[] = $line_item;
+          }
         }
 
         //Update order line items (see new_order_line_items notes above)
@@ -289,7 +293,7 @@ function uc_discounts_order($op, &$arg1, $arg2) {
       uc_order_log_changes($arg1->order_id, $messages);
 
       // Don't allow user to re-use codes on another order without re-entering them
-      unset($_SESSION['uc_discounts_codes']);
+      unset($_SESSION['uc_discounts_applied']);
       break;
 
     case "delete":
@@ -407,8 +411,6 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
 
   switch ($op) {
     case "view":
-      //Add form to checkout pane
-
       $description = t("Enter discount codes in the box below (one per line).");
 
       //If viewing an existing order, load order's codes
@@ -538,14 +540,13 @@ function get_existing_discount_line_items($order) {
 function uc_discounts_js_calculate() {
   global $user;
 
-  //If session order exists, use it
   if (!empty($_SESSION["cart_order"])) {
     $order_id = $_SESSION['cart_order'];
     $order = uc_order_load($order_id);
+  //If session order exists, use it
     if (is_null($order)) {
-      print "{}";
-      exit();
-      return;
+      print '{}';
+      exit;
     }
   }
   //Otherwise create phony order
@@ -555,8 +556,7 @@ function uc_discounts_js_calculate() {
     $order->products = uc_cart_get_contents();
   }
 
-  // Session var gets used by conditional action
-  $order->uc_discounts_codes = $_SESSION['uc_discounts_codes'] = get_codes($_POST['uc-discounts-codes']);
+  $order->uc_discounts_codes = get_codes($_POST['uc-discounts-codes']);
 
   $line_items = array();
   $errors     = array();
@@ -566,14 +566,19 @@ function uc_discounts_js_calculate() {
   $discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
 
   $i = 0;
+  // Session var gets used by conditional action
+  $_SESSION['uc_discounts_applied'] = array();
   foreach ($discounts as $discount) {
-    $line_item           = array();
-    $line_item["id"]     = LINE_ITEM_KEY_NAME . $i++;
-    $line_item["type"]   = $discount->type;
-    $line_item["title"]  = $discount->title;
-    $line_item["amount"] = -$discount->amount;
-    $line_item["weight"] = $discount->weight;
-    $line_items[]        = $line_item;
+    $_SESSION['uc_discounts_applied'][] = $discount->discount_id;
+    if ($discount->amount != 0) {
+      $line_item           = array();
+      $line_item["id"]     = LINE_ITEM_KEY_NAME . $i++;
+      $line_item["type"]   = $discount->type;
+      $line_item["title"]  = $discount->title;
+      $line_item["amount"] = -$discount->amount;
+      $line_item["weight"] = $discount->weight;
+      $line_items[]        = $line_item;
+    }
   }
 
   if (!empty($warnings)) {

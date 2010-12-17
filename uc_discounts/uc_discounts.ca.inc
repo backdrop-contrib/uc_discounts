@@ -19,6 +19,10 @@ function uc_discounts_ca_condition() {
 function uc_discounts_condition_discount_applied($order, $settings) {
   global $user;
 
+  if (empty($_SESSION['uc_discounts_applied'])) {
+    return FALSE;
+  }
+
   // Session var populated by uc_discounts_js_calculate()
   foreach ($_SESSION['uc_discounts_applied'] as $discount_id) {
     if (in_array($discount_id, $settings['discount_id'])) {

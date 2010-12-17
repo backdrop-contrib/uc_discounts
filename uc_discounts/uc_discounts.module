@@ -1438,6 +1438,12 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     //Add this discount to list of discounts applied to order
     $discounts[] = $discount;
   }
+
+  // If no discount array was filled in, means that the discount was not found in the database
+  if (count($discounts) == 0 && !empty($order->uc_discounts_codes)) {
+    $warnings[] = t('Coupon does not exist or is not valid.');
+  }
+
   // end of db fetch while loop
   return $discounts;
 }

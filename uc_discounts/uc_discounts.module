@@ -464,14 +464,19 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
     case "process":
       //TO DO: only update codes if codes_string ($arg2["uc-discounts-codes"]) has changed
 
-      //Save form values from checkout pane in order ($arg1)
-      $arg1->uc_discounts_codes = get_codes($arg2["uc-discounts-codes"]);
-
       $has_code_errors = FALSE;
 
       $errors    = array();
       $warnings  = array();
       $discounts = get_discounts_for_order($arg1, $errors, $warnings);
+
+      // Make sure the recorded discount codes for the order were only the ones that were actually used
+      // for a discount.
+      $applied_codes = array();
+      foreach ($discounts as $discount) {
+        $applied_codes[] = $discount->code;
+      }
+      $arg1->uc_discounts_codes = $applied_codes;
 
       foreach ($errors as $error) drupal_set_message($error, "error");
       foreach ($warnings as $warning) drupal_set_message(t("Warning:") . $warning, "error");

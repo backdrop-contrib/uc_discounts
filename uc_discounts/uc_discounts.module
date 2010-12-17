@@ -1702,3 +1702,6 @@ function uc_discounts_log($s) {
   //	error_log($s);
 }
 
+function uc_discounts_views_api() {
+  return array('api' => 2);
+}

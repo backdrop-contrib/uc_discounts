@@ -401,6 +401,21 @@ function uc_discounts_order_pane_callback($op, $arg1) {
  * @see hook_cart_pane()
  */
 function uc_discounts_cart_pane($items) {
+  $panes[] = array(
+    'id' => 'uc_discounts_pane',
+    'title' => t('Discounts'),
+    'enabled' => TRUE,
+    'weight' => 1,
+    'body' => !is_null($items) ? uc_discounts_cart_pane_output($items) : '',
+  );
+
+  return $panes;
+}
+
+/**
+ * Adds the discounts to the cart page as line items via javascript
+ */
+function uc_discounts_cart_pane_output($items) {
   global $user;
 
   //Create phony order object to call to get_discounts_for_order
@@ -415,7 +430,7 @@ function uc_discounts_cart_pane($items) {
 
   //If there are no discounts, do not alter cart
   if (count($discounts) == 0) {
-    return array();
+    return '';
   }
 
   //Calculate subtotal with discounts
@@ -450,10 +465,7 @@ function uc_discounts_cart_pane($items) {
   $body .= "</table></div>";
 
   //Write table using javascript between items and cart form buttons
-  drupal_add_js(sprintf("$(document).ready(function()
-		{
-			$(\"#cart-form-buttons\").before(\"%s\");
-		});", $body), "inline");
+  drupal_add_js(sprintf('$(document).ready(function() { $("#cart-form-buttons").before("%s"); });', $body), 'inline');
 }
 
 /**

@@ -325,6 +325,77 @@ function uc_discounts_line_item() {
 }
 
 /**
+ * Implementation of hook_order_pane
+ */
+function uc_discounts_order_pane() {
+  $panes[] = array(
+    'id' => 'uc_discounts',
+    'callback' => 'uc_discounts_order_pane_callback',
+    'title' => t('Discount codes'),
+    'weight' => 7,
+    'show' => array('edit'),
+  );
+
+  return $panes;
+}
+
+/**
+ * Callback from hook_order_pane
+ */
+function uc_discounts_order_pane_callback($op, $arg1) {
+  switch ($op) {
+    case 'edit-form':
+      $form['uc-discounts']['uc-discounts-codes'] = array(
+        '#type' => 'textarea',
+        '#rows' => 5,
+        '#prefix' => '<div class="discount-codes-wrapper">',
+        '#suffix' => '</div>',
+      );
+      $form['uc-discounts']['uc-discounts-button'] = array(
+        '#type' => 'submit',
+        '#value' => t('Apply discounts'),
+      );
+      return $form;
+
+    case 'edit-theme':
+      $form_rendered = drupal_render($arg1['uc-discounts']);
+      return $form_rendered;
+
+    case 'edit-ops':
+      return array(t('Apply discounts'));
+
+    case t('Apply discounts'):
+      if ($order = uc_order_load($arg1['order_id'])) {
+        $order->uc_discounts_codes = get_codes($arg1['uc-discounts-codes']);
+        $has_code_errors = FALSE;
+        $errors = array();
+        $warnings = array();
+        $discounts = get_discounts_for_order($order, $errors, $warnings);
+
+        foreach ($errors as $error) {
+          drupal_set_message($error, 'error');
+        }
+        foreach ($warnings as $warning) {
+          drupal_set_message($warning, 'warning');
+        }
+
+        if (empty($errors)) {
+          if (empty($discounts)) {
+            drupal_set_message(t('The code(s) did not yield a discount for this order.'), 'warning');
+          }
+          else {
+            add_discount_line_items_to_order($order, $discounts);
+            $order->uc_discounts_line_items_need_updating = TRUE;
+            uc_discounts_order('save', $order, NULL);
+            drupal_set_message(t('Discount code(s) applied to order.'));
+          }
+        }
+      }
+      break;
+  }
+}
+
+/**
  * Implementation of hook_cart_pane().
  *
  * @see hook_cart_pane()

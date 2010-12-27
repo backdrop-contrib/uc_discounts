@@ -464,6 +464,9 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
     case "process":
       //TO DO: only update codes if codes_string ($arg2["uc-discounts-codes"]) has changed
 
+      // Save form values from checkout pane in order ($arg1).
+      $arg1->uc_discounts_codes = get_codes($arg2['uc-discounts-codes']);
+
       $has_code_errors = FALSE;
 
       $errors    = array();
@@ -486,11 +489,12 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
         return FALSE;
       }
 
-    //Add discount line items to order
-    add_discount_line_items_to_order($arg1, $discounts);
+      //Add discount line items to order
+      add_discount_line_items_to_order($arg1, $discounts);
+      dsm($arg1);
 
-    //Mark order as needing discount line items updated
-    $arg1->uc_discounts_line_items_need_updating = TRUE;
+      //Mark order as needing discount line items updated
+      $arg1->uc_discounts_line_items_need_updating = TRUE;
     break;
   }
 }
@@ -500,16 +504,16 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
  *
  * Note: assumes discount objects are the result of a call to get_discounts_for_order()
  */
-function add_discount_line_items_to_order($order, $discounts) {
+function add_discount_line_items_to_order(&$order, $discounts) {
   //Create line items for discounts and store in order's uc_discounts_line_items field
   $line_items = array();
   foreach ($discounts as $discount) {
     $line_item = array(
-      "type" => LINE_ITEM_KEY_NAME,
-      "title" => $discount->short_description,
-      "amount" => -$discount->amount,
-      "weight" => LINE_ITEM_WEIGHT,
-    	"data" => array('discount_id' => $discount->discount_id),
+      'type' => LINE_ITEM_KEY_NAME,
+      'title' => $discount->short_description,
+      'amount' => -$discount->amount,
+      'weight' => LINE_ITEM_WEIGHT,
+      'data' => array('discount_id' => $discount->discount_id),
     );
 
     $line_items[] = $line_item;

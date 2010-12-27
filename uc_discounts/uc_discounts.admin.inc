@@ -12,7 +12,7 @@
  */
 function uc_discounts_admin_settings() {
   $search_params = array(
-    'name' => arg(4),
+    'name' => arg(5),
   );
 
   $header = array(
@@ -105,7 +105,7 @@ function uc_discounts_search_form_submit($form, &$form_state) {
   $args = array(
     $form_state['values']['name'],
   );
-  $form_state['redirect'] = array('admin/store/settings/uc_discounts/'. implode('/', $args));
+  $form_state['redirect'] = array('admin/store/settings/uc_discounts/list/'. implode('/', $args));
 }
 
 /**

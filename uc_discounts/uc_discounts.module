@@ -491,7 +491,6 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
 
       //Add discount line items to order
       add_discount_line_items_to_order($arg1, $discounts);
-      dsm($arg1);
 
       //Mark order as needing discount line items updated
       $arg1->uc_discounts_line_items_need_updating = TRUE;

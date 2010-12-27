@@ -30,7 +30,7 @@ function uc_discounts_admin_settings() {
 
   $query     = "SELECT * FROM {uc_discounts}";
   if (!empty($search_params['name'])) {
-    $name = db_escape_string($search_params['name'] . '%');
+    $name = db_escape_string('%' . $search_params['name'] . '%');
     $query .= " WHERE name LIKE '$name' OR description LIKE '$name' OR short_description LIKE '$name'";
   }
   $tablesort = tablesort_sql($header);

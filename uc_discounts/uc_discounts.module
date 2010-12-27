@@ -660,31 +660,43 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
       $product_ids = array();
 
       //Get products for terms
-      $query = "SELECT DISTINCT p.nid FROM {uc_products} p
-				INNER JOIN {term_node} tn ON p.nid=tn.nid
-				INNER JOIN {uc_discounts_terms} dt ON tn.tid=dt.term_id
-				WHERE dt.discount_id=%d";
-      uc_discounts_log($query);
+      $terms = get_term_ids_for_discount($discount->discount_id, TRUE);
+      $query = 'SELECT DISTINCT p.nid FROM {uc_products} p';
+      if (!empty($terms)) {
+        $query .= ' INNER JOIN {term_node} tn ON p.nid=tn.nid
+                    INNER JOIN {uc_discounts_terms} dt ON tn.tid=dt.term_id
+                    WHERE dt.discount_id=%d';
+      }
       $result = db_query($query, $discount->discount_id);
-      while ($row = db_fetch_array($result)) $product_ids[] = $row["nid"];
+      while ($row = db_fetch_object($result)) {
+        $product_ids[] = $row->nid;
+      }
       return $product_ids;
 
     case FILTER_TYPE_SKUS:
-      $query = "SELECT DISTINCT p.nid FROM {uc_products} p
-				INNER JOIN {uc_discounts_skus} ds ON p.model=ds.sku
-				WHERE ds.discount_id=%d";
-      uc_discounts_log($query);
+      $skus = get_skus_for_discount($discount->discount_id, TRUE);
+      $query = 'SELECT DISTINCT p.nid FROM {uc_products} p';
+      if (!empty($skus)) {
+        $query .= ' INNER JOIN {uc_discounts_skus} ds ON p.model=ds.sku
+                    WHERE ds.discount_id=%d';
+      }
       $result = db_query($query, $discount->discount_id);
-      while ($row = db_fetch_array($result)) $product_ids[] = $row["nid"];
+      while ($row = db_fetch_object($result)) {
+        $product_ids[] = $row->nid;
+      }
       return $product_ids;
 
     case FILTER_TYPE_CLASS:
-      $query = "SELECT DISTINCT n.nid FROM {node} n
-				INNER JOIN {uc_discounts_classes} dcl ON n.type=dcl.class
-				WHERE dcl.discount_id=%d";
-      uc_discounts_log($query);
+      $classes = get_classes_for_discount($discount->discount_id, TRUE);
+      $query = 'SELECT DISTINCT n.nid FROM {node} n';
+      if (!empty($classes)) {
+          $query .= ' INNER JOIN {uc_discounts_classes} dcl ON n.type=dcl.class
+                      WHERE dcl.discount_id=%d';
+      }
       $result = db_query($query, $discount->discount_id);
-      while ($row = db_fetch_array($result)) $product_ids[] = $row["nid"];
+      while ($row = db_fetch_object($result)) {
+        $product_ids[] = $row->nid;
+      }
       return $product_ids;
   }
   return array();

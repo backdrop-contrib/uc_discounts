@@ -10,9 +10,9 @@
 /**
  * Display a list of discounts.
  */
-function uc_discounts_admin_settings() {
+function uc_discounts_admin_list() {
   $search_params = array(
-    'name' => arg(5),
+    'name' => arg(4),
   );
 
   $header = array(
@@ -42,9 +42,9 @@ function uc_discounts_admin_settings() {
     $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
     $operations = array(
       l(t("usage"), "admin/reports/uc_discounts/discount/". $discount->discount_id),
-      l(t("edit"), "admin/store/settings/uc_discounts/edit/". $discount->discount_id),
-      l(t("copy"), "admin/store/settings/uc_discounts/copy/". $discount->discount_id),
-      l(t("delete"), "admin/store/settings/uc_discounts/delete/". $discount->discount_id),
+      l(t("edit"), "admin/store/uc_discounts/edit/". $discount->discount_id),
+      l(t("copy"), "admin/store/uc_discounts/copy/". $discount->discount_id),
+      l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
     );
 
     $rows[] = array("data" =>
@@ -105,7 +105,7 @@ function uc_discounts_search_form_submit($form, &$form_state) {
   $args = array(
     $form_state['values']['name'],
   );
-  $form_state['redirect'] = array('admin/store/settings/uc_discounts/list/'. implode('/', $args));
+  $form_state['redirect'] = array('admin/store/uc_discounts/list/'. implode('/', $args));
 }
 
 /**
@@ -658,7 +658,7 @@ function uc_discounts_form_validate($form, &$form_state) {
  * Submit handler for uc_discounts_form().
  */
 function uc_discounts_form_submit($form, &$form_state) {
-  $form_state["redirect"] = "admin/store/settings/uc_discounts";
+  $form_state["redirect"] = "admin/store/uc_discounts";
   $op = isset($form_state["values"]["op"]) ? $form_state["values"]["op"] : "";
   if ($op == t("Submit")) {
     $codes = explode("\n", $form_state["values"]["codes"]);
@@ -870,7 +870,7 @@ function uc_discounts_copy($original_discount_id) {
   }
 
   drupal_set_message(t("The discount was successfully copied as %name.", array('%name' => $discount->name)));
-  drupal_goto("admin/store/settings/uc_discounts");
+  drupal_goto("admin/store/uc_discounts");
 }
 
 /**
@@ -883,10 +883,12 @@ function uc_discounts_delete($form_state, $discount_id = 0) {
   if ($discount_id != 0) {
     $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
     $form     = array("discount_id" => array("#type" => "value", "#value" => $discount_id));
-    $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/settings/uc_discounts');
+    $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/uc_discounts');
     return $output;
   }
-  else drupal_goto("admin/store/settings/uc_discounts");
+  else {
+    drupal_goto("admin/store/uc_discounts");
+  }
 }
 
 /**
@@ -900,7 +902,7 @@ function uc_discounts_delete_submit($form, &$form_state) {
 
   drupal_set_message(t("Discount deleted."));
 
-  $form_state["redirect"] = "admin/store/settings/uc_discounts";
+  $form_state["redirect"] = "admin/store/uc_discounts";
 }
 
 /**
@@ -947,8 +949,8 @@ function uc_discounts_report() {
         uc_currency_format($discount->total_amount),
         uc_currency_format($discount->total_revenue),
         l(t("view usage"), "admin/reports/uc_discounts/discount/". $discount->discount_id),
-        l(t("edit"), "admin/store/settings/uc_discounts/edit/". $discount->discount_id),
-        l(t("delete"), "admin/store/settings/uc_discounts/delete/". $discount->discount_id),
+        l(t("edit"), "admin/store/uc_discounts/edit/". $discount->discount_id),
+        l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
       ),
     );
   }
@@ -1002,9 +1004,9 @@ function uc_discounts_report_for_discount($discount_id) {
     $total_times_applied,
     uc_currency_format($discount->total_amount),
     uc_currency_format($discount->total_revenue),
-    l(t("edit"), "admin/store/settings/uc_discounts/edit/". $discount->discount_id),
-    l(t("copy"), "admin/store/settings/uc_discounts/copy/". $discount->discount_id),
-    l(t("delete"), "admin/store/settings/uc_discounts/delete/". $discount->discount_id),
+    l(t("edit"), "admin/store/uc_discounts/edit/". $discount->discount_id),
+    l(t("copy"), "admin/store/uc_discounts/copy/". $discount->discount_id),
+    l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
   );
   $output .= theme("table", $header, $discounts);
 

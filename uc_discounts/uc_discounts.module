@@ -67,7 +67,7 @@ function uc_discounts_init() {
 
 function uc_discounts_help($path, $arg) {
   switch ($path) {
-    case "admin/store/settings/uc_discounts":
+    case "admin/store/uc_discounts":
       return t("Add and review discounts");
   }
   return $output;
@@ -86,21 +86,21 @@ function uc_discounts_perm() {
 function uc_discounts_menu() {
   $items = array();
 
-  $items['admin/store/settings/uc_discounts'] = array(
-    'title' => 'Discount settings',
-    'description' => 'Configure discount settings.',
-    'page callback' => 'uc_discounts_admin_settings',
+  $items['admin/store/uc_discounts'] = array(
+    'title' => 'Discounts',
+    'description' => 'Configure discouns.',
+    'page callback' => 'uc_discounts_admin_list',
     'access arguments' => array('configure discounts'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/settings/uc_discounts/list'] = array(
+  $items['admin/store/uc_discounts/list'] = array(
     'title' => 'List',
     'description' => 'View list of discounts.',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
-  $items['admin/store/settings/uc_discounts/add'] = array(
+  $items['admin/store/uc_discounts/add'] = array(
     'title' => 'Add discount',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_discounts_form'),
@@ -109,7 +109,7 @@ function uc_discounts_menu() {
     'weight' => 1,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/settings/uc_discounts/edit'] = array(
+  $items['admin/store/uc_discounts/edit'] = array(
     'title' => 'Edit discount rule',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_discounts_form'),
@@ -117,13 +117,13 @@ function uc_discounts_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/settings/uc_discounts/copy'] = array(
+  $items['admin/store/uc_discounts/copy'] = array(
     'page callback' => 'uc_discounts_copy',
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/settings/uc_discounts/delete'] = array(
+  $items['admin/store/uc_discounts/delete'] = array(
     'title' => 'Delete discount rule',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_discounts_delete'),

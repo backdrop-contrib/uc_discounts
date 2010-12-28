@@ -394,7 +394,7 @@ function uc_discounts_install() {
 
   //Print out a nice message directing administrators towards the configuration screen.
   drupal_set_message(st("UC Discounts (Alternative) settings are available under !link",
-      array("!link" => l("Administer > Store administration > Configuration", "admin/store/settings/uc_discounts"))
+      array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
     ));
 }
 

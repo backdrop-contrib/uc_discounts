@@ -485,6 +485,35 @@ function uc_discounts_checkout_pane() {
 }
 
 /**
+ * Implementation of hook_form_FORM_ID_alter()
+ * Ensures that javascript for adding discounts is added to checkout,
+ * regardless of whether discounts pane is used.
+ */
+function uc_discounts_form_uc_cart_checkout_form_alter(&$form, $form_state) {
+  drupal_add_js(array(
+      'uc_discounts' => array(
+        'line_item_key_name' => LINE_ITEM_KEY_NAME,
+        'line_item_weight' => LINE_ITEM_WEIGHT,
+        'total_discount_text' => t('Total discount'),
+        'calculate_discount_response_line_items_key' => CALCULATE_DISCOUNT_RESPONSE_LINE_ITEMS_KEY,
+        'calculate_discount_response_errors_key' => CALCULATE_DISCOUNT_RESPONSE_ERRORS_KEY,
+        'calculate_discount_response_messages_key' => CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY,
+        'progress_msg' => t('Calculating discounts...'),
+        'no_codes_entered' => t('Please enter at least one code'),
+        'no_applicable_discounts' => t('No applicable discounts'),
+        'err_msg' => t('There were problems determining if any discounts apply.  Please try again shortly.\nIf this does not resolve the issue, please call @phone to complete your order.',
+          array('@phone' => variable_get('uc_store_phone', NULL))
+        ),
+        'response_parse_err_msg' => t('Unable to parse response text: '),
+      ),
+    ), 'setting');
+
+  drupal_add_js('$(document).ready(function(e) { uc_discountsOnLoad(e); });', 'inline');
+  drupal_add_js('misc/progress.js');
+  drupal_add_js(drupal_get_path('module', 'uc_discounts') .'/uc_discounts.js');
+}
+
+/**
  * Discounts checkout pane callback
  *
  * More information at http://www.ubercart.org/docs/developer/245/checkout
@@ -519,28 +548,6 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
         "#type" => "button",
         "#value" => t("Click to calculate discounts"),
       );
-
-      drupal_add_js(array(
-          "uc_discounts" => array(
-            "line_item_key_name" => LINE_ITEM_KEY_NAME,
-            "line_item_weight" => LINE_ITEM_WEIGHT,
-            "total_discount_text" => t("Total discount"),
-            "calculate_discount_response_line_items_key" => CALCULATE_DISCOUNT_RESPONSE_LINE_ITEMS_KEY,
-            "calculate_discount_response_errors_key" => CALCULATE_DISCOUNT_RESPONSE_ERRORS_KEY,
-            "calculate_discount_response_messages_key" => CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY,
-            "progress_msg" => t("Calculating discounts..."),
-            "no_codes_entered" => t("Please enter at least one code"),
-            "no_applicable_discounts" => t("No applicable discounts"),
-            "err_msg" => t("There were problems determining if any discounts apply.  Please try again shortly.\nIf this does not resolve the issue, please call @phone to complete your order.",
-              array("@phone" => variable_get("uc_store_phone", NULL))
-            ),
-            "response_parse_err_msg" => t("Unable to parse response text: "),
-          ),
-        ), "setting");
-
-      drupal_add_js("$(document).ready(function(e) { uc_discountsOnLoad(e); });", "inline");
-      drupal_add_js("misc/progress.js");
-      drupal_add_js(drupal_get_path("module", "uc_discounts") ."/uc_discounts.js");
 
       return array("description" => $description, "contents" => $contents);
 

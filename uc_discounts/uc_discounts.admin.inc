@@ -166,7 +166,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $form["can_be_combined_with_other_discounts"] = array(
     "#type" => "checkbox",
     "#title" => t("Can be combined with other discounts"),
-    "#description" => t("Whether or not this discount will be applied if other discounts are."),
     "#default_value" => isset($form_state["values"]["can_be_combined_with_other_discounts"])
      ? $form_state["values"]["can_be_combined_with_other_discounts"] : CAN_BE_COMBINED_WITH_OTHER_DISCOUNTS_DEFAULT,
   );

@@ -345,7 +345,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $skus_display_string = ($filter_type == FILTER_TYPE_SKUS) ? "" : " style='display:none'";
   $classes_display_string = ($filter_type == FILTER_TYPE_CLASS) ? "" : " style='display:none'";
 
-  $filter_type_onchange = 'value = $("this").val();';
+  $filter_type_onchange = 'value = $(this).val();';
   $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_PRODUCTS . ') { $(".uc-discounts-form .products-container").slideDown(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); }';
   $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_TERMS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideDown(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); }';
   $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_SKUS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideDown(); $(".uc-discounts-form .classes-container").slideUp(); }';

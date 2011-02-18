@@ -143,6 +143,14 @@ function uc_discounts_menu() {
     'access arguments' => array('access site reports'),
     'file' => 'uc_discounts.admin.inc',
   );
+  $items['admin/reports/uc_discounts/all/download'] = array(
+    'title' => 'Download Ubercart discounts usage data',
+    'description' => 'Download usage data for each Ubercart discount.',
+    'page callback' => 'uc_discounts_report',
+    'access arguments' => array('access site reports'),
+    'file' => 'uc_discounts.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
   $items['admin/reports/uc_discounts/discount'] = array(
     'title' => 'Ubercart discount usage data',
     'page callback' => 'uc_discounts_report_for_discount',
@@ -641,7 +649,7 @@ function uc_discounts_js_calculate() {
   if (!empty($_SESSION["cart_order"])) {
     $order_id = $_SESSION['cart_order'];
     $order = uc_order_load($order_id);
-  //If session order exists, use it
+    //If session order exists, use it
     if (is_null($order)) {
       print '{}';
       exit;
@@ -685,12 +693,13 @@ function uc_discounts_js_calculate() {
     $errors = array_merge($errors, $warnings2);
   }
 
-  $calculate_discount_response = array(CALCULATE_DISCOUNT_RESPONSE_LINE_ITEMS_KEY => $line_items,
+  $calculate_discount_response = array(
+    CALCULATE_DISCOUNT_RESPONSE_LINE_ITEMS_KEY => $line_items,
     CALCULATE_DISCOUNT_RESPONSE_ERRORS_KEY => $errors,
     CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY => $messages,
   );
   drupal_json($calculate_discount_response);
-  exit();
+  exit;
 }
 
 
@@ -967,9 +976,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
         $kits[$kit_id]['product_qty'] += $product->qty;
       }
 
-      uc_discounts_add_to_existing_map_number_value($order_product_id_subtotal_map,
-        $nid, $product->price * $product->qty
-      );
+      uc_discounts_add_to_existing_map_number_value($order_product_id_subtotal_map, $nid, $product->price * $product->qty);
       uc_discounts_add_to_existing_map_number_value($order_product_id_quantity_map, $nid, $product->qty);
 
       $a = $order_product_id_product_array_map[$nid];
@@ -1143,7 +1150,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       if ($row["uses_count"] >= $discount->max_uses) {
         //If this is a coded discount, add error message
         if (!is_null($warnings) && !is_null($discount->code)) {
-          $warnings[] = t('The discount for code "@code" has reached its max number of uses.',
+          $warnings[] = t('The discount for code "@code" has reached its maximum number of uses.',
             array("@code" => $discount->code)
           );
         }
@@ -1161,7 +1168,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       if ($row["user_uses_count"] >= $discount->max_uses_per_user) {
         //If this is a coded discount, add warning message
         if (!is_null($warnings) && !is_null($discount->code)) {
-          $warnings[] = t('The discount for code "@code" has reached its max number of uses.',
+          $warnings[] = t('The discount for code "@code" has reached its maximum number of uses.',
             array("@code" => $discount->code)
           );
         }
@@ -1265,7 +1272,9 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
             if (isset($order_product_id_subtotal_map[$product_id])) {
               if ($discount->requires_single_product_to_qualify) {
                 if ($order_product_id_subtotal_map[$product_id] >= $order->qualifying_amount) {
-                  //In this case, $order_qualifying amount should be the sum of prices of products that both qualify and meet the minimum qualification amount based on their individual price.
+                  //In this case, $order_qualifying amount should be the sum of
+                  //prices of products that both qualify and meet the minimum
+                  //qualification amount based on their individual price.
                   $order_qualifying_amount += $order_product_id_subtotal_map[$product_id];
                 }
               }

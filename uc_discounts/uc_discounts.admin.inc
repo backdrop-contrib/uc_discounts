@@ -16,16 +16,16 @@ function uc_discounts_admin_list() {
   );
 
   $header = array(
-    array("data" => t("Active"), "field" => "is_active"),
-    array("data" => t("Name"), "field" => "name"),
-    array("data" => t("Short Description"), "field" => "short_description"),
-    array("data" => t("Qualifying Type"), "field" => "qualifying_type"),
-    array("data" => t("Type"), "field" => "discount_type"),
-    array("data" => t("Amount"), "field" => "discount_amount"),
-    array("data" => t("Weight"), "field" => "weight"),
-    array("data" => t("Created At"), "field" => "insert_timestamp", "sort" => "desc"),
-    array("data" => t("Expires At"), "field" => "expiration"),
-    array("data" => t("Operations")),
+    array('data' => t('Active'), 'field' => 'is_active'),
+    array('data' => t('Name'), 'field' => 'name'),
+    array('data' => t('Short Description'), 'field' => 'short_description'),
+    array('data' => t('Qualifying Type'), 'field' => 'qualifying_type'),
+    array('data' => t('Type'), 'field' => 'discount_type'),
+    array('data' => t('Amount'), 'field' => 'discount_amount'),
+    array('data' => t('Weight'), 'field' => 'weight'),
+    array('data' => t('Created At'), 'field' => 'insert_timestamp', 'sort' => 'desc'),
+    array('data' => t('Expires At'), 'field' => 'expiration'),
+    array('data' => t('Operations')),
   );
 
   $query     = "SELECT * FROM {uc_discounts}";
@@ -47,16 +47,15 @@ function uc_discounts_admin_list() {
       l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
     );
 
-    $rows[] = array("data" =>
-      //Cell data
+    $rows[] = array('data' =>
       array(
         array('data' => ($discount->is_active ? '&#10003;' : 'X'), 'class' => ($discount->is_active ? 'is_active' : 'is_inactive')),
         $discount->name,
         $discount->short_description,
         qualifying_type_name($discount->qualifying_type),
         discount_type_name($discount->discount_type),
-        array('data' => discount_amount_formatted($discount), 'class' => 'amount'),
-        array('data' => $discount->weight, 'class' => 'weight'),
+        array('data' => discount_amount_formatted($discount), 'class' => 'numeric'),
+        array('data' => $discount->weight, 'class' => 'numeric'),
         array('data' => format_date($discount->insert_timestamp, 'small'), 'class' => 'date'),
         array('data' => ($discount->has_expiration ? format_date($discount->expiration, 'small') : 'N/A'), 'class' => 'date'),
         array('data' => implode(' ', $operations), 'class' => 'operations'),
@@ -65,12 +64,12 @@ function uc_discounts_admin_list() {
   }
 
   if (empty($rows)) {
-    $rows[] = array(array("data" => t("No discounts."), "colspan" => count($header)));
+    $rows[] = array(array('data' => t('No discounts.'), 'colspan' => count($header)));
   }
 
   $output = drupal_get_form('uc_discounts_search_form', $search_params);
-  $output .= theme("table", $header, $rows, array("id" => "uc_discounts_table"));
-  $output .= theme("pager", NULL, 50, 0);
+  $output .= theme('table', $header, $rows, array('class' => 'uc-discounts'));
+  $output .= theme('pager', NULL, 50, 0);
   return $output;
 }
 
@@ -908,62 +907,104 @@ function uc_discounts_delete_submit($form, &$form_state) {
  * Generate report for all discounts.
  */
 function uc_discounts_report() {
+  $op = arg(4) == 'download' ? 'download' : 'show';
   $header = array(
-    array("data" => t("Name"), "field" => "d.name"),
-    array("data" => t("Short Description"), "field" => "d.short_description"),
-    array("data" => t("Qualifying Type"), "field" => "d.qualifying_type"),
-    array("data" => t("Discount Type"), "field" => "d.discount_type"),
-    array("data" => t("Weight"), "field" => "d.weight", "sort" => "asc"),
-    array("data" => t("Uses"), "field" => "use_count"),
-    array("data" => t("Times Applied"), "field" => "total_times_applied"),
-    array("data" => t("Discounted Amount"), "field" => "total_amount"),
-    array("data" => t("Revenue Amount"), "field" => "total_revenue"),
-    array("data" => t("Operations"), "colspan" => 3),
+    array('data' => t('Active'), 'field' => 'd.is_active'),
+    array('data' => t('Name'), 'field' => 'd.name'),
+    array('data' => t('Short Description'), 'field' => 'd.short_description'),
+    array('data' => t('Qualifying Type'), 'field' => 'd.qualifying_type'),
+    array('data' => t('Type'), 'field' => 'd.discount_type'),
+    array('data' => t('Uses'), 'field' => 'use_count'),
+    array('data' => t('Times Applied'), 'field' => 'total_times_applied'),
+    array('data' => t('Discounted Amount'), 'field' => 'total_amount'),
+    array('data' => t('Revenue Amount'), 'field' => 'total_revenue'),
+    array('data' => t('Weight'), 'field' => 'd.weight'),
+    array('data' => t('Created At'), 'field' => 'insert_timestamp', 'sort' => 'desc'),
+    array('data' => t('Operations')),
   );
 
-  $query     = "SELECT d.*, COUNT(du.discount_use_id) total_use_count,
-                  SUM(du.times_applied) total_times_applied, SUM(du.amount) total_amount, SUM(o.order_total) total_revenue
+  $query     = "SELECT d.*,
+                       COUNT(du.discount_use_id) total_use_count,
+                       SUM(du.times_applied) total_times_applied,
+                       SUM(du.amount) total_amount,
+                       SUM(o.order_total) total_revenue
                 FROM {uc_discounts} d
                 LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
                 LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = 'completed' AND o.order_total > 0
                 GROUP BY d.discount_id";
-  $tablesort = tablesort_sql($header);
-  $result    = pager_query($query . $tablesort, 50);
+  $query .= tablesort_sql($header);
+  $count_sql = 'SELECT COUNT(*) FROM {uc_discounts}';
+  $result = $op == 'download' ? db_query($query) : pager_query($query, 50, 0, $count_sql);
 
   $rows = array();
   while ($discount = db_fetch_object($result)) {
     $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
     $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
+    $operations = array(
+      l(t('usage'), 'admin/reports/uc_discounts/discount/'. $discount->discount_id),
+      l(t('edit'), 'admin/store/uc_discounts/edit/'. $discount->discount_id),
+      l(t('delete'), 'admin/store/uc_discounts/delete/'. $discount->discount_id),
+    );
 
-    $rows[] = array("data" =>
-      //Cell data
-      array(
-        $discount->name,
-        $discount->short_description,
-        qualifying_type_name($discount->qualifying_type),
-        discount_type_name($discount->discount_type),
-        $discount->weight,
-        $total_use_count,
-        $total_times_applied,
-        uc_currency_format($discount->total_amount),
-        uc_currency_format($discount->total_revenue),
-        l(t("view usage"), "admin/reports/uc_discounts/discount/". $discount->discount_id),
-        l(t("edit"), "admin/store/uc_discounts/edit/". $discount->discount_id),
-        l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
-      ),
+    $rows[] = array(
+      array('data' => ($discount->is_active ? '&#10003;' : 'X'), 'class' => ($discount->is_active ? 'is_active' : 'is_inactive')),
+      $discount->name,
+      $discount->short_description,
+      qualifying_type_name($discount->qualifying_type),
+      discount_type_name($discount->discount_type),
+      array('data' => $total_use_count, 'class' => 'numeric'),
+      array('data' => $total_times_applied, 'class' => 'numeric'),
+      uc_currency_format($discount->total_amount),
+      uc_currency_format($discount->total_revenue),
+      array('data' => $discount->weight, 'class' => 'weight'),
+      array('data' => format_date($discount->insert_timestamp, 'small'), 'class' => 'date'),
+      array('data' => implode(' ', $operations), 'class' => 'operations'),
     );
   }
 
-  if (empty($rows)) {
+  if ($op == 'download') {
+    $http_headers = array(
+      'Pragma: no-cache',
+      'Expires: 0',
+      'Cache-Control: no-cache, must-revalidate',
+      'Cache-Control: private',
+      'Content-Transfer-Encoding: binary',
+      'Content-Disposition: attachment; filename="discount_usage_report.csv"',
+      'Content-Type: text/csv'
+    );
+    foreach ($http_headers as $http_header) {
+      $http_header = preg_replace('/\r?\n(?!\t| )/', '', $http_header);
+      drupal_set_header($http_header);
+    }
 
-    $rows[] = array(array("data" => t("No discount data available."), "colspan" => 11));
-
+    $fp = fopen('php://output', 'w');
+    array_unshift($rows, $header);
+    foreach ($rows as $key => $row) {
+      $csv_row = array();
+      // remove Operations cell
+      array_pop($row);
+      foreach ($row as $cell) {
+        $csv_row[] = is_array($cell) ? $cell['data'] : $cell;
+      }
+      if ($key > 0) {
+        // make is_active CSV friendly
+        $csv_row[0] = $csv_row[0] == 'X' ? 0 : 1;
+      }
+      fputcsv($fp, $csv_row);
+    }
+    fclose($fp);
+    exit;
   }
+  else {
+    if (empty($rows)) {
+      $rows[] = array(array('data' => t('No discounts.'), 'colspan' => count($header)));
+    }
 
-  $output .= theme("table", $header, $rows, array("id" => "uc_discounts_report"));
-  $output .= theme("pager", NULL, 50, 0);
-
-  return $output;
+    $output .= theme('table', $header, $rows, array('class' => 'uc-discounts'));
+    $output .= theme('pager', NULL, 50, 0);
+    $output .= l(t('Export to CSV'), 'admin/reports/uc_discounts/all/download');
+    return $output;
+  }
 }
 
 /**

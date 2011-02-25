@@ -58,4 +58,3 @@ Configuration:
 
 Last updated:
 ------------
-$Id$

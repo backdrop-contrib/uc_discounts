@@ -1,4 +1,3 @@
-; $Id$
 name =  Product Price Alterer Field
 description = Defines CCK-based field for altering product price based on applicable discounts from uc_discounts_alt module.
 dependencies[] = uc_discounts

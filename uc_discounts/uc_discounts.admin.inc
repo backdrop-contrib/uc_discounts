@@ -454,8 +454,8 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#options" => $options,
     "#default_value" => $classes,
     "#multiple" => TRUE,
-    "#prefix" => sprintf("<div class='classes-container'%s", $classes_display_string),
-    "#suffix" => "</div>",
+    "#prefix" => sprintf('<div class="classes-container"%s>', $classes_display_string),
+    "#suffix" => '</div>',
   );
 
   $has_role_filter = isset($form_state["values"]["has_role_filter"]) ? $form_state["values"]["has_role_filter"] : HAS_ROLE_FILTER_DEFAULT;

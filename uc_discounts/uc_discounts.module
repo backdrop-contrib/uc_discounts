@@ -1,4 +1,5 @@
 <?php
+//$Id: uc_discounts.module,v 1.29.2.31 2010/12/30 19:37:21 jrust Exp $
 
 
 /**
@@ -168,13 +169,13 @@ function uc_discounts_menu() {
  */
 function uc_discounts_order($op, &$arg1, $arg2) {
   switch ($op) {
-    case "load":
+    case 'load':
       //Get order's codes from database
       $codes_string = uc_discounts_order_codes_get($arg1->order_id);
       $arg1->uc_discounts_codes = get_codes($codes_string);
       break;
 
-    case "save":
+    case 'save':
       //If discount line items need updating
       if ($arg1->uc_discounts_line_items_need_updating) {
         //Delete existing order codes
@@ -193,9 +194,9 @@ function uc_discounts_order($op, &$arg1, $arg2) {
           $existing_line_items = uc_order_load_line_items($arg1->order_id, TRUE);
         }
 
-        //Use new_order_line_items to populate $arg1->line_items by:
-        //	Storing all non-discounts line items
-        //	Storing new discount line items
+        // Use new_order_line_items to populate $arg1->line_items by:
+        // Storing all non-discounts line items
+        // Storing new discount line items
         $new_order_line_items = array();
 
         //Delete existing discount line items
@@ -227,37 +228,40 @@ function uc_discounts_order($op, &$arg1, $arg2) {
       }
       break;
 
-    case "update":
+    case 'update':
       //If status changes to "cancelled", delete order uses
       if ($arg2 == "cancelled") {
         uc_discounts_uses_delete_for_order($arg1->order_id);
       }
       break;
 
-    case "submit":
-      //Ensure stored discounts are accurate (recalculate and match new amounts against stored amounts)
-
-      //Store existing discount amounts
+    // Ensure stored discounts are accurate (recalculate and match new amounts against stored amounts)
+    case 'submit':
+      // Store existing discount amounts
       $existing_discount_amounts = array();
-      foreach (get_existing_discount_line_items($arg1) as $line_item) $existing_discount_amounts[] = uc_currency_format($line_item["amount"]);
+      foreach (get_existing_discount_line_items($arg1) as $line_item) {
+        $existing_discount_amounts[] = uc_currency_format($line_item["amount"]);
+      }
 
-
-      //Regenerate discount amounts
-
+      // Regenerate discount amounts
       $errors    = array();
       $warnings  = array();
       $messages  = array();
       $discounts = get_discounts_for_order($arg1, $errors, $warnings, $messages);
 
-      //If there were errors, print and return FALSE
+      // If there were errors, print and return FALSE
       if (!empty($errors)) {
-        foreach ($errors as $error) drupal_set_message($error, "error");
-        return array(array('pass' => FALSE,
+        foreach ($errors as $error) {
+          drupal_set_message($error, "error");
+        }
+
+        return array(array(
+            'pass' => FALSE,
             'message' => t('Discounts have changed.  Please review your cart and continue checkout.'),
           ));
       }
 
-      //Add discount line items to order
+      // Add discount line items to order
       add_discount_line_items_to_order($arg1, $discounts);
 
       $new_discount_amounts = array();
@@ -267,48 +271,37 @@ function uc_discounts_order($op, &$arg1, $arg2) {
 
       $discount_intersection = array_intersect($existing_discount_amounts, $new_discount_amounts);
       if (count($discount_intersection) != count($existing_discount_amounts)) {
-        //Save new discount line items
+        // Save new discount line items
         $arg1->uc_discounts_line_items_need_updating = TRUE;
-        uc_discounts_order("save", $arg1, NULL);
+        uc_discounts_order('save', $arg1, NULL);
 
-        return array(array('pass' => FALSE,
+        return array(array(
+            'pass' => FALSE,
             'message' => t('Discounts have changed.  Please review your cart and continue checkout.'),
           ));
       }
 
-      //Delete existing uses for order
-      uc_discounts_uses_delete_for_order($arg1->order_id);
-
-      //Insert uses (for best results use discounts returned by call to get_discounts_for_order)
-      foreach ($discounts as $discount) {
-        $code          = (!empty($discount->code)) ? $discount->code : "";
-        $times_applied = (is_numeric($discount->times_applied)) ? $discount->times_applied : 1;
-        $amount        = (is_numeric($discount->amount)) ? $discount->amount : 0;
-
-        $discount_use = new stdClass();
-        $discount_use->discount_id = $discount->discount_id;
-        $discount_use->user_id = $arg1->uid;
-        $discount_use->order_id = $arg1->order_id;
-        $discount_use->code = $code;
-        $discount_use->times_applied = $times_applied;
-        $discount_use->amount = $amount;
-        $discount_use->insert_timestamp = time();
-        drupal_write_record('uc_discounts_uses', $discount_use);
-      }
-
-      //Add discount messages to order
+      // Add discount messages to order
       uc_order_log_changes($arg1->order_id, $messages);
-
-      // Don't allow user to re-use codes on another order without re-entering them
-      unset($_SESSION['uc_discounts_applied']);
       break;
 
-    case "delete":
-      //Delete existing order codes
+    case 'delete':
+      // Delete existing order codes
       uc_discounts_order_codes_delete($arg1->order_id);
       //TO DO: determine if uses should be deleted or put global setting in for user to decide
       break;
   }
+}
+
+/**
+ * Implementation of hook_uc_checkout_complete().
+ * Upon successful completion of checkout, record usage
+ * Note: $order->uc_discounts_codes is set by the checkout pane
+ */
+function uc_discounts_uc_checkout_complete($order, $account) {
+  uc_discounts_uses_save_for_order($order);
+  // Don't allow user to re-use codes on another order without re-entering them
+  unset($_SESSION['uc_discounts_applied']);
 }
 
 /**
@@ -394,6 +387,7 @@ function uc_discounts_order_pane_callback($op, $arg1) {
             add_discount_line_items_to_order($order, $discounts);
             $order->uc_discounts_line_items_need_updating = TRUE;
             uc_discounts_order('save', $order, NULL);
+            uc_discounts_uses_save_for_order($order);
             drupal_set_message(t('Discount code(s) applied to order.'));
           }
         }
@@ -578,8 +572,12 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
       }
       $arg1->uc_discounts_codes = $applied_codes;
 
-      foreach ($errors as $error) drupal_set_message($error, "error");
-      foreach ($warnings as $warning) drupal_set_message(t("Warning:") . $warning, "error");
+      foreach ($errors as $error) {
+        drupal_set_message($error, "error");
+      }
+      foreach ($warnings as $warning) {
+        drupal_set_message(t('Warning: @warning', array('@warning' => $warning)), 'error');
+      }
 
       //If there were errors, return FALSE
       if (!empty($errors)) {
@@ -688,7 +686,9 @@ function uc_discounts_js_calculate() {
 
   if (!empty($warnings)) {
     $warnings2 = array();
-    foreach ($warnings as $warning) $warnings2[] = t("Warning:") . $warning;
+    foreach ($warnings as $warning) {
+      $warnings2[] = t('Warning: @warning', array('@warning' => $warning));
+    }
     $errors = array_merge($errors, $warnings2);
   }
 
@@ -1055,14 +1055,18 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
   if (!empty($order->uc_discounts_codes)) {
     //Create IN string of product node IDs in order
     $escaped_codes = array();
-    foreach ($order->uc_discounts_codes as $code) $escaped_codes[] = "'". db_escape_string($code) ."'";
+    foreach ($order->uc_discounts_codes as $code) {
+      $escaped_codes[] = "'". db_escape_string($code) ."'";
+    }
     $escaped_codes_string = join(",", $escaped_codes);
 
     $codes_clause = sprintf(" OR d.discount_id IN( SELECT discount_id FROM {uc_discounts_codes} WHERE code IN(%s) )",
       $escaped_codes_string
     );
   }
-  else $codes_clause = "";
+  else {
+    $codes_clause = "";
+  }
 
   //Create roles clause
   $auth_rid = ($order->uid != 0) ? DRUPAL_AUTHENTICATED_RID : DRUPAL_ANONYMOUS_RID;
@@ -1690,6 +1694,33 @@ function uc_discounts_uses_delete_for_order($order_id) {
   $query = "DELETE FROM {uc_discounts_uses} WHERE order_id=%d";
   uc_discounts_log("query=". $query);
   db_query($query, $order_id);
+}
+
+/**
+ * Records uses of a discount for an order
+ */
+function uc_discounts_uses_save_for_order($order) {
+  $discounts = get_discounts_for_order($order);
+
+  // Delete existing uses for order
+  uc_discounts_uses_delete_for_order($order->order_id);
+
+  // Insert uses (for best results use discounts returned by call to get_discounts_for_order)
+  foreach ($discounts as $discount) {
+    $code          = (!empty($discount->code)) ? $discount->code : '';
+    $times_applied = (is_numeric($discount->times_applied)) ? $discount->times_applied : 1;
+    $amount        = (is_numeric($discount->amount)) ? $discount->amount : 0;
+
+    $discount_use = new stdClass();
+    $discount_use->discount_id = $discount->discount_id;
+    $discount_use->user_id = $order->uid;
+    $discount_use->order_id = $order->order_id;
+    $discount_use->code = $code;
+    $discount_use->times_applied = $times_applied;
+    $discount_use->amount = $amount;
+    $discount_use->insert_timestamp = time();
+    drupal_write_record('uc_discounts_uses', $discount_use);
+  }
 }
 
 /**

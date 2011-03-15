@@ -302,6 +302,7 @@ function uc_discounts_uc_checkout_complete($order, $account) {
   uc_discounts_uses_save_for_order($order);
   // Don't allow user to re-use codes on another order without re-entering them
   unset($_SESSION['uc_discounts_applied']);
+  unset($_SESSION['uc_discounts_codes']);
 }
 
 /**
@@ -669,7 +670,8 @@ function uc_discounts_js_calculate() {
   $discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
 
   $i = 0;
-  // Session var gets used by conditional action
+  // Session vars get used by conditional action
+  $_SESSION['uc_discounts_codes'] = $order->uc_discounts_codes;
   $_SESSION['uc_discounts_applied'] = array();
   foreach ($discounts as $discount) {
     $_SESSION['uc_discounts_applied'][] = $discount->discount_id;

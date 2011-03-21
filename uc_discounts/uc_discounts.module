@@ -1229,7 +1229,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     $order_qualifying_subtotal = 0;
 
     // Check if required_product is set.
-    if (isset($discount->required_product) && $discount->required_product != 'none') {
+    if ($discount->required_product != '') {
       // Get nid of required_product
       $required_product_result = db_query("SELECT DISTINCT nid from {uc_products} WHERE model='%s'", $discount->required_product);
       $required_product_id = db_result($required_product_result);
@@ -1367,6 +1367,10 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     // See if we need to limit the number of applications
     if ($discount->max_times_applied != 0) {
       $discount->times_applied = min($discount->times_applied, $discount->max_times_applied);
+    }
+    // See if it be further limited based on number of required products in the cart
+    if ($discount->limit_max_times_applied && $discount->required_product != '') {
+      $discount->times_applied = min($discount->times_applied, $order_product_id_quantity_map[$required_product_id]);
     }
 
     switch ($discount->discount_type) {

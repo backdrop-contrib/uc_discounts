@@ -152,7 +152,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#size" => 75,
   );
 
-  $is_active = isset($form_state["values"]["is_active"]) ? $form_state["values"]["is_active"] : IS_ACTIVE_DEFAULT;
+  $is_active = isset($form_state["values"]["is_active"]) ? $form_state["values"]["is_active"] : FALSE;
   $form["is_active"] = array(
     "#type" => "checkbox",
     "#title" => t("Is active"),
@@ -165,10 +165,10 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "checkbox",
     "#title" => t("Can be combined with other discounts"),
     "#default_value" => isset($form_state["values"]["can_be_combined_with_other_discounts"])
-     ? $form_state["values"]["can_be_combined_with_other_discounts"] : CAN_BE_COMBINED_WITH_OTHER_DISCOUNTS_DEFAULT,
+     ? $form_state["values"]["can_be_combined_with_other_discounts"] : FALSE,
   );
 
-  $has_activation = isset($form_state["values"]["has_activation"]) ? $form_state["values"]["has_activation"] : HAS_ACTIVATION_DEFAULT;
+  $has_activation = isset($form_state["values"]["has_activation"]) ? $form_state["values"]["has_activation"] : FALSE;
   $form["has_activation"] = array(
     "#type" => "checkbox",
     "#title" => t("Discount activates"),
@@ -189,7 +189,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     '#suffix' => "</div>",
   );
 
-  $has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : HAS_EXPIRATION_DEFAULT;
+  $has_expiration = isset($form_state["values"]["has_expiration"]) ? $form_state["values"]["has_expiration"] : FALSE;
   $form["has_expiration"] = array(
     "#type" => "checkbox",
     "#title" => t("Discount expires"),
@@ -245,7 +245,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#required" => TRUE,
   );
 
-  $has_qualifying_amount_max = isset($form_state["values"]["has_qualifying_amount_max"]) ? $form_state["values"]["has_qualifying_amount_max"] : HAS_QUALIFYING_AMOUNT_MAX_DEFAULT;
+  $has_qualifying_amount_max = isset($form_state["values"]["has_qualifying_amount_max"]) ? $form_state["values"]["has_qualifying_amount_max"] : FALSE;
   $form["qualifications"]["has_qualifying_amount_max"] = array(
     "#type" => "checkbox",
     "#title" => t("Has max qualifying amount."),
@@ -266,31 +266,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#suffix" => "</div>",
   );
 
-  $form["discount_set"] = array(
-    "#type" => "fieldset",
-    "#title" => t("Discount Application"),
-    "#description" => t("Details of the discount to apply"),
-    "#collapsible" => TRUE,
-  );
-
-  $form["discount_set"]["discount_type"] = array(
-    "#type" => "select",
-    "#title" => t("Discount type"),
-    "#description" => t("Type of discount to apply."),
-    "#options" => discount_type_options(),
-    "#default_value" => $form_state["values"]["discount_type"],
-  );
-
-  $form["discount_set"]["discount_amount"] = array(
-    "#type" => "textfield",
-    "#title" => t("Discount amount"),
-    "#description" => t("The amount of discount.	E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)"),
-    "#default_value" => $form_state["values"]["discount_amount"],
-    "#size" => 15,
-    "#required" => TRUE,
-  );
-
-  $requires_code = isset($form_state["values"]["requires_code"]) ? $form_state["values"]["requires_code"] : REQUIRES_CODE_DEFAULT;
+  $requires_code = isset($form_state["values"]["requires_code"]) ? $form_state["values"]["requires_code"] : FALSE;
   $display_string = ($requires_code) ? "" : " style='display:none'";
 
   $codes_container_id = "codes-container-". $seed;
@@ -337,7 +313,103 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#suffix" => "</div>",
   );
 
-  $filter_type = isset($form_state["values"]["filter_type"]) ? $form_state["values"]["filter_type"] : FILTER_TYPE_DEFAULT;
+  $has_role_filter = isset($form_state["values"]["has_role_filter"]) ? $form_state["values"]["has_role_filter"] : FALSE;
+  $form["qualifications"]["has_role_filter"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Qualification by Role(s)."),
+    "#default_value" => $has_role_filter,
+    '#attributes' => array('onchange' => "$('#discount-role-ids-wrapper').toggle();"),
+  );
+
+  //Get current discount roles
+  $role_ids = null;
+  if (isset($form_state["values"]["role_ids"])) {
+    $role_ids = $form_state["values"]["role_ids"];
+  }
+  else if ($is_edit) {
+    $role_ids = get_role_ids_for_discount($discount_id, FALSE);
+  }
+
+  //Create roles form element
+  $options = array();
+  //$result = db_query("SELECT rid, name FROM {role} WHERE rid<>%d AND rid<>%d ORDER BY rid", DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID);
+  $result = db_query("SELECT rid, name FROM {role} ORDER BY rid");
+  $options[ALL_ROLES] = t("<All Roles>");
+  while ($row = db_fetch_object($result)) $options[$row->rid] = $row->name;
+  $display_string = ($has_role_filter) ? "" : " style='display:none'";
+  $form["qualifications"]["role_ids"] = array(
+    "#type" => "select",
+    "#title" => t("Roles") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#description" => t("Select all roles that this discount applies to or &lt;All Roles&gt; to apply to all roles."),
+    "#options" => $options,
+    "#default_value" => $role_ids,
+    "#multiple" => TRUE,
+    "#prefix" => "<div id='discount-role-ids-wrapper'$display_string>",
+    "#suffix" => "</div>",
+  );
+
+  $form["qualifications"]["use_only_discounted_products_to_qualify"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Calculate the order subtotal using only discounted products."),
+    "#description" => t("If checked, uses only the products included by the 'Filter type' below in determining if the order meets the qualifying amount.  Otherwise it will be based off all products in the cart."),
+    "#default_value" => isset($form_state["values"]["use_only_discounted_products_to_qualify"]) ? $form_state["values"]["use_only_discounted_products_to_qualify"] : FALSE,
+  );
+
+  $form["qualifications"]["requires_single_product_to_qualify"] = array(
+    "#type" => "checkbox",
+    "#title" => t("Require single product SKU to qualify."),
+    "#description" => t("Requires products with unique SKUs to meet the qualifying requirements. Otherwise, qualifying requirements can be met by a combination of different products."),
+    "#default_value" => isset($form_state["values"]["requires_single_product_to_qualify"]) ? $form_state["values"]["requires_single_product_to_qualify"] : FALSE,
+  );
+
+  //Create SKUs form element
+  $options          = array();
+  $result           = db_query("SELECT p.model, n.title FROM {uc_products} p, {node} n WHERE p.nid=n.nid ORDER BY p.model");
+  $options['none'] = t("No specific product required.");
+  while ($row = db_fetch_object($result)) $options[$row->model] = $row->model ." (". $row->title .")";
+
+  $form["qualifications"]["required_product"] = array(
+    "#type" => "select",
+    "#title" => t("Required product"),
+    "#description" => t("The discount will only be applied if the cart contains this product"),
+    "#options" => $options,
+    "#default_value" => $form_state["values"]["required_product"],
+  );
+
+  $form["discount_set"] = array(
+    "#type" => "fieldset",
+    "#title" => t("Discount Application"),
+    "#description" => t("Details of the discount to apply"),
+    "#collapsible" => TRUE,
+  );
+
+  $form["discount_set"]["discount_type"] = array(
+    "#type" => "select",
+    "#title" => t("Discount type"),
+    "#description" => t("Type of discount to apply."),
+    "#options" => discount_type_options(),
+    "#default_value" => $form_state["values"]["discount_type"],
+  );
+
+  $form["discount_set"]["discount_amount"] = array(
+    "#type" => "textfield",
+    "#title" => t("Discount amount"),
+    "#description" => t("The amount of discount.	E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)"),
+    "#default_value" => $form_state["values"]["discount_amount"],
+    "#size" => 15,
+    "#required" => TRUE,
+  );
+
+  $form["discount_set"]["max_times_applied"] = array(
+    "#type" => "textfield",
+    "#title" => t("Maximum times applied"),
+    "#description" => t("Number of products in the cart to which this discount can be applied (0 for unlimited).  Does not apply to 'Percentage off' or 'Fixed amount off' discounts."),
+    "#default_value" => isset($form_state["values"]["max_times_applied"]) ? $form_state["values"]["max_times_applied"] : 0,
+    "#size" => 7,
+    "#required" => TRUE,
+  );
+
+  $filter_type = isset($form_state["values"]["filter_type"]) ? $form_state["values"]["filter_type"] : FILTER_TYPE_PRODUCTS;
   $products_display_string = ($filter_type == FILTER_TYPE_PRODUCTS) ? "" : " style='display:none'";
   $terms_display_string = ($filter_type == FILTER_TYPE_TERMS) ? "" : " style='display:none'";
   $skus_display_string = ($filter_type == FILTER_TYPE_SKUS) ? "" : " style='display:none'";
@@ -458,84 +530,11 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#suffix" => '</div>',
   );
 
-  $has_role_filter = isset($form_state["values"]["has_role_filter"]) ? $form_state["values"]["has_role_filter"] : HAS_ROLE_FILTER_DEFAULT;
-  $form["qualifications"]["has_role_filter"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Qualification by Role(s)."),
-    "#default_value" => $has_role_filter,
-    '#attributes' => array('onchange' => "$('#discount-role-ids-wrapper').toggle();"),
-  );
-
-  //Get current discount roles
-  $role_ids = null;
-  if (isset($form_state["values"]["role_ids"])) {
-    $role_ids = $form_state["values"]["role_ids"];
-  }
-  elseif ($is_edit) {  $role_ids = get_role_ids_for_discount($discount_id, FALSE);}
-
-  //Create roles form element
-  $options = array();
-  //$result = db_query("SELECT rid, name FROM {role} WHERE rid<>%d AND rid<>%d ORDER BY rid", DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID);
-  $result = db_query("SELECT rid, name FROM {role} ORDER BY rid");
-  $options[ALL_ROLES] = t("<All Roles>");
-  while ($row = db_fetch_object($result)) $options[$row->rid] = $row->name;
-  $display_string = ($has_role_filter) ? "" : " style='display:none'";
-  $form["qualifications"]["role_ids"] = array(
-    "#type" => "select",
-    "#title" => t("Roles") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
-    "#description" => t("Select all roles that this discount applies to or &lt;All Roles&gt; to apply to all roles."),
-    "#options" => $options,
-    "#default_value" => $role_ids,
-    "#multiple" => TRUE,
-    "#prefix" => "<div id='discount-role-ids-wrapper'$display_string>",
-    "#suffix" => "</div>",
-  );
-
-  $form["qualifications"]["use_only_discounted_products_to_qualify"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Calculate the order subtotal using only discounted products."),
-    "#description" => t("If checked, uses only the products included by the 'Filter type' below in determining if the order meets the qualifying amount.  Otherwise it will be based off all products in the cart."),
-    "#default_value" => isset($form_state["values"]["use_only_discounted_products_to_qualify"]) ? $form_state["values"]["use_only_discounted_products_to_qualify"] : USE_ONLY_DISCOUNTED_PRODUCTS_TO_QUALIFY_DEFAULT,
-  );
-
-  $form["qualifications"]["requires_single_product_to_qualify"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Require single product SKU to qualify."),
-    "#description" => t("Requires products with unique SKUs to meet the qualifying requirements. Otherwise, qualifying requirements can be met by a combination of different products."),
-    "#default_value" => isset($form_state["values"]["requires_single_product_to_qualify"]) ? $form_state["values"]["requires_single_product_to_qualify"] : REQUIRES_SINGLE_PRODUCT_TO_QUALIFY_DEFAULT,
-  );
-
-  //Create SKUs form element
-  $options          = array();
-  $result           = db_query("SELECT p.model, n.title FROM {uc_products} p, {node} n WHERE p.nid=n.nid ORDER BY p.model");
-  $options['none'] = t("No specific product required.");
-  while ($row = db_fetch_object($result)) $options[$row->model] = $row->model ." (". $row->title .")";
-
-  $form["qualifications"]["required_product"] = array(
-    "#type" => "select",
-    "#title" => t("Required product"),
-    "#description" => t("The discount will only be applied if the cart contains this product"),
-    "#options" => $options,
-    "#default_value" => $form_state["values"]["required_product"],
-  );
-
-
-  $form["discount_set"]["max_times_applied"] = array(
-    "#type" => "textfield",
-    "#title" => t("Maximum times applied"),
-    "#description" => t("Number of times this discount can be applied to a single cart (0 for unlimited).  Does not apply to 'Percent off' discounts."),
-    "#default_value" => isset($form_state["values"]["max_times_applied"])
-     ? $form_state["values"]["max_times_applied"] : MAX_TIMES_APPLIED_DEFAULT,
-    "#size" => 7,
-    "#required" => TRUE,
-  );
-
   $form["discount_set"]["max_uses"] = array(
     "#type" => "textfield",
     "#title" => t("Max uses"),
     "#description" => t("Number of times this discount can be applied (0 for unlimited)."),
-    "#default_value" => isset($form_state["values"]["max_uses"])
-     ? $form_state["values"]["max_uses"] : MAX_USES_DEFAULT,
+    "#default_value" => isset($form_state["values"]["max_uses"]) ? $form_state["values"]["max_uses"] : 0,
     "#size" => 7,
     "#required" => TRUE,
   );
@@ -544,8 +543,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "textfield",
     "#title" => t("Max uses per user"),
     "#description" => t("Number of times this discount can be applied to a particular user (0 for unlimited)."),
-    "#default_value" => isset($form_state["values"]["max_uses_per_user"])
-     ? $form_state["values"]["max_uses_per_user"] : MAX_USES_PER_USER_DEFAULT,
+    "#default_value" => isset($form_state["values"]["max_uses_per_user"]) ? $form_state["values"]["max_uses_per_user"] : 0,
     "#size" => 7,
     "#required" => TRUE,
   );
@@ -554,8 +552,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "textfield",
     "#title" => t("Max uses per code"),
     "#description" => t("Number of times this discount can be applied to a particular code (0 for unlimited).  Note: if 'Max uses' (if set) still applies as overall maximum number of uses for this discount."),
-    "#default_value" => isset($form_state["values"]["max_uses_per_code"])
-     ? $form_state["values"]["max_uses_per_code"] : MAX_USES_PER_CODE_DEFAULT,
+    "#default_value" => isset($form_state["values"]["max_uses_per_code"]) ? $form_state["values"]["max_uses_per_code"] : 0,
     "#size" => 7,
     "#required" => TRUE,
   );

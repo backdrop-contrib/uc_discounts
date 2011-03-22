@@ -1364,13 +1364,13 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
     // Determine number of times to apply discount, by default once for every qualifying product
     $discount->times_applied = $discount_products_qty;
-    // See if we need to limit the number of applications
-    if ($discount->max_times_applied != 0) {
-      $discount->times_applied = min($discount->times_applied, $discount->max_times_applied);
-    }
-    // See if it be further limited based on number of required products in the cart
+    // See if it should be limited based on number of required products in the cart
     if ($discount->limit_max_times_applied && $discount->required_product != '') {
       $discount->times_applied = min($discount->times_applied, $order_product_id_quantity_map[$required_product_id]);
+    }
+    // See if we need to limit the number of applications with a hard cap
+    if ($discount->max_times_applied != 0) {
+      $discount->times_applied = min($discount->times_applied, $discount->max_times_applied);
     }
 
     switch ($discount->discount_type) {

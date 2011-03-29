@@ -38,3 +38,10 @@ table.uc-discounts td.is_active {
 table.uc-discounts td.is_inactive {
   color: red;
 }
+
+code.uc-discounts-generated-codes {
+  display: block;
+  background: #eee;
+  border: 1px solid #333;
+  white-space: pre;
+}

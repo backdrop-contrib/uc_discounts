@@ -1,11 +1,4 @@
 <?php
-
-
-/**
- * @file
- * Discounts administration menu items.
- */
-
 /**
  * Display a list of discounts.
  */
@@ -301,7 +294,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $form["qualifications"]["codes"] = array(
     "#type" => "textarea",
     "#title" => t("Discount codes") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
-    "#description" => t("Enter discount codes in box above, one code per line.  Spaces are permitted but may confuse consumers. Note codes will be trimmed."),
+    "#description" => t("Enter discount codes in box above, one code per line.  Spaces are permitted but may confuse consumers.  You may use the !link if you need to create a lot of unique codes.", array('!link' => l(t('discount code generator'), "admin/store/uc_discounts/generate_codes/$discount_id"))),
     "#default_value" => $codes_string,
     "#rows" => 5,
     "#prefix" => sprintf("<div class='codes-container'%s>", $display_string) ."<div class='discount-codes-wrapper'>",
@@ -889,16 +882,11 @@ function uc_discounts_copy($original_discount_id) {
  * @ingroup forms
  * @see uc_discounts_delete_submit()
  */
-function uc_discounts_delete($form_state, $discount_id = 0) {
-  if ($discount_id != 0) {
-    $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
-    $form     = array("discount_id" => array("#type" => "value", "#value" => $discount_id));
-    $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/uc_discounts');
-    return $output;
-  }
-  else {
-    drupal_goto("admin/store/uc_discounts");
-  }
+function uc_discounts_delete($form_state, $discount_id) {
+  $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
+  $form     = array("discount_id" => array("#type" => "value", "#value" => $discount_id));
+  $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/uc_discounts');
+  return $output;
 }
 
 /**
@@ -911,7 +899,6 @@ function uc_discounts_delete_submit($form, &$form_state) {
   }
 
   drupal_set_message(t("Discount deleted."));
-
   $form_state["redirect"] = "admin/store/uc_discounts";
 }
 
@@ -1111,3 +1098,81 @@ function uc_discounts_report_for_discount($discount_id) {
   return $output;
 }
 
+/**
+ * Allows admin to generate a list of unique codes that can be used for things like mail blasts
+ */
+function uc_discounts_generate_codes(&$form_state, $discount_id) {
+}
+
+/**
+ * @see uc_discounts_generate_codes()
+ */
+function uc_discounts_generate_codes_form(&$form_state, $discount_id) {
+  $form['about'] = array(
+    '#value' => '<p>' . t('Generate unqiue codes for this discount.  After generating them simply copy and paste them into the Codes textarea for your discount.') . '</p>',
+  );
+  $form['num'] = array(
+    '#title' => t('Number of codes'),
+    '#type' => 'textfield',
+    '#default_value' => $form_state['values']['num'],
+    '#required' => TRUE,
+    '#size' => 5,
+  );
+  $form['pattern'] = array(
+    '#title' => t('Code pattern'),
+    '#description' => t('The pattern for generating the codes.  %d will be replaced with a random digit, %s will be replaced with a random letter.'),
+    '#default_value' => empty($form_state['values']['pattern']) ? 'code%d%s%d' : $form_state['values']['pattern'],
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#size' => 15,
+  );
+  $form['discount_id'] = array('#type' => 'value', '#value' => $discount_id);
+  $form['submit'] = array(
+    '#value' => t('Generate codes'),
+    '#type' => 'submit',
+  );
+
+  if (!empty($form_state['storage']['codes'])) {
+    $form['codes'] = array(
+      '#value' => "<p><em>" . t('Copy these codes into the Codes textarea for your discount. Note that this list also contains any existing codes for the discount.') . "</em></p>
+                   <code class=\"uc-discounts-generated-codes\">{$form_state['storage']['codes']}</code>",
+    );
+  }
+
+  return $form;
+}
+
+function uc_discounts_generate_codes_form_validate($form, &$form_state) {
+  if (!is_numeric($form_state['values']['num']) || $form_state['values']['num'] <= 0) {
+    form_set_error('num', t('Number of discounts must be a number greater than 0.'));
+  }
+
+  if (substr_count($form_state['values']['pattern'], '%') < 2) {
+    form_set_error('pattern', t('Code pattern must have at least two random digits or letters to ensure uniqueness.'));
+  }
+}
+
+function uc_discounts_generate_codes_form_submit($form, &$form_state) {
+  $codes = get_codes_for_discount($form_state['values']['discount_id']);
+  foreach(range(1, $form_state['values']['num']) as $num) {
+    while (true) {
+      $code = preg_replace_callback('/%(s|d)/', '_uc_discounts_get_random_string', $form_state['values']['pattern']);
+      if (!in_array($code, $codes)) {
+        $codes[] = $code;
+        break;
+      }
+    }
+  }
+
+  $form_state['storage']['codes'] = implode("\n", $codes);
+}
+
+/**
+ * Generates a randome digit or letter, used as a callback for preg_replace
+ */
+function _uc_discounts_get_random_string($matches) {
+  // @see user_password
+  $str = $matches[1] == 's' ? 'abcdefghijkmnopqrstuvwxyz' : '23456789';
+  $str_len = strlen($str) - 1;
+  return $str[mt_rand(0, $str_len)];
+}

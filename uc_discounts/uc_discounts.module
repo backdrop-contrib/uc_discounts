@@ -48,22 +48,14 @@ define("CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY", "messages");
  * Implementation of hook_init().
  */
 function uc_discounts_init() {
-  drupal_add_css(drupal_get_path("module", "uc_discounts") ."/uc_discounts.css");
-}
-
-function uc_discounts_help($path, $arg) {
-  switch ($path) {
-    case "admin/store/uc_discounts":
-      return t("Add and review discounts");
-  }
-  return $output;
+  drupal_add_css(drupal_get_path('module', 'uc_discounts')  . '/uc_discounts.css');
 }
 
 /**
  * Implementation of hook_perm().
  */
 function uc_discounts_perm() {
-  return array("configure discounts");
+  return array('configure discounts');
 }
 
 /**
@@ -74,7 +66,7 @@ function uc_discounts_menu() {
 
   $items['admin/store/uc_discounts'] = array(
     'title' => 'Discounts',
-    'description' => 'Configure discouns.',
+    'description' => 'Add and review discounts.',
     'page callback' => 'uc_discounts_admin_list',
     'access arguments' => array('configure discounts'),
     'type' => MENU_NORMAL_ITEM,
@@ -95,27 +87,37 @@ function uc_discounts_menu() {
     'weight' => 1,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/uc_discounts/edit'] = array(
+  $items['admin/store/uc_discounts/edit/%'] = array(
     'title' => 'Edit discount rule',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_discounts_form'),
+    'page arguments' => array('uc_discounts_form', 4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/uc_discounts/copy'] = array(
+  $items['admin/store/uc_discounts/copy/%'] = array(
     'page callback' => 'uc_discounts_copy',
+    'page arguments' => array(4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/store/uc_discounts/delete'] = array(
+  $items['admin/store/uc_discounts/delete/%'] = array(
     'title' => 'Delete discount rule',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_discounts_delete'),
+    'page arguments' => array('uc_discounts_delete', 4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
+  );
+  $items['admin/store/uc_discounts/generate_codes/%'] = array(
+    'title' => 'Generate codes',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_discounts_generate_codes_form', 4),
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
+    'weight' => 2,
   );
   $items['cart/checkout/uc_discounts/calculate'] = array(
     'page callback' => 'uc_discounts_js_calculate',
@@ -287,7 +289,6 @@ function uc_discounts_order($op, &$arg1, $arg2) {
 function uc_discounts_uc_checkout_complete($order, $account) {
   uc_discounts_uses_save_for_order($order);
   // Don't allow user to re-use codes on another order without re-entering them
-  unset($_SESSION['uc_discounts_applied']);
   unset($_SESSION['uc_discounts_codes']);
 }
 
@@ -658,9 +659,7 @@ function uc_discounts_js_calculate() {
   $i = 0;
   // Session vars get used by conditional action
   $_SESSION['uc_discounts_codes'] = $order->uc_discounts_codes;
-  $_SESSION['uc_discounts_applied'] = array();
   foreach ($discounts as $discount) {
-    $_SESSION['uc_discounts_applied'][] = $discount->discount_id;
     if ($discount->amount != 0) {
       $line_item           = array();
       $line_item["id"]     = LINE_ITEM_KEY_NAME . $i++;
@@ -712,10 +711,10 @@ function uc_discounts_delete_all($discount_id) {
  */
 function get_codes_for_discount($discount_id) {
   $codes = array();
-
-  //Get codes from database
-  $result = db_query("SELECT code FROM {uc_discounts_codes} WHERE discount_id=%d", $discount_id);
-  while ($row = db_fetch_array($result)) $codes[] = $row["code"];
+  $result = db_query('SELECT code FROM {uc_discounts_codes} WHERE discount_id = %d', $discount_id);
+  while ($row = db_fetch_array($result)) {
+    $codes[] = $row['code'];
+  }
   return $codes;
 }
 

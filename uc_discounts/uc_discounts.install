@@ -282,7 +282,7 @@ function uc_discounts_schema() {
     "fields" => array(
       "discount_class_id" => array(
         "type" => "serial",
-        "no null" => TRUE,
+        "not null" => TRUE,
       ),
       "discount_id" => array(
         "type" => "int",

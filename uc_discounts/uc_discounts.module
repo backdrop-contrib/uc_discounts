@@ -688,6 +688,142 @@ function uc_discounts_js_calculate() {
   exit;
 }
 
+/**
+ * Implements hook_theme().
+ */
+function uc_discounts_theme() {
+  return array(
+    'uc_discounts_cart_checkout_table' => array(
+      'arguments' => array('form' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_checkout_pane_alter()
+ * Get discounted price to show up on checkout, & review
+ */
+function uc_discounts_checkout_pane_alter(&$panes) {
+  foreach ($panes as &$pane) {
+    if ($pane['id'] == 'cart') {
+      $pane['callback'] = 'uc_discounts_checkout_pane_content';
+    }
+  }
+}
+
+function uc_discounts_checkout_pane_content($op) {
+  switch ($op) {
+    case 'view':
+      $contents['cart_review_table'] = array(
+        '#value' => theme('uc_discounts_cart_checkout_table'),
+        '#weight' => variable_get('uc_pane_cart_field_cart_weight', 2),
+      );
+      return array('contents' => $contents, 'next-button' => FALSE);
+
+    case 'review':
+      $discount_amount = uc_discounts_get_discount_amount_for_order($op);
+      $items = uc_cart_get_contents();
+      $output = '<table>';
+      $context = array(
+        'revision' => 'themed',
+        'type' => 'cart_item',
+        'subject' => array(),
+      );
+      $total = 0;
+      foreach ($items as $item) {
+        $total += ($item->price * $item->qty);
+        $desc = check_plain($item->title) . uc_product_get_description($item);
+
+        $price_info = array(
+          'price' => $item->price,
+          'qty' => $item->qty,
+        );
+        $context['subject'] = array(
+          'cart' => $items,
+          'cart_item' => $item,
+          'node' => node_load($item->nid),
+        );
+        $output .= '<tr valign="top"><td>' . $item->qty . '&times;</td><td width="100%">' . $desc
+                   . '</td><td nowrap="nowrap">' . uc_price($price_info, $context) . '</td></tr>';
+      }
+      if ($discount_amount > 0) {
+        $final_price = $total - $discount_amount;
+        $output .= '<tr valign="top"><td colspan="2"><strong>' . t('Discount') . ': </strong></td><td nowrap="nowrap">' . uc_price($discount_amount, $context) . '</td></tr>';
+        $output .= '<tr valign="top"><td colspan="2"><strong>' . t('Total') . ': </strong></td><td nowrap="nowrap"><b>' . uc_price($final_price, $context) . '</b></td></tr>';
+      }
+      $output .= '</table>';
+      $review[] = $output;
+      return $review;
+  }
+}
+
+function theme_uc_discounts_cart_checkout_table($show_subtotal = TRUE) {
+  $subtotal = 0;
+
+  $discount_amount = uc_discounts_get_discount_amount_for_order('checkout');
+  // Set up table header.
+  $header = array(
+    array('data' => t('Qty'), 'class' => 'qty'),
+    array('data' => t('Products'), 'class' => 'products'),
+    array('data' => t('Price'), 'class' => 'price'),
+  );
+
+  $context = array();
+
+  // Set up table rows.
+  $contents = uc_cart_get_contents();
+  foreach ($contents as $item) {
+    $price_info = array(
+      'price' => $item->price,
+      'qty' => $item->qty,
+    );
+
+    $context['revision'] = 'altered';
+    $context['type'] = 'cart_item';
+    $context['subject'] = array(
+      'cart' => $contents,
+      'cart_item' => $item * $discount_amount,
+      'node' => node_load($item->nid),
+    );
+
+    $total = uc_price($price_info, $context);
+    $subtotal += $total;
+
+    $description = check_plain($item->title) . uc_product_get_description($item);
+
+    // Remove node from context to prevent the price from being altered.
+    $context['revision'] = 'themed-original';
+    $context['type'] = 'amount';
+    unset($context['subject']);
+    $rows[] = array(
+      array('data' => t('@qty&times;', array('@qty' => $item->qty)), 'class' => 'qty'),
+      array('data' => $description, 'class' => 'products'),
+      array('data' => uc_price($total, $context), 'class' => 'price'),
+    );
+  }
+  if ($discount_amount > 0) {
+    $rows[] = array(
+      array('data' => ''),
+      array('data' => t('Discount:'), 'align' => 'right'),
+      array('data' => uc_price($discount_amount, $context), 'class' => 'price'),
+    );
+    $subtotal = $subtotal - $discount_amount;
+  }
+
+  // Add the subtotal as the final row.
+  if ($show_subtotal) {
+    $context = array(
+      'revision' => 'themed-original',
+      'type' => 'amount',
+    );
+    $rows[] = array(
+      'data' => array(array('data' => '<span id="subtotal-title">' . t('Subtotal:') . '</span> ' . uc_price($subtotal, $context), 'colspan' => 3, 'class' => 'subtotal')),
+      'class' => 'subtotal',
+    );
+  }
+
+  return theme('table', $header, $rows, array('class' => 'cart-review'));
+}
 
 ///////////////////////////////////////////////////////////////////
 //Database operations
@@ -1557,6 +1693,34 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
   // end of db fetch while loop
   return $discounts;
+}
+
+/**
+ * Helper function that gets the discount amount for the order
+ * @return int *
+ */
+function uc_discounts_get_discount_amount_for_order($op) {
+  global $user;
+  $order = uc_order_load($_SESSION["cart_order"]);
+  if (!$order) {
+    $items = uc_cart_get_contents();
+    $order = new stdClass();
+    $order->uid = $user->uid;
+    $order->products = $items;
+  }
+  $errors = array();
+  $warnings = array();
+  $messages = array();
+  $discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
+  $total_discount_amount = 0;
+  if (is_array($discounts)) {
+    foreach ($discounts as $discount) {
+      if (!$discount->requires_code || $op == 'review') {
+        $total_discount_amount += $discount->amount;
+      }
+    }
+  }
+  return $total_discount_amount;
 }
 
 /**

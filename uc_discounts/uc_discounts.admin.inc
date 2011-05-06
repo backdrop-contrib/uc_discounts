@@ -412,7 +412,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#description" => t("Allows for a discount like 'Get half off X for each Y that is purchased.'"),
     "#default_value" => isset($form_state["values"]["limit_max_times_applied"]) ? $form_state["values"]["limit_max_times_applied"] : FALSE,
     "#size" => 7,
-    "#required" => TRUE,
     '#prefix' => "<div id=\"discount-limit-max-times-applied-wrapper\"$display_string>",
     '#suffix' => "</div>",
   );

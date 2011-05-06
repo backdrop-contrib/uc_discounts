@@ -29,7 +29,7 @@ function uc_discounts_schema() {
       ),
       "description" => array(
         "type" => "varchar",
-        "length" => 1000,
+        "length" => 100,
         "not null" => TRUE,
         "default" => "",
       ),

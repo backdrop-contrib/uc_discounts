@@ -1,4 +1,5 @@
 <?php
+//$Id: product_price_alterer_field.module,v 1.16 2009/08/22 21:30:39 ryangroe Exp $
 
 
 /**
@@ -167,71 +168,41 @@ function theme_add_product_price_altering_javascript($product) {
 
     //Alter price using javascript
     drupal_add_js("$(document).ready(function()
-			{
-				$(\".views-field-discounted-price\").each(function()
-					{
-						var self = $(this);
-						var content = self.find(\".field-content:first\");
-						if ( (content.size() > 0) && ($.trim( content.html() ).length == 0) )
-							return true;
-						else if ($.trim( self.html() ).length == 0)
-							return true;
+      {
+        $(\".views-field-discounted-price\").each(function()
+          {
+            var self = $(this);
+            var content = self.find(\".field-content:first\");
+            if ( (content.size() > 0) && ($.trim( content.html() ).length == 0) )
+              return true;
+            else if ($.trim( self.html() ).length == 0)
+              return true;
 
-						self.parent().find(\".views-field-sell-price:not(th)\")
-							.addClass(\"original-sell-price\");
-					});
-				$(\".uc-price-sell:not(.original-sell-price)\").each(function()
-					{
-						var self = $(this);
-						self.addClass(\"original-sell-price\")
-							.after(	$( \".field-type-discounted-price:first\", self.parent() )	);
-					});
-				//Legacy
-				$(\".sell-price:not(.original-sell-price)\").each(function()
-					{
-						var self = $(this);
-						self.addClass(\"original-sell-price\")
-							.after(	$( \".field-type-discounted-price:first\", self.parent() )	);
-					});
-			});", "inline");
+            self.parent().find(\".views-field-sell-price:not(th)\")
+              .addClass(\"original-sell-price\");
+          });
+        $(\".uc-price-sell:not(.original-sell-price)\").each(function()
+          {
+            var self = $(this);
+            self.addClass(\"original-sell-price\")
+              .after(  $( \".field-type-discounted-price:first\", self.parent() )  );
+          });
+        //Legacy
+        $(\".sell-price:not(.original-sell-price)\").each(function()
+          {
+            var self = $(this);
+            self.addClass(\"original-sell-price\")
+              .after(  $( \".field-type-discounted-price:first\", self.parent() )  );
+          });
+      });", "inline");
   }
 }
 
 /**
- * Implementation of hook_views_data()
- * Register all of the basic handlers views uses.
+ * Implementation hook_views_api
  */
-function product_price_alterer_field_views_data() {
-  $data["uc_products"]["discounted_price"] = array(
-    "title" => t("Discounted price"),
-    "help" => t("Price after discounts (if any exist)."),
-    "real field" => "sell_price",
-    "argument" => array(
-      "handler" => "views_handler_argument_numeric",
-    ),
-    "field" => array(
-      "handler" => "discounted_price_handler",
-      "click sortable" => FALSE,
-    ),
-  );
-
-  return $data;
-}
-
-/**
- * Implementation of hook_views_handlers()
- * Register all of the basic handlers views uses.
- */
-function product_price_alterer_field_views_handlers() {
+function product_price_alterer_field_views_api() {
   return array(
-    "info" => array(
-      "path" => drupal_get_path("module", "product_price_alterer_field"),
-    ),
-    "handlers" => array(
-      "discounted_price_handler" => array(
-        "parent" => "views_handler_field_numeric",
-      ),
-    ),
+    'api' => 2,
   );
 }
-

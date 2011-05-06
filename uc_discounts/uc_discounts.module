@@ -846,7 +846,7 @@ function get_skus_for_discount($discount_id, $exclude_all_skus = FALSE) {
 
   //Get SKUs from database
   if ($exclude_all_skus) {
-    $result = db_query("SELECT sku FROM {uc_discounts_skus} WHERE discount_id = %d AND sku <> '%s'",
+    $result = db_query("SELECT sku FROM {uc_discounts_skus} WHERE discount_id=%d AND sku<>%d",
       $discount_id, ALL_SKUS
     );
   }
@@ -864,7 +864,7 @@ function get_classes_for_discount($discount_id, $exclude_all_classes = FALSE) {
 
   //Get Classes from database
   if ($exclude_all_classes) {
-    $result = db_query("SELECT class FROM {uc_discounts_classes} WHERE discount_id = %d AND class <> '%s'",
+    $result = db_query("SELECT class FROM {uc_discounts_classes} WHERE discount_id=%d AND class<>%d",
       $discount_id, ALL_CLASSES
     );
   }
@@ -1560,14 +1560,29 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 }
 
 /**
+ * Helper function that gets the codeless discounted price of a product
+ * @param $product A node product
+ * @param $return_null Return NULL for the price if there are no discounts.  Otherwise it returns the sell_price
+ */
+function uc_discounts_get_discounted_price_for_product($product, $return_null = TRUE) {
+  $discounts = get_codeless_discounts_for_product_and_quantity($product, 1);
+  if (empty($discounts)) {
+    return $return_null ? NULL : $product->sell_price;
+  }
+
+  $total_discount_amount = 0;
+  foreach ($discounts as $discount) {
+    $total_discount_amount += $discount->amount;
+  }
+
+  return $product->sell_price - $total_discount_amount;
+}
+
+/**
  * Returns all codeless discounts for product.
- *
- * @param $product_id Node ID for product
  */
 function get_codeless_discounts_for_product($product, $sort_column = "weight", $is_ascending_sort = TRUE) {
-  return get_codeless_discounts_for_product_and_quantity($product, NULL,
-    $sort_column, $is_ascending_sort
-  );
+  return get_codeless_discounts_for_product_and_quantity($product, NULL, $sort_column, $is_ascending_sort);
 }
 
 /**
@@ -1575,9 +1590,7 @@ function get_codeless_discounts_for_product($product, $sort_column = "weight", $
  *
  * @param $product_id Node ID for product
  */
-function get_codeless_discounts_for_product_and_quantity($product, $quantity = NULL, $sort_column = "weight",
-  $is_ascending_sort = TRUE
-) {
+function get_codeless_discounts_for_product_and_quantity($product, $quantity = NULL, $sort_column = "weight", $is_ascending_sort = TRUE) {
   if (is_null($product) || !$product) {
     return array();
   }

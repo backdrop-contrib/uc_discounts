@@ -1014,7 +1014,7 @@ function get_classes_for_discount($discount_id, $exclude_all_classes = FALSE) {
 
   //Get Classes from database
   if ($exclude_all_classes) {
-    $result = db_query("SELECT class FROM {uc_discounts_classes} WHERE discount_id=%d AND class<>%d",
+    $result = db_query("SELECT class FROM {uc_discounts_classes} WHERE discount_id=%d AND class <> '%s'",
       $discount_id, ALL_CLASSES
     );
   }

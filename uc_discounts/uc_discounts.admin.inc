@@ -113,7 +113,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $seed           = rand(1, 1000000);
 
   if (!$form_submitted && $is_edit) {
-    $form_state["values"] = db_fetch_array(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
+    $form_state["values"] = (array) uc_discounts_load($discount_id);
   }
 
   $form["#attributes"] = array('class' => 'uc-discounts-form');
@@ -325,7 +325,6 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 
   //Create roles form element
   $options = array();
-  //$result = db_query("SELECT rid, name FROM {role} WHERE rid<>%d AND rid<>%d ORDER BY rid", DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID);
   $result = db_query("SELECT rid, name FROM {role} ORDER BY rid");
   $options[ALL_ROLES] = t("<All Roles>");
   while ($row = db_fetch_object($result)) $options[$row->rid] = $row->name;
@@ -449,7 +448,9 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   if (isset($form_state["values"]["product_ids"])) {
     $product_ids = $form_state["values"]["product_ids"];
   }
-  elseif ($is_edit) {  $product_ids = get_product_ids_for_discount($discount_id, FALSE);}
+  elseif ($is_edit) {
+    $product_ids = get_product_ids_for_discount($discount_id, FALSE);
+  }
 
   //Create products form element
   $options = array();
@@ -815,6 +816,10 @@ function uc_discounts_form_submit($form, &$form_state) {
       }
     }
 
+    foreach (module_implements('uc_discount') as $module) {
+      $function = $module . '_uc_discount';
+      $function('save', $discount);
+    }
     drupal_set_message(t("%name settings have been saved.", array("%name" => $form_state["values"]["name"])));
   }
 }
@@ -823,8 +828,7 @@ function uc_discounts_form_submit($form, &$form_state) {
  * Copy a discount.
  */
 function uc_discounts_copy($original_discount_id) {
-  //Should be transactional
-  $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $original_discount_id));
+  $discount = uc_discounts_load($original_discount_id);
   $discount->name = t("Copy of @discount", array("@discount" => $discount->name));
   $discount->insert_timestamp = time();
   drupal_write_record('uc_discounts', $discount);
@@ -871,6 +875,10 @@ function uc_discounts_copy($original_discount_id) {
     drupal_write_record('uc_discounts_roles', $new_role);
   }
 
+  foreach (module_implements('uc_discount') as $module) {
+    $function = $module . '_uc_discount';
+    $function('save', $discount);
+  }
   drupal_set_message(t("The discount was successfully copied as %name.", array('%name' => $discount->name)));
   drupal_goto("admin/store/uc_discounts");
 }
@@ -882,7 +890,7 @@ function uc_discounts_copy($original_discount_id) {
  * @see uc_discounts_delete_submit()
  */
 function uc_discounts_delete($form_state, $discount_id) {
-  $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
+  $discount = uc_discounts_load($discount_id);
   $form     = array("discount_id" => array("#type" => "value", "#value" => $discount_id));
   $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/uc_discounts');
   return $output;
@@ -893,11 +901,11 @@ function uc_discounts_delete($form_state, $discount_id) {
  */
 function uc_discounts_delete_submit($form, &$form_state) {
   if ($form_state["values"]["confirm"]) {
-    $discount_id = $form_state["values"]["discount_id"];
-    uc_discounts_delete_all($discount_id);
+    $discount = uc_discounts_load($form_state["values"]["discount_id"]);
+    uc_discounts_delete_all($discount);
+    drupal_set_message(t("Discount deleted."));
   }
 
-  drupal_set_message(t("Discount deleted."));
   $form_state["redirect"] = "admin/store/uc_discounts";
 }
 

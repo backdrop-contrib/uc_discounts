@@ -832,14 +832,30 @@ function theme_uc_discounts_cart_checkout_table($show_subtotal = TRUE) {
 /**
  * Deletes a uc_discounts row and all dependencies.
  */
-function uc_discounts_delete_all($discount_id) {
-  db_query("DELETE FROM {uc_discounts_uses} WHERE discount_id=%d", $discount_id);
-  db_query("DELETE FROM {uc_discounts_products} WHERE discount_id=%d", $discount_id);
-  db_query("DELETE FROM {uc_discounts_terms} WHERE discount_id=%d", $discount_id);
-  db_query("DELETE FROM {uc_discounts_skus} WHERE discount_id=%d", $discount_id);
-  db_query("DELETE FROM {uc_discounts_roles} WHERE discount_id=%d", $discount_id);
-  db_query("DELETE FROM {uc_discounts_codes} WHERE discount_id=%d", $discount_id);
-  db_query("DELETE FROM {uc_discounts} WHERE discount_id=%d", $discount_id);
+function uc_discounts_delete_all($discount) {
+  foreach (module_implements('uc_discount') as $module) {
+    $function = $module . '_uc_discount';
+    $function('delete', $discount);
+  }
+  db_query("DELETE FROM {uc_discounts_uses} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts_products} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts_terms} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts_skus} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts_roles} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts_codes} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts} WHERE discount_id=%d", $discount->discount_id);
+}
+
+/**
+ * Loads a discount
+ */
+function uc_discounts_load($discount_id) {
+  $discount = db_fetch_object(db_query("SELECT * FROM {uc_discounts} WHERE discount_id=%d", $discount_id));
+   foreach (module_implements('uc_discount') as $module) {
+     $function = $module . '_uc_discount';
+     $function('load', $discount);
+   }
+  return $discount;
 }
 
 /**
@@ -859,7 +875,6 @@ function get_codes_for_discount($discount_id) {
  */
 function uc_discounts_codes_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_codes} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -952,7 +967,6 @@ function get_product_ids_for_discount($discount_id, $exclude_all_products = FALS
  */
 function uc_discounts_products_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_products} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -1033,7 +1047,6 @@ function get_role_ids_for_discount($discount_id, $exclude_all_roles = FALSE) {
  */
 function uc_discounts_terms_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_terms} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -1042,7 +1055,6 @@ function uc_discounts_terms_delete($discount_id) {
  */
 function uc_discounts_skus_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_skus} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -1051,7 +1063,6 @@ function uc_discounts_skus_delete($discount_id) {
  */
 function uc_discounts_classes_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_classes} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -1060,7 +1071,6 @@ function uc_discounts_classes_delete($discount_id) {
  */
 function uc_discounts_roles_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_roles} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -1217,7 +1227,6 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       ORDER BY weight", $escaped_codes_string, $roles_clause, $product_ids_clause,
       $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE
     );
-    uc_discounts_log("query=". $query);
     $result = db_query($query);
     while ($discount = db_fetch_object($result)) {
       $warnings[] = t('The discount for code "@code" has expired.',
@@ -1250,6 +1259,16 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
   // Appears to check if order qualifies for each discount then applies discount.  Functionality should be separated, no?
   while ($discount = db_fetch_object($result)) {
+    foreach (module_implements('uc_discount') as $module) {
+      $function = $module . '_uc_discount';
+      $function('load', $discount, $order);
+    }
+
+    // In case the hook modified the discount
+    if (!$discount->is_active) {
+      continue;
+    }
+
     //Get code for discount (if one exists)
     $discount->code = NULL;
     if (!empty($escaped_codes_string)) {
@@ -1836,7 +1855,6 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
     $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause,
     time(), time(), IS_ACTIVE, $sort_column, $sort_order_string
   );
-  uc_discounts_log("query=". $query);
   $result = db_query($query);
 
   $discounts = array();
@@ -1849,7 +1867,6 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
  */
 function uc_discounts_uses_delete_for_discount($discount_id) {
   $query = "DELETE FROM {uc_discounts_uses} WHERE discount_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $discount_id);
 }
 
@@ -1858,7 +1875,6 @@ function uc_discounts_uses_delete_for_discount($discount_id) {
  */
 function uc_discounts_uses_delete_for_order($order_id) {
   $query = "DELETE FROM {uc_discounts_uses} WHERE order_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $order_id);
 }
 
@@ -1905,7 +1921,6 @@ function uc_discounts_order_codes_get($order_id) {
  */
 function uc_discounts_order_codes_delete($order_id) {
   $query = "DELETE FROM {uc_discounts_order_codes} WHERE order_id=%d";
-  uc_discounts_log("query=". $query);
   db_query($query, $order_id);
 }
 
@@ -2007,10 +2022,6 @@ function discount_amount_formatted($discount) {
 
 function uc_discounts_add_to_existing_map_number_value(&$a, $key, $value) {
   $a[$key] = (array_key_exists($key, $a)) ? $a[$key] + $value : $value;
-}
-
-function uc_discounts_log($s) {
-  //  error_log($s);
 }
 
 function uc_discounts_views_api() {

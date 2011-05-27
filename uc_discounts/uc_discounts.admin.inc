@@ -288,7 +288,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     if ($is_edit) {
       $codes = get_codes_for_discount($discount_id);
     }
-    $codes_string = create_codes_string($codes);
+    $codes_string = uc_discounts_codes_to_str($codes);
   }
 
   $form["qualifications"]["codes"] = array(

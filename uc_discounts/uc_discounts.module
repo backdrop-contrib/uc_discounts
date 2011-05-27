@@ -159,8 +159,7 @@ function uc_discounts_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'load':
       //Get order's codes from database
-      $codes_string = uc_discounts_order_codes_get($arg1->order_id);
-      $arg1->uc_discounts_codes = get_codes($codes_string);
+      $arg1->uc_discounts_codes = uc_discounts_get_codes_for_order($arg1->order_id);
       break;
 
     case 'save':
@@ -170,7 +169,7 @@ function uc_discounts_order($op, &$arg1, $arg2) {
         uc_discounts_order_codes_delete($arg1->order_id);
 
         //Save order's codes as string
-        $codes_string = create_codes_string($arg1->uc_discounts_codes);
+        $codes_string = uc_discounts_codes_to_str($arg1->uc_discounts_codes);
         $new_discount_order_code = array('order_id' => $arg1->order_id, 'codes' => $codes_string);
         drupal_write_record('uc_discounts_order_codes', $new_discount_order_code);
 
@@ -225,52 +224,10 @@ function uc_discounts_order($op, &$arg1, $arg2) {
 
     // Ensure stored discounts are accurate (recalculate and match new amounts against stored amounts)
     case 'submit':
-      // Store existing discount amounts
-      $existing_discount_amounts = array();
-      foreach (get_existing_discount_line_items($arg1) as $line_item) {
-        $existing_discount_amounts[] = uc_currency_format($line_item["amount"]);
+      $result = uc_discounts_apply($arg1, FALSE);
+      if (!$result['success']) {
+        return array(array('pass' => FALSE, 'message' => $result['message']));
       }
-
-      // Regenerate discount amounts
-      $errors    = array();
-      $warnings  = array();
-      $messages  = array();
-      $discounts = get_discounts_for_order($arg1, $errors, $warnings, $messages);
-
-      // If there were errors, print and return FALSE
-      if (!empty($errors)) {
-        foreach ($errors as $error) {
-          drupal_set_message($error, "error");
-        }
-
-        return array(array(
-            'pass' => FALSE,
-            'message' => t('Discounts have changed.  Please review your cart and continue checkout.'),
-          ));
-      }
-
-      // Add discount line items to order
-      add_discount_line_items_to_order($arg1, $discounts);
-
-      $new_discount_amounts = array();
-      foreach ($arg1->uc_discounts_line_items as $line_item) {
-        $new_discount_amounts[] = uc_currency_format($line_item["amount"]);
-      }
-
-      $discount_intersection = array_intersect($existing_discount_amounts, $new_discount_amounts);
-      if (count($discount_intersection) != count($existing_discount_amounts)) {
-        // Save new discount line items
-        $arg1->uc_discounts_line_items_need_updating = TRUE;
-        uc_discounts_order('save', $arg1, NULL);
-
-        return array(array(
-            'pass' => FALSE,
-            'message' => t('Discounts have changed.  Please review your cart and continue checkout.'),
-          ));
-      }
-
-      // Add discount messages to order
-      uc_order_log_changes($arg1->order_id, $messages);
       break;
 
     case 'delete':
@@ -320,7 +277,7 @@ function uc_discounts_order_pane() {
     'id' => 'uc_discounts',
     'callback' => 'uc_discounts_order_pane_callback',
     'title' => t('Discount codes'),
-    'weight' => 7,
+    'weight' => 8,
     'show' => array('edit'),
   );
 
@@ -335,9 +292,7 @@ function uc_discounts_order_pane_callback($op, $arg1) {
     case 'edit-form':
       $form['uc-discounts']['uc-discounts-codes'] = array(
         '#type' => 'textarea',
-        '#rows' => 5,
-        '#prefix' => '<div class="discount-codes-wrapper">',
-        '#suffix' => '</div>',
+        '#rows' => 3,
       );
       $form['uc-discounts']['uc-discounts-button'] = array(
         '#type' => 'submit',
@@ -354,7 +309,11 @@ function uc_discounts_order_pane_callback($op, $arg1) {
 
     case t('Apply discounts'):
       if ($order = uc_order_load($arg1['order_id'])) {
-        $order->uc_discounts_codes = get_codes($arg1['uc-discounts-codes']);
+        $order->uc_discounts_codes = array_merge($order->uc_discounts_codes, uc_discounts_codes_to_array($arg1['uc-discounts-codes']));
+        $result = uc_discounts_apply($order, TRUE, FALSE);
+        drupal_set_message($result['message'], ($result['success'] ? 'notice' : 'error'));
+
+        /*
         $has_code_errors = FALSE;
         $errors = array();
         $warnings = array();
@@ -379,6 +338,7 @@ function uc_discounts_order_pane_callback($op, $arg1) {
             drupal_set_message(t('Discount code(s) applied to order.'));
           }
         }
+        */
       }
       break;
   }
@@ -516,7 +476,7 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
 
       //If viewing an existing order, load order's codes
       if (!empty($arg1->order_id)) {
-        $codes_string = uc_discounts_order_codes_get($arg1->order_id);
+        $codes_string = uc_discounts_codes_to_str(uc_discounts_get_codes_for_order($arg1->order_id));
       }
 
       $contents["uc-discounts-codes"] = array(
@@ -544,7 +504,7 @@ function uc_checkout_pane_discounts($op, &$arg1, $arg2) {
       //TO DO: only update codes if codes_string ($arg2["uc-discounts-codes"]) has changed
 
       // Save form values from checkout pane in order ($arg1).
-      $arg1->uc_discounts_codes = get_codes($arg2['uc-discounts-codes']);
+      $arg1->uc_discounts_codes = uc_discounts_codes_to_array($arg2['uc-discounts-codes']);
 
       $has_code_errors = FALSE;
 
@@ -604,26 +564,6 @@ function add_discount_line_items_to_order(&$order, $discounts) {
 }
 
 /**
- * Returns existing discounts line items for order.
- */
-function get_existing_discount_line_items($order) {
-  if (is_array($order->line_items)) {
-    $existing_line_items = $order->line_items;
-  }
-  else $existing_line_items = uc_order_load_line_items($order->order_id, TRUE);
-
-  $line_items = array();
-  foreach ($existing_line_items as $line_item) {
-    //If line item type is LINE_ITEM_KEY_NAME, add it to array
-    if ($line_item["type"] == LINE_ITEM_KEY_NAME) {
-      $line_items[] = $line_item;
-    }
-  }
-
-  return $line_items;
-}
-
-/**
  * AJAX callback for discounts calculation.
  *
  * Calculate discount for an order in the checkout page.
@@ -647,7 +587,7 @@ function uc_discounts_js_calculate() {
     $order->products = uc_cart_get_contents();
   }
 
-  $order->uc_discounts_codes = get_codes($_POST['uc-discounts-codes']);
+  $order->uc_discounts_codes = uc_discounts_codes_to_array($_POST['uc-discounts-codes']);
 
   $line_items = array();
   $errors     = array();
@@ -1908,12 +1848,93 @@ function uc_discounts_uses_save_for_order($order) {
 /**
  * Returns order codes for order.
  */
-function uc_discounts_order_codes_get($order_id) {
-  //Get order's codes from database
-  $row = db_fetch_array(db_query(
-      "SELECT codes FROM {uc_discounts_order_codes} WHERE order_id=%d", $order_id
-    ));
-  return (!empty($row)) ? $row["codes"] : NULL;
+function uc_discounts_get_codes_for_order($order_id) {
+  return uc_discounts_codes_to_array(db_result(db_query('SELECT codes FROM {uc_discounts_order_codes} WHERE order_id = %d', $order_id)));
+}
+
+/**
+ * Applies the discounts to an order by creating the necessary line items.
+ * @param  $order The order object with any codes set in the uc_discounts_code property
+ * @param $compare_to_existing Compare new discounts to existing order discounts and fail if they have changed?
+ * @param $save_uses Save the discounts to the uses table?  If not done here it will need to be done when the order is successfully created.
+ * @return array An array with the keys: 'success' => @bool, 'message' => @str
+ */
+function uc_discounts_apply($order, $save_uses = TRUE, $compare_to_existing = TRUE) {
+  // Store existing discount amounts
+  $existing_discount_amounts = array();
+  foreach (get_existing_discount_line_items($order) as $line_item) {
+    $existing_discount_amounts[] = uc_currency_format($line_item["amount"]);
+  }
+
+  // Regenerate discount amounts
+  $errors    = array();
+  $warnings  = array();
+  $messages  = array();
+  $discounts = get_discounts_for_order($order, $errors, $warnings, $messages);
+
+  foreach ($warnings as $warning) {
+    drupal_set_message($warning, 'error');
+  }
+
+  // If there were errors, print and return FALSE
+  if (!empty($errors)) {
+    uc_order_log_changes($order->order_id, $errors);
+    foreach ($errors as $error) {
+      drupal_set_message($error, 'error');
+    }
+
+    return array('success' => FALSE, 'message' => t('Discounts have changed.  Please review your cart and continue checkout.'));
+  }
+
+  // Add discount line items to order
+  add_discount_line_items_to_order($order, $discounts);
+
+  $new_discount_amounts = array();
+  foreach ($order->uc_discounts_line_items as $line_item) {
+    $new_discount_amounts[] = uc_currency_format($line_item["amount"]);
+  }
+
+  if ($compare_to_existing) {
+    $discount_intersection = array_intersect($existing_discount_amounts, $new_discount_amounts);
+    if (count($discount_intersection) != count($existing_discount_amounts)) {
+      // Save new discount line items
+      $order->uc_discounts_line_items_need_updating = TRUE;
+      uc_discounts_order('save', $order, NULL);
+
+      return array('success' => FALSE, 'message' => t('Discounts have changed.  Please review your cart and continue checkout.'));
+    }
+  }
+  else {
+    $order->uc_discounts_line_items_need_updating = TRUE;
+    uc_discounts_order('save', $order, NULL);
+  }
+
+  if ($save_uses) {
+    uc_discounts_uses_save_for_order($order);
+  }
+
+  uc_order_log_changes($order->order_id, $messages);
+  return array('success' => TRUE, 'message' => t('Discount code(s) applied to order.'));
+}
+
+/**
+ * Returns existing discounts line items for order.
+ */
+function get_existing_discount_line_items($order) {
+  if (is_array($order->line_items)) {
+    $existing_line_items = $order->line_items;
+  }
+  else $existing_line_items = uc_order_load_line_items($order->order_id, TRUE);
+
+  $line_items = array();
+  foreach ($existing_line_items as $line_item) {
+    //If line item type is LINE_ITEM_KEY_NAME, add it to array
+    if ($line_item["type"] == LINE_ITEM_KEY_NAME) {
+      $line_items[] = $line_item;
+    }
+  }
+
+  return $line_items;
 }
 
 /**
@@ -1932,17 +1953,9 @@ function uc_discounts_order_codes_delete($order_id) {
 /**
  * Returns a string list of codes into an array of codes
  */
-function get_codes($codes_string) {
+function uc_discounts_codes_to_array($codes_string) {
   $codes = array();
-
-  if (empty($codes_string)) {
-
-    return $codes;
-
-  }
-
   $raw_codes = explode("\n", $codes_string);
-
   foreach ($raw_codes as $raw_code) {
     $code = trim($raw_code);
     if (!empty($code)) {
@@ -1957,11 +1970,8 @@ function get_codes($codes_string) {
  * Create a codes string from passed codes array.
  * Note: returns "" if passed array is null
  */
-function create_codes_string($codes) {
-  if (empty($codes)) {
-    return "";
-  }
-  return join("\n", $codes);
+function uc_discounts_codes_to_str($codes) {
+  return implode("\n", $codes);
 }
 
 /**

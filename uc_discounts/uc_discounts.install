@@ -299,6 +299,26 @@ function uc_discounts_schema() {
     "primary key" => array("discount_class_id"),
   );
 
+  $schema["uc_discounts_authors"] = array(
+    "fields" => array(
+      "discount_author_id" => array(
+        "type" => "serial",
+        "not null" => TRUE,
+      ),
+      "discount_id" => array(
+        "type" => "int",
+        "not null" => TRUE,
+        "description" => t("The {uc_discounts}.discount_id of the discount."),
+      ),
+      "author_id" => array(
+        "type" => "int",
+        "not null" => TRUE,
+        "description" => t("The {users}.uid of the author being discounted."),
+      ),
+    ),
+    "primary key" => array("discount_author_id"),
+  );
+
   $schema["uc_discounts_roles"] = array(
     "fields" => array(
       "discount_role_id" => array(
@@ -554,5 +574,31 @@ function uc_discounts_update_6003() {
   $ret = array();
   db_add_field($ret, 'uc_discounts', 'limit_max_times_applied', $schema['uc_discounts']['fields']['limit_max_times_applied']);
   db_query("UPDATE {uc_discounts} SET required_product = '' WHERE required_product = 'none'");
+  return $ret;
+}
+
+//Add uc_discounts_authors table
+function uc_discounts_update_6004() {
+  $schema["uc_discounts_authors"] = array(
+    "fields" => array(
+      "discount_author_id" => array(
+        "type" => "serial",
+        "not null" => TRUE,
+      ),
+      "discount_id" => array(
+        "type" => "int",
+        "not null" => TRUE,
+        "description" => t("The {uc_discounts}.discount_id of the discount."),
+      ),
+      "author_id" => array(
+        "type" => "int",
+        "not null" => TRUE,
+        "description" => t("The {users}.uid of the author being discounted."),
+      ),
+    ),
+    "primary key" => array("discount_author_id"),
+  );
+  $ret = array();
+  db_create_table($ret, 'uc_discounts_authors', $schema['uc_discounts_authors']);
   return $ret;
 }

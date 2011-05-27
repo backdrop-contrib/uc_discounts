@@ -420,12 +420,14 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $terms_display_string = ($filter_type == FILTER_TYPE_TERMS) ? "" : " style='display:none'";
   $skus_display_string = ($filter_type == FILTER_TYPE_SKUS) ? "" : " style='display:none'";
   $classes_display_string = ($filter_type == FILTER_TYPE_CLASS) ? "" : " style='display:none'";
+  $authors_display_string = ($filter_type == FILTER_TYPE_AUTHORS) ? "" : " style='display:none'";
 
   $filter_type_onchange = 'value = $(this).val();';
-  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_PRODUCTS . ') { $(".uc-discounts-form .products-container").slideDown(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); }';
-  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_TERMS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideDown(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); }';
-  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_SKUS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideDown(); $(".uc-discounts-form .classes-container").slideUp(); }';
-  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_CLASS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideDown(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_PRODUCTS . ') { $(".uc-discounts-form .products-container").slideDown(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); $(".uc-discounts-form .authors-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_TERMS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideDown(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); $(".uc-discounts-form .authors-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_SKUS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideDown(); $(".uc-discounts-form .classes-container").slideUp(); $(".uc-discounts-form .authors-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_CLASS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideDown(); $(".uc-discounts-form .authors-container").slideUp(); }';
+  $filter_type_onchange .= 'if (value == ' . FILTER_TYPE_AUTHORS . ') { $(".uc-discounts-form .products-container").slideUp(); $(".uc-discounts-form .terms-container").slideUp(); $(".uc-discounts-form .skus-container").slideUp(); $(".uc-discounts-form .classes-container").slideUp(); $(".uc-discounts-form .authors-container").slideDown(); }';
 
   //Create filter_type form element
   $options = array();
@@ -433,10 +435,11 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $options[FILTER_TYPE_TERMS] = t("Filter By Terms");
   $options[FILTER_TYPE_SKUS] = t("Filter By SKUs");
   $options[FILTER_TYPE_CLASS] = t("Filter by Class");
+  $options[FILTER_TYPE_AUTHORS] = t("Filter by Authors");
   $form["discount_set"]["filter_type"] = array(
     "#type" => "select",
     "#title" => t("Filter Type"),
-    "#description" => t("Determine whether to filter by products, terms, SKUs, or class. Discount is applied to only these products."),
+    "#description" => t("Determine whether to filter by products, terms, SKUs, class, or node authors. Discount is applied to only these products."),
     "#options" => $options,
     "#default_value" => $filter_type,
     "#required" => TRUE,
@@ -538,6 +541,31 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#suffix" => '</div>',
   );
 
+  //Get current discount authors
+  $author_ids = null;
+  if (isset($form_state["values"]["author_ids"])) {
+    $author_ids = $form_state["values"]["author_ids"];
+  }
+  elseif ($is_edit) {  $author_ids = get_author_ids_for_discount($discount_id, FALSE);}
+
+  //Create authors form element
+  $options = array();
+  $result = db_query('SELECT uid, name FROM {users} u INNER JOIN {node} n USING(uid)
+                      WHERE u.uid > 0 AND n.type IN(' . db_placeholders(uc_product_types(), 'varchar') . ')
+                      GROUP BY u.uid ORDER BY name', uc_product_types());
+  $options[ALL_AUTHORS] = t("<All Authors>");
+  while ($row = db_fetch_object($result)) $options[$row->uid] = $row->name;
+  $form["discount_set"]["author_ids"] = array(
+    "#type" => "select",
+    "#title" => t("Authors") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#description" => t("Select all authors this discount applies to or &lt;All Authors&gt; to apply to all authors."),
+    "#options" => $options,
+    "#default_value" => $author_ids,
+    "#multiple" => TRUE,
+    "#prefix" => sprintf("<div class='authors-container'%s>", $authors_display_string),
+    "#suffix" => "</div>",
+  );
+
   $form["discount_set"]["max_uses"] = array(
     "#type" => "textfield",
     "#title" => t("Max uses"),
@@ -635,6 +663,12 @@ function uc_discounts_form_validate($form, &$form_state) {
       $has_errors = TRUE;
     }
   }
+  elseif ($values["filter_type"] == FILTER_TYPE_AUTHORS) {
+    if (empty($values["author_ids"])) {
+      form_set_error("author_ids", t("Authors are required because of 'Filter Type' value"));
+      $has_errors = TRUE;
+    }
+  }
   else {
     form_set_error("filter_type", t("Invalid filter type value"));
     $has_errors = TRUE;
@@ -691,6 +725,13 @@ function uc_discounts_form_submit($form, &$form_state) {
     //If classes contain "all classes", insert only all Classes row (class=<ALL_CLASSES>)
     if (in_array(ALL_CLASSES, $classes)) {
       $classes = array(ALL_CLASSES);
+    }
+
+    $author_ids = ($form_state["values"]["filter_type"] == FILTER_TYPE_AUTHORS) ? $form_state["values"]["author_ids"] : array();
+
+    //If authors contains "all authors", insert only all authors row (product_id=<ALL_AUTHORS>)
+    if (in_array(ALL_AUTHORS, $author_ids)) {
+      $author_ids = array(ALL_AUTHORS);
     }
 
     $role_ids = ($form_state["values"]["has_role_filter"]) ? $form_state["values"]["role_ids"] : array();
@@ -753,6 +794,7 @@ function uc_discounts_form_submit($form, &$form_state) {
       uc_discounts_terms_delete($discount->discount_id);
       uc_discounts_skus_delete($discount->discount_id);
       uc_discounts_classes_delete($discount->discount_id);
+      uc_discounts_authors_delete($discount->discount_id);
       uc_discounts_roles_delete($discount->discount_id);
     }
 
@@ -802,6 +844,16 @@ function uc_discounts_form_submit($form, &$form_state) {
         //Empty Class is ALL_CLASSES
         $new_class = array('discount_id' => $discount->discount_id, 'class' => $class);
         drupal_write_record('uc_discounts_classes', $new_class);
+      }
+    }
+    //Insert authors (if necessary)
+    if ($form_state["values"]["filter_type"] == FILTER_TYPE_AUTHORS) {
+      foreach ($author_ids as $author_id) {
+        if (empty($author_id)) {
+          continue;
+        }
+        $new_author = array('discount_id' => $discount->discount_id, 'author_id' => $author_id);
+        drupal_write_record('uc_discounts_authors', $new_author);
       }
     }
 
@@ -866,6 +918,13 @@ function uc_discounts_copy($original_discount_id) {
   foreach ($classes as $class) {
     $new_class = array('discount_id' => $discount->discount_id, 'class' => $class);
     drupal_write_record('uc_discounts_classes', $new_class);
+  }
+
+  //Copy discount's authors
+  $author_ids = get_author_ids_for_discount($original_discount_id);
+  foreach ($author_ids as $author_id) {
+    $new_author = array('discount_id' => $discount->discount_id, 'author_id' => $author_id);
+    drupal_write_record('uc_discounts_authors', $new_author);
   }
 
   //Copy discount's roles

@@ -23,12 +23,14 @@ define("FILTER_TYPE_PRODUCTS", 1);
 define("FILTER_TYPE_TERMS", 2);
 define("FILTER_TYPE_SKUS", 3);
 define("FILTER_TYPE_CLASS", 4);
+define("FILTER_TYPE_AUTHORS", 5);
 
 define("ALL_PRODUCTS", "-1");
 define("ALL_TERMS", "-1");
 define("ALL_SKUS", "");
 define("ALL_CLASSES", "");
 define("ALL_ROLES", "-1");
+define("ALL_AUTHORS", "-1");
 
 define("IS_ACTIVE", TRUE);
 
@@ -783,6 +785,7 @@ function uc_discounts_delete_all($discount) {
   db_query("DELETE FROM {uc_discounts_skus} WHERE discount_id=%d", $discount->discount_id);
   db_query("DELETE FROM {uc_discounts_roles} WHERE discount_id=%d", $discount->discount_id);
   db_query("DELETE FROM {uc_discounts_codes} WHERE discount_id=%d", $discount->discount_id);
+  db_query("DELETE FROM {uc_discounts_authors} WHERE discount_id=%d", $discount->discount_id);
   db_query("DELETE FROM {uc_discounts} WHERE discount_id=%d", $discount->discount_id);
 }
 
@@ -868,6 +871,19 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
       if (!empty($classes)) {
           $query .= ' INNER JOIN {uc_discounts_classes} dcl ON n.type=dcl.class
                       WHERE dcl.discount_id=%d';
+      }
+      $result = db_query($query, $discount->discount_id);
+      while ($row = db_fetch_object($result)) {
+        $product_ids[] = $row->nid;
+      }
+      return $product_ids;
+
+    case FILTER_TYPE_AUTHORS:
+      $authors = get_author_ids_for_discount($discount->discount_id, TRUE);
+      $query = 'SELECT DISTINCT n.nid FROM {node} n';
+      if (!empty($authors)) {
+          $query .= ' INNER JOIN {uc_discounts_authors} dau ON n.uid=dau.author_id
+                      WHERE dau.discount_id=%d';
       }
       $result = db_query($query, $discount->discount_id);
       while ($row = db_fetch_object($result)) {
@@ -965,6 +981,23 @@ function get_classes_for_discount($discount_id, $exclude_all_classes = FALSE) {
 }
 
 /**
+ * Returns author_ids for discount.
+ */
+function get_author_ids_for_discount($discount_id, $exclude_all_authors = FALSE) {
+  $author_ids = array();
+  //Get authors from database
+  if ($exclude_all_authors) {
+    $result = db_query("SELECT author_id FROM {uc_discounts_authors} WHERE discount_id=%d AND author_id<>%d",
+      $discount_id, ALL_PRODUCTS
+    );
+  }
+  else $result = db_query("SELECT author_id FROM {uc_discounts_authors} WHERE discount_id=%d", $discount_id);
+
+  while ($row = db_fetch_array($result)) $author_ids[] = $row["author_id"];
+  return $author_ids;
+}
+
+/**
  * Returns role_ids for discount.
  */
 function get_role_ids_for_discount($discount_id, $exclude_all_roles = FALSE) {
@@ -1003,6 +1036,14 @@ function uc_discounts_skus_delete($discount_id) {
  */
 function uc_discounts_classes_delete($discount_id) {
   $query = "DELETE FROM {uc_discounts_classes} WHERE discount_id=%d";
+  db_query($query, $discount_id);
+}
+
+/**
+ * Deletes all uc_discounts_authors rows for a discount.
+ */
+function uc_discounts_authors_delete($discount_id) {
+  $query = "DELETE FROM {uc_discounts_authors} WHERE discount_id=%d";
   db_query($query, $discount_id);
 }
 
@@ -1123,6 +1164,18 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     FILTER_TYPE_CLASS, join(",", $temp_classes)
   );
 
+  //Create IN string of authors in order
+  $temp_authors = array();
+  $temp_authors[] = "'". db_escape_string(ALL_AUTHORS) ."'";
+  if (is_array($order->products) && !empty($order->products)) {
+    //Get authors for order's products
+    $result = db_query("SELECT DISTINCT uid FROM {node} WHERE nid IN(%s)", join(",", $order_product_ids));
+    while ($row = db_fetch_array($result)) $temp_authors[] = "'". db_escape_string($row["uid"]) ."'";
+  }
+  $authors_clause = sprintf("d.filter_type<>%d OR dau.author_id IN(%s)",
+    FILTER_TYPE_AUTHORS, join(",", $temp_authors)
+  );
+
   //Create codes clause
   $escaped_codes_string = NULL;
   if (!empty($order->uc_discounts_codes)) {
@@ -1156,8 +1209,10 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       LEFT JOIN {uc_discounts_roles} dr ON d.discount_id=dr.discount_id
       LEFT JOIN {uc_discounts_codes} dc ON d.discount_id=dc.discount_id
       LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id
+      LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id
       WHERE dc.code IN(%s)
       AND (d.has_role_filter=0%s)
+      AND (%s)
       AND (%s)
       AND (%s)
       AND (%s)
@@ -1165,7 +1220,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
       AND (d.has_expiration<>0 AND d.expiration<=%d)
       AND (d.is_active=%d)
       ORDER BY weight", $escaped_codes_string, $roles_clause, $product_ids_clause,
-      $term_ids_clause, $skus_clause, $classes_clause, time(), IS_ACTIVE
+      $term_ids_clause, $skus_clause, $classes_clause, $authors_clause, time(), IS_ACTIVE
     );
     $result = db_query($query);
     while ($discount = db_fetch_object($result)) {
@@ -1180,8 +1235,10 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
     LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id
     LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id
+    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id
     WHERE (d.requires_code=0%s)
     AND (d.has_role_filter=0%s)
+    AND (%s)
     AND (%s)
     AND (%s)
     AND (%s)
@@ -1190,7 +1247,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     AND (d.has_expiration=0 OR d.expiration>%d)
     AND (d.is_active=%d)
     ORDER BY weight", $codes_clause, $roles_clause, $product_ids_clause,
-    $term_ids_clause, $skus_clause, $classes_clause, time(), time(), IS_ACTIVE
+    $term_ids_clause, $skus_clause, $classes_clause, $authors_clause, time(), time(), IS_ACTIVE
   );
   
   $result = db_query($query);
@@ -1751,6 +1808,12 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
   $result    = db_query("SELECT DISTINCT type FROM {node} WHERE nid=%d", $product->nid);
   while ($row = db_fetch_array($result)) $classes[] = "'". db_escape_string($row["type"]) ."'";
 
+  //Get classes for product
+  $authors   = array();
+  $authors[] = "'". db_escape_string(ALL_AUTHORS) ."'";
+  $result    = db_query("SELECT DISTINCT uid FROM {node} WHERE nid=%d", $product->nid);
+  while ($row = db_fetch_array($result)) $authors[] = "'". db_escape_string($row["uid"]) ."'";
+
   //Create roles clause
   global $user;
   $auth_rid = ($user->uid != 0) ? DRUPAL_AUTHENTICATED_RID : DRUPAL_ANONYMOUS_RID;
@@ -1775,6 +1838,10 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
     FILTER_TYPE_CLASS, join(",", $classes)
   );
 
+  $authors_clause = sprintf("d.filter_type<>%d OR dau.class IN(%s)",
+    FILTER_TYPE_AUTHORS, join(",", $authors)
+  );
+
   $sort_order_string = (is_ascending_sort) ? "ASC" : "DESC";
 
   $query = sprintf("SELECT d.* FROM {uc_discounts} d
@@ -1782,8 +1849,10 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
     LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
     LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id
     LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id
+    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id
     WHERE d.requires_code=0
     AND (d.has_role_filter=0%s)
+    AND (%s)
     AND (%s)
     AND (%s)
     AND (%s)
@@ -1792,7 +1861,7 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
     AND (d.has_expiration=0 OR d.expiration>%d)
     AND (d.is_active=%d)
     ORDER BY d.%s %s",
-    $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause,
+    $roles_clause, $product_ids_clause, $term_ids_clause, $skus_clause, $classes_clause, $authors_clause,
     time(), time(), IS_ACTIVE, $sort_column, $sort_order_string
   );
   $result = db_query($query);
@@ -1971,7 +2040,7 @@ function uc_discounts_codes_to_array($codes_string) {
  * Note: returns "" if passed array is null
  */
 function uc_discounts_codes_to_str($codes) {
-  return implode("\n", $codes);
+  return implode("\n", (array) $codes);
 }
 
 /**

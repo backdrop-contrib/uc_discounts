@@ -1808,7 +1808,7 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
   $result    = db_query("SELECT DISTINCT type FROM {node} WHERE nid=%d", $product->nid);
   while ($row = db_fetch_array($result)) $classes[] = "'". db_escape_string($row["type"]) ."'";
 
-  //Get classes for product
+  //Get uids for product
   $authors   = array();
   $authors[] = "'". db_escape_string(ALL_AUTHORS) ."'";
   $result    = db_query("SELECT DISTINCT uid FROM {node} WHERE nid=%d", $product->nid);
@@ -1838,7 +1838,7 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
     FILTER_TYPE_CLASS, join(",", $classes)
   );
 
-  $authors_clause = sprintf("d.filter_type<>%d OR dau.class IN(%s)",
+  $authors_clause = sprintf("d.filter_type<>%d OR dau.author_id IN(%s)",
     FILTER_TYPE_AUTHORS, join(",", $authors)
   );
 

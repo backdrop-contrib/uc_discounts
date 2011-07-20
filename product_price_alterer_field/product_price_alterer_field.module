@@ -151,7 +151,7 @@ function add_product_price_altering_javascript() {
       });
       $('.uc-price-sell:not(.original-sell-price), .sell-price:not(.original-sell-price)').each(function() {
         var self = $(this);
-        if (self.parent().find('.field-type-discounted-price').length > 0) {
+        if (self.parents('.node').find('.field-type-discounted-price').length > 0) {
           self.addClass('original-sell-price');
         }
       });

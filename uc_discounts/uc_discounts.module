@@ -180,7 +180,7 @@ function uc_discounts_order($op, &$arg1, $arg2) {
           $existing_line_items = $arg1->line_items;
         }
         else {
-          $existing_line_items = uc_order_load_line_items($arg1->order_id, TRUE);
+          $existing_line_items = uc_order_load_line_items($arg1, TRUE);
         }
 
         // Use new_order_line_items to populate $arg1->line_items by:
@@ -1993,7 +1993,9 @@ function get_existing_discount_line_items($order) {
   if (is_array($order->line_items)) {
     $existing_line_items = $order->line_items;
   }
-  else $existing_line_items = uc_order_load_line_items($order->order_id, TRUE);
+  else {
+    $existing_line_items = uc_order_load_line_items($order, TRUE);
+  }
 
   $line_items = array();
   foreach ($existing_line_items as $line_item) {

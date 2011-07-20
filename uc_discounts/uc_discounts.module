@@ -839,7 +839,7 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
       $product_ids = array();
 
       //Get products for terms
-      $terms = get_term_ids_for_discount($discount->discount_id, TRUE);
+      $terms = get_term_ids_for_discount($discount->discount_id, $exclude_all_products);
       $query = 'SELECT DISTINCT p.nid FROM {uc_products} p';
       if (!empty($terms)) {
         $query .= ' INNER JOIN {term_node} tn ON p.nid=tn.nid
@@ -853,7 +853,7 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
       return $product_ids;
 
     case FILTER_TYPE_SKUS:
-      $skus = get_skus_for_discount($discount->discount_id, TRUE);
+      $skus = get_skus_for_discount($discount->discount_id, $exclude_all_products);
       $query = 'SELECT DISTINCT p.nid FROM {uc_products} p';
       if (!empty($skus)) {
         $query .= ' INNER JOIN {uc_discounts_skus} ds ON p.model=ds.sku
@@ -866,7 +866,7 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
       return $product_ids;
 
     case FILTER_TYPE_CLASS:
-      $classes = get_classes_for_discount($discount->discount_id, TRUE);
+      $classes = get_classes_for_discount($discount->discount_id, $exclude_all_products);
       $query = 'SELECT DISTINCT n.nid FROM {node} n';
       if (!empty($classes)) {
           $query .= ' INNER JOIN {uc_discounts_classes} dcl ON n.type=dcl.class
@@ -879,7 +879,7 @@ function get_product_ids_for_discount_object($discount, $exclude_all_products = 
       return $product_ids;
 
     case FILTER_TYPE_AUTHORS:
-      $authors = get_author_ids_for_discount($discount->discount_id, TRUE);
+      $authors = get_author_ids_for_discount($discount->discount_id, $exclude_all_products);
       $query = 'SELECT DISTINCT n.nid FROM {node} n';
       if (!empty($authors)) {
           $query .= ' INNER JOIN {uc_discounts_authors} dau ON n.uid=dau.author_id

@@ -102,11 +102,11 @@ function uc_discounts_schema() {
         "default" => 1,
         "description" => t("Requires qualifying amount to come from a single product."),
       ),
-      "required_product" => array(
-        "type" => "varchar",
-        "length" => 255,
+      "required_product_type" => array(
+        "type" => "int",
+        'size' => 'tiny',
         "not null" => TRUE,
-        "default" => "",
+        "default" => 0,
       ),
       "max_times_applied" => array(
         "type" => "int",
@@ -233,6 +233,16 @@ function uc_discounts_schema() {
         "not null" => TRUE,
         "description" => t("The {uc_products}.nid of the product being discounted."),
       ),
+      "grouping" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 1,
+        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+      ),
+    ),
+    'indexes' => array(
+      'discount_id_grouping' => array('discount_id', 'grouping'),
     ),
     "primary key" => array("discount_product_id"),
   );
@@ -253,6 +263,16 @@ function uc_discounts_schema() {
         "not null" => TRUE,
         "description" => t("The {term}.tid of the term being discounted."),
       ),
+      "grouping" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 1,
+        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+      ),
+    ),
+    'indexes' => array(
+      'discount_id_grouping' => array('discount_id', 'grouping'),
     ),
     "primary key" => array("discount_term_id"),
   );
@@ -274,6 +294,16 @@ function uc_discounts_schema() {
         "not null" => TRUE,
         "description" => t("The {uc_products}.model of the product being discounted."),
       ),
+      "grouping" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 1,
+        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+      ),
+    ),
+    'indexes' => array(
+      'discount_id_grouping' => array('discount_id', 'grouping'),
     ),
     "primary key" => array("discount_sku_id"),
   );
@@ -295,6 +325,16 @@ function uc_discounts_schema() {
         "not null" => TRUE,
         "description" => t("The {node_type}.type of the product being discounted."),
       ),
+      "grouping" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 1,
+        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+      ),
+    ),
+    'indexes' => array(
+      'discount_id_grouping' => array('discount_id', 'grouping'),
     ),
     "primary key" => array("discount_class_id"),
   );
@@ -315,6 +355,16 @@ function uc_discounts_schema() {
         "not null" => TRUE,
         "description" => t("The {users}.uid of the author being discounted."),
       ),
+      "grouping" => array(
+        "type" => "int",
+        "size" => "tiny",
+        "not null" => TRUE,
+        "default" => 1,
+        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+      ),
+    ),
+    'indexes' => array(
+      'discount_id_grouping' => array('discount_id', 'grouping'),
     ),
     "primary key" => array("discount_author_id"),
   );
@@ -600,5 +650,32 @@ function uc_discounts_update_6004() {
   );
   $ret = array();
   db_create_table($ret, 'uc_discounts_authors', $schema['uc_discounts_authors']);
+  return $ret;
+}
+
+/**
+ * #999778, Allow multiple products to be selected for discount qualification
+ */
+function uc_discounts_update_6005() {
+  $schema = uc_discounts_schema();
+  $ret = array();
+  db_add_field($ret, 'uc_discounts', 'required_product_type', $schema['uc_discounts']['fields']['required_product_type']);
+  db_add_field($ret, 'uc_discounts_products', 'grouping', $schema['uc_discounts_products']['fields']['grouping']);
+  db_add_index($ret, 'uc_discounts_products', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field($ret, 'uc_discounts_terms', 'grouping', $schema['uc_discounts_terms']['fields']['grouping']);
+  db_add_index($ret, 'uc_discounts_terms', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field($ret, 'uc_discounts_skus', 'grouping', $schema['uc_discounts_skus']['fields']['grouping']);
+  db_add_index($ret, 'uc_discounts_skus', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field($ret, 'uc_discounts_classes', 'grouping', $schema['uc_discounts_classes']['fields']['grouping']);
+  db_add_index($ret, 'uc_discounts_classes', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field($ret, 'uc_discounts_authors', 'grouping', $schema['uc_discounts_authors']['fields']['grouping']);
+  db_add_index($ret, 'uc_discounts_authors', 'discount_id_grouping', array('discount_id', 'grouping'));
+  $result = db_query("SELECT * FROM {uc_discounts} WHERE required_product != ''");
+  while ($discount = db_fetch_object($result)) {
+    $new_sku = array('discount_id' => $discount->discount_id, 'sku' => $discount->required_product, 'grouping' => DISCOUNT_FILTER_GROUPING_QUALIFICATION);
+    drupal_write_record('uc_discounts_skus', $new_sku);
+    db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", FILTER_TYPE_SKUS, $discount->discount_id);
+  }
+  db_drop_field($ret, 'uc_discounts', 'required_product');
   return $ret;
 }

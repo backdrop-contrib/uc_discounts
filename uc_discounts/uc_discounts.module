@@ -447,6 +447,7 @@ function uc_discounts_checkout_pane() {
 function uc_discounts_form_uc_cart_checkout_form_alter(&$form, $form_state) {
   drupal_add_js(array(
       'uc_discounts' => array(
+        'url' => url('cart/checkout/uc_discounts/calculate'),
         'line_item_key_name' => LINE_ITEM_KEY_NAME,
         'line_item_weight' => LINE_ITEM_WEIGHT,
         'total_discount_text' => t('Total discount'),

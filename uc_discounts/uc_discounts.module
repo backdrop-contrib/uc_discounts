@@ -1389,7 +1389,7 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     // Get product IDs for determining discount qualification
     $required_product_ids = get_product_ids_for_discount_object($discount, DISCOUNT_FILTER_GROUPING_QUALIFICATION);
     $required_ids_in_order = array_intersect($required_product_ids, $order_product_ids);
-    if (!empty($required_product_ids) && empty($required_ids_in_order)) {
+    if (!empty($discount->code) && !empty($required_product_ids) && empty($required_ids_in_order)) {
       $warnings[] = t('The discount for code "@code" requires a product that is not in your cart.',
                       array('@code' => $discount->code));
       continue;

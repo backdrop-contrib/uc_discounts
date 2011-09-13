@@ -672,8 +672,7 @@ function uc_discounts_update_6005() {
   db_add_index($ret, 'uc_discounts_authors', 'discount_id_grouping', array('discount_id', 'grouping'));
   $result = db_query("SELECT * FROM {uc_discounts} WHERE required_product != ''");
   while ($discount = db_fetch_object($result)) {
-    $new_sku = array('discount_id' => $discount->discount_id, 'sku' => $discount->required_product, 'grouping' => DISCOUNT_FILTER_GROUPING_QUALIFICATION);
-    drupal_write_record('uc_discounts_skus', $new_sku);
+    db_query("INSERT INTO {uc_discounts_skus} SET discount_id = %d, sku = '%s', grouping = %d", $discount->discount_id, $discount->required_product, DISCOUNT_FILTER_GROUPING_QUALIFICATION);
     db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", FILTER_TYPE_SKUS, $discount->discount_id);
   }
   db_drop_field($ret, 'uc_discounts', 'required_product');

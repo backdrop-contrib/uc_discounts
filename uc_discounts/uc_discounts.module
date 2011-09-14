@@ -55,6 +55,69 @@ define("CALCULATE_DISCOUNT_RESPONSE_MESSAGES_KEY", "messages");
  */
 function uc_discounts_init() {
   drupal_add_css(drupal_get_path('module', 'uc_discounts')  . '/uc_discounts.css');
+  // @see uc_discounts_add_to_cart()
+  if (isset($_SESSION['uc_discounts_after_add_to_cart'])) {
+    $nid = $_SESSION['uc_discounts_after_add_to_cart']['nid'];
+    $added_qty = $_SESSION['uc_discounts_after_add_to_cart']['qty'];
+    unset($_SESSION['uc_discounts_after_add_to_cart']);
+
+    $items_to_add = $new_product_ids = array();
+
+    // Discounts are checked against the product(s) specified in Discount Application,
+    // not Discount Qualifications. Therefore, we have to look up the discount by its
+    // required_product_type field and check for discounts on the product(s) associated
+    // with it
+    $product = node_load($nid);
+    $result = db_query("SELECT * FROM {uc_discounts} d
+                        WHERE d.add_to_cart = 1
+                          AND (d.has_activation = 0 OR d.activates_on < %d)
+                          AND (d.has_expiration = 0 OR d.expiration > %d)
+                          AND d.is_active = 1
+                          AND d.discount_type = %d
+                        ORDER BY weight", time(), time(), DISCOUNT_TYPE_FREE_ITEMS);
+    while ($discount = db_fetch_object($result)) {
+      if (in_array($product->nid, get_product_ids_for_discount($discount->discount_id, DISCOUNT_FILTER_GROUPING_QUALIFICATION, TRUE))) {
+        $new_product_ids = get_product_ids_for_discount($discount->discount_id, DISCOUNT_FILTER_GROUPING_APPLICATION, TRUE);
+        break;
+      }
+    }
+
+    if (!empty($new_product_ids)) {
+      foreach ($new_product_ids as $id) {
+        $potential_product = node_load($id);
+        // How many of the item are in the cart? We're only interested in node IDs right now.
+        $items = uc_cart_get_contents();
+        $qty = 0;
+        $source_qty = 0;
+        foreach ($items as $item) {
+          if ($item->nid == $potential_product->nid) {
+            $qty += $item->qty;
+          }
+          if ($item->nid == $product->nid) {
+            $source_qty += $item->qty;
+          }
+        }
+
+        $target_qty = $discount->discount_amount;
+        $qualifying_amount = $discount->qualifying_amount;
+        $times_applied = floor($qty / $target_qty);
+        $times_to_apply = ((($target_qty / $qualifying_amount) * $added_qty) / $target_qty);
+        // Make sure max_times_applied is respected
+        if ($times_applied < $discount->max_times_applied || $discount->max_times_applied == 0) {
+          // Calculate how many there should be and subtract what we already have
+          $to_add = ($target_qty * ($discount->max_times_applied ? min($discount->max_times_applied - $times_applied, $times_to_apply) : $times_to_apply));
+        }
+        // Don't add items immediately so that uc_cart_get_contents() will behave predictably.
+        if ($to_add > 0) {
+          $items_to_add[] = array('nid' => $potential_product->nid, 'qty' => $to_add, 'data' => array());
+        }
+      }
+    }
+
+    foreach ($items_to_add as $p) {
+      uc_cart_add_item($p['nid'], $p['qty'], $p['data'] + module_invoke_all('add_to_cart_data', $p), NULL, FALSE, FALSE, FALSE);
+    }
+  }
 }
 
 /**
@@ -253,6 +316,14 @@ function uc_discounts_uc_checkout_complete($order, $account) {
   uc_discounts_uses_save_for_order($order);
   // Don't allow user to re-use codes on another order without re-entering them
   unset($_SESSION['uc_discounts_codes']);
+}
+
+/**
+ * Implementation of hook_add_to_cart()
+ */
+function uc_discounts_add_to_cart($nid, $qty, $data) {
+  // @see hook_init()
+  $_SESSION['uc_discounts_after_add_to_cart'] = array('nid' => $nid, 'qty' => $qty);
 }
 
 /**
@@ -1876,7 +1947,9 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
   $result = db_query($query);
 
   $discounts = array();
-  while ($discount = db_fetch_object($result)) $discounts[] = $discount;
+  while ($discount = db_fetch_object($result)) {
+    $discounts[] = $discount;
+  }
   return $discounts;
 }
 

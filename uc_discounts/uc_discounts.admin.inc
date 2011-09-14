@@ -337,77 +337,84 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 
   _uc_discounts_product_filter_form($form, $form_state, DISCOUNT_FILTER_GROUPING_QUALIFICATION, $discount_id);
 
-  $form["application"] = array(
-    "#type" => "fieldset",
-    "#title" => t("Discount Application"),
-    "#description" => t("Details of the discount to apply"),
-    "#collapsible" => TRUE,
+  $form['application'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Discount Application'),
+    '#description' => t('Details of the discount to apply'),
+    '#collapsible' => TRUE,
   );
 
-  $form["application"]["discount_type"] = array(
-    "#type" => "select",
-    "#title" => t("Discount type"),
-    "#description" => t("Type of discount to apply."),
-    "#options" => discount_type_options(),
-    "#default_value" => $form_state["values"]["discount_type"],
+  $form['application']['discount_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Discount type'),
+    '#description' => t('Type of discount to apply.'),
+    '#options' => discount_type_options(),
+    '#default_value' => $form_state['values']['discount_type'],
   );
 
-  $form["application"]["discount_amount"] = array(
-    "#type" => "textfield",
-    "#title" => t("Discount amount"),
-    "#description" => t("The amount of discount.  E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)"),
-    "#default_value" => $form_state["values"]["discount_amount"],
-    "#size" => 15,
-    "#required" => TRUE,
-  );
-
-  $form["application"]["max_times_applied"] = array(
-    "#type" => "textfield",
-    "#title" => t("Maximum applications"),
-    "#description" => t("How many times can this discount be applied in a single cart (0 for unlimited)?  Does not apply to 'Percentage off' or 'Fixed amount off' discounts."),
-    "#default_value" => isset($form_state["values"]["max_times_applied"]) ? $form_state["values"]["max_times_applied"] : 0,
-    "#size" => 7,
-    "#required" => TRUE,
-  );
-
-  $form["application"]["limit_max_times_applied"] = array(
-    "#type" => "checkbox",
-    "#title" => t("Further limit maximum applications to number of Required Products in cart."),
-    "#description" => t("Allows for a discount like 'Get half off X for each Y that is purchased.'"),
-    "#default_value" => isset($form_state["values"]["limit_max_times_applied"]) ? $form_state["values"]["limit_max_times_applied"] : FALSE,
-    "#size" => 7,
+  $form['application']['discount_amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Discount amount'),
+    '#description' => t('The amount of discount.  E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)'),
+    '#default_value' => $form_state['values']['discount_amount'],
+    '#size' => 15,
+    '#required' => TRUE,
   );
 
   _uc_discounts_product_filter_form($form, $form_state, DISCOUNT_FILTER_GROUPING_APPLICATION, $discount_id);
 
-  $form["application"]["max_uses"] = array(
-    "#type" => "textfield",
-    "#title" => t("Max uses"),
-    "#description" => t("Number of times this discount can be applied (0 for unlimited)."),
-    "#default_value" => isset($form_state["values"]["max_uses"]) ? $form_state["values"]["max_uses"] : 0,
-    "#size" => 7,
-    "#required" => TRUE,
+  $form['application']['add_to_cart'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add "Discounted products" to cart.'),
+    '#description' => t('Ensure that the selected items are added to the cart if not already present. If already present, update the quantity appropriately. You must set at least one "Required product" above and a "Discount type" of "Free items" in order for this to be effective. Does not work with discounts that require a Code.'),
+    '#default_value' => isset($form_state['values']['add_to_cart']) ? $form_state['values']['add_to_cart'] : FALSE,
   );
 
-  $form["application"]["max_uses_per_user"] = array(
-    "#type" => "textfield",
-    "#title" => t("Max uses per user"),
-    "#description" => t("Number of times this discount can be applied to a particular user (0 for unlimited)."),
-    "#default_value" => isset($form_state["values"]["max_uses_per_user"]) ? $form_state["values"]["max_uses_per_user"] : 0,
-    "#size" => 7,
-    "#required" => TRUE,
+  $form['application']['max_times_applied'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum applications'),
+    '#description' => t('How many times can this discount be applied in a single cart (0 for unlimited)?  Does not apply to "Percentage off" or "Fixed amount off" discounts.'),
+    '#default_value' => isset($form_state['values']['max_times_applied']) ? $form_state['values']['max_times_applied'] : 0,
+    '#size' => 7,
+    '#required' => TRUE,
   );
 
-  $form["application"]["max_uses_per_code"] = array(
-    "#type" => "textfield",
-    "#title" => t("Max uses per code"),
-    "#description" => t("Number of times this discount can be applied to a particular code (0 for unlimited).  Note: if 'Max uses' (if set) still applies as overall maximum number of uses for this discount."),
-    "#default_value" => isset($form_state["values"]["max_uses_per_code"]) ? $form_state["values"]["max_uses_per_code"] : 0,
-    "#size" => 7,
-    "#required" => TRUE,
+  $form['application']['limit_max_times_applied'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Further limit maximum applications to number of Required Products in cart.'),
+    '#description' => t('Allows for a discount like "Get half off X for each Y that is purchased."'),
+    '#default_value' => isset($form_state['values']['limit_max_times_applied']) ? $form_state['values']['limit_max_times_applied'] : FALSE,
+    '#size' => 7,
   );
 
-  $form["submit"] = array("#type" => "submit", "#value" => t("Submit"));
+  $form['application']['max_uses'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max uses'),
+    '#description' => t('Number of times this discount can be applied (0 for unlimited).'),
+    '#default_value' => isset($form_state['values']['max_uses']) ? $form_state['values']['max_uses'] : 0,
+    '#size' => 7,
+    '#required' => TRUE,
+  );
+
+  $form['application']['max_uses_per_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max uses per user'),
+    '#description' => t('Number of times this discount can be applied to a particular user (0 for unlimited).'),
+    '#default_value' => isset($form_state['values']['max_uses_per_user']) ? $form_state['values']['max_uses_per_user'] : 0,
+    '#size' => 7,
+    '#required' => TRUE,
+  );
+
+  $form['application']['max_uses_per_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max uses per code'),
+    '#description' => t('Number of times this discount can be applied to a particular code (0 for unlimited).  Note: "Max uses" (if set) still applies as overall maximum number of uses for this discount.'),
+    '#default_value' => isset($form_state['values']['max_uses_per_code']) ? $form_state['values']['max_uses_per_code'] : 0,
+    '#size' => 7,
+    '#required' => TRUE,
+  );
+
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
 
   return $form;
 }
@@ -420,7 +427,7 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
 
   $form[$fieldset_name]['filter'] = array(
     '#type' => 'fieldset',
-    '#title' => $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? t('Discounted Products') : t('Required Products'),
+    '#title' => $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? t('Discounted products') : t('Required products'),
     '#description' => $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? t('Select the products which will be discounted.') : t('If products are selected, at least one of them will be required.'),
   );
 
@@ -643,6 +650,7 @@ function uc_discounts_form_submit($form, &$form_state) {
   $discount->use_only_discounted_products_to_qualify = $form_state['values']['use_only_discounted_products_to_qualify'];
   $discount->requires_single_product_to_qualify = $form_state['values']['requires_single_product_to_qualify'];
   $discount->required_product_type = $form_state['values']['required_product_type'];
+  $discount->add_to_cart = $form_state['values']['add_to_cart'];
   $discount->max_times_applied = $form_state['values']['max_times_applied'];
   $discount->limit_max_times_applied = $form_state['values']['limit_max_times_applied'];
   $discount->can_be_combined_with_other_discounts = $form_state['values']['can_be_combined_with_other_discounts'];

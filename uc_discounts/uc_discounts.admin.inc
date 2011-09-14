@@ -471,6 +471,7 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
 
   $name = "$grouping-filter-select-" . FILTER_TYPE_TERMS;
   $term_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : get_term_ids_for_discount($discount_id, $grouping, FALSE);
+  $options = array();
   if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
     $options = array(ALL_TERMS => t("<All Terms>"));
   }

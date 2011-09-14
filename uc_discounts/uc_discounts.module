@@ -1216,16 +1216,18 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
     $order->uid, ALL_ROLES, $auth_rid
   );
 
+  $grouping = DISCOUNT_FILTER_GROUPING_APPLICATION;
+
   //Add warnings for expired discounts with codes (if necessary)
   if (!empty($order->uc_discounts_codes)) {
     $query = sprintf("SELECT DISTINCT d.*, dc.code code FROM {uc_discounts} d
-      LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id
-      LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
-      LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id
+      LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id AND dp.grouping = $grouping
+      LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id AND dt.grouping = $grouping
+      LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id AND ds.grouping = $grouping
+      LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id AND dcl.grouping = $grouping
+      LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id AND dau.grouping = $grouping
       LEFT JOIN {uc_discounts_roles} dr ON d.discount_id=dr.discount_id
       LEFT JOIN {uc_discounts_codes} dc ON d.discount_id=dc.discount_id
-      LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id
-      LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id
       WHERE dc.code IN(%s)
       AND (d.has_role_filter=0%s)
       AND (%s)
@@ -1247,11 +1249,11 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
   }
 
   $query = sprintf("SELECT DISTINCT d.* FROM {uc_discounts} d
-    LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id
-    LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id
-    LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id
-    LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id
-    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id
+    LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id AND dp.grouping = $grouping
+    LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id AND dt.grouping = $grouping
+    LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id AND ds.grouping = $grouping
+    LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id AND dcl.grouping = $grouping
+    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id AND dau.grouping = $grouping
     WHERE (d.requires_code=0%s)
     AND (d.has_role_filter=0%s)
     AND (%s)

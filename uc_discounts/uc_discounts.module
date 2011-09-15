@@ -76,8 +76,8 @@ function uc_discounts_init() {
                           AND d.discount_type = %d
                         ORDER BY weight", time(), time(), DISCOUNT_TYPE_FREE_ITEMS);
     while ($discount = db_fetch_object($result)) {
-      if (in_array($product->nid, get_product_ids_for_discount($discount->discount_id, DISCOUNT_FILTER_GROUPING_QUALIFICATION, TRUE))) {
-        $new_product_ids = get_product_ids_for_discount($discount->discount_id, DISCOUNT_FILTER_GROUPING_APPLICATION, TRUE);
+      if (in_array($product->nid, get_product_ids_for_discount_object($discount, DISCOUNT_FILTER_GROUPING_QUALIFICATION, TRUE))) {
+        $new_product_ids = get_product_ids_for_discount_object($discount, DISCOUNT_FILTER_GROUPING_APPLICATION, TRUE);
         break;
       }
     }

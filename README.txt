@@ -61,6 +61,8 @@ Allows you to hook into a discount to implement custom logic.
 /**
  * hook_uc_discount() example
  *
+ * Allows for a discount to be modified when it is being loaded/saved/delted
+ *
  * @param $op The discount operation: load, save, or delete
  * @param $arg2 Optional argument.  Order object is passed in when discounts for an order are being calculated.
  */
@@ -79,5 +81,23 @@ function mymodule_uc_discount($op, &$discount, $arg2 = NULL) {
         $discount->is_active = FALSE;
       }
       break;
+  }
+}
+
+/**
+ * hook_uc_discounts_codes_alter() example
+ *
+ * Allows for the discount codes that a customer submits to be altered or for the order
+ * to be altered based on the discount codes.
+ *
+ * @param $order Order object with uc_discounts_codes array set
+ * @param $context Either 'js_calculate' or 'pane_submit'
+ */
+function mymodule_uc_discounts_codes_alter($order, $context) {
+  // Do something if a certain code is entered
+  foreach ($order->uc_discounts_codes as $code) {
+    if (strtolower($code) == 'special_code') {
+      // add another item to the cart, etc.
+    }
   }
 }

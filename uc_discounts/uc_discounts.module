@@ -1929,7 +1929,7 @@ function get_codeless_discounts_for_product_and_quantity($product, $quantity = N
     LEFT JOIN {uc_discounts_terms} dt ON d.discount_id = dt.discount_id AND dt.grouping = $grouping
     LEFT JOIN {uc_discounts_skus} ds ON d.discount_id = ds.discount_id AND ds.grouping = $grouping
     LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id = dcl.discount_id AND dcl.grouping = $grouping
-    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id = dau.discount_id AND dau = $grouping
+    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id = dau.discount_id AND dau.grouping = $grouping
     WHERE d.requires_code = 0
     AND (d.has_role_filter = 0%s)
     AND (%s)

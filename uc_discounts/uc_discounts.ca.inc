@@ -1,7 +1,7 @@
 <?php
 /**
-  * Implementation of hook_ca_condition().
-  */
+ * Implements hook_ca_condition().
+ */
 function uc_discounts_ca_condition() {
   $conditions = array();
   $conditions['uc_discounts_condition_discount_applied'] = array(
@@ -10,7 +10,10 @@ function uc_discounts_ca_condition() {
     '#category' => t('Order: Discounts'),
     '#callback' => 'uc_discounts_condition_discount_applied',
     '#arguments' => array(
-      'order' => array('#entity' => 'uc_order', '#title' => t('Order')),
+      'order' => array(
+        '#entity' => 'uc_order',
+        '#title' => t('Order'),
+      ),
     ),
   );
   $conditions['uc_discounts_condition_total'] = array(
@@ -19,7 +22,10 @@ function uc_discounts_ca_condition() {
     '#category' => t('Order'),
     '#callback' => 'uc_discounts_condition_total',
     '#arguments' => array(
-      'order' => array('#entity' => 'uc_order', '#title' => t('Order')),
+      'order' => array(
+        '#entity' => 'uc_order',
+        '#title' => t('Order'),
+      ),
     ),
   );
   return $conditions;

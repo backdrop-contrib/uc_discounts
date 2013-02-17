@@ -1,4 +1,10 @@
 <?php
+/**
+ * @file
+ * Install, update and uninstall functions for the uc_discounts module.
+ *
+ */
+
 //$Id: uc_discounts.install,v 1.9.2.6 2010/12/28 00:06:23 jrust Exp $
 
 
@@ -42,20 +48,20 @@ function uc_discounts_schema() {
         "type" => "float",
         "not null" => TRUE,
         "default" => 0.0,
-        "description" => t("Minimum quantity or price required to qualify for this discount."),
+        "description" => "Minimum quantity or price required to qualify for this discount.",
       ),
       "has_qualifying_amount_max" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Whether or not this discount has a max qualifying amount."),
+        "description" => "Whether or not this discount has a max qualifying amount.",
       ),
       "qualifying_amount_max" => array(
         "type" => "float",
         "not null" => TRUE,
         "default" => 0.0,
-        "description" => t("Maximum quantity or price required to qualify for this discount."),
+        "description" => "Maximum quantity or price required to qualify for this discount.",
       ),
       "discount_type" => array(
         "type" => "int",
@@ -66,41 +72,41 @@ function uc_discounts_schema() {
         "type" => "float",
         "not null" => TRUE,
         "default" => 0.0,
-        "description" => t("Amount to discount (i.e. 1 free item, 25%, or $2.00)"),
+        "description" => "Amount to discount (i.e. 1 free item, 25%, or $2.00)",
       ),
       "requires_code" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("Requires code to activate discount."),
+        "description" => "Requires code to activate discount.",
       ),
       "filter_type" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("What type of object to filter on."),
+        "description" => "What type of object to filter on.",
       ),
       "has_role_filter" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Whether or not this discount filters based on role."),
+        "description" => "Whether or not this discount filters based on role.",
       ),
       "use_only_discounted_products_to_qualify" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Calculate the order subtotal using only discounted products."),
+        "description" => "Calculate the order subtotal using only discounted products.",
       ),
       "requires_single_product_to_qualify" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("Requires qualifying amount to come from a single product."),
+        "description" => "Requires qualifying amount to come from a single product.",
       ),
       "required_product_type" => array(
         "type" => "int",
@@ -112,79 +118,79 @@ function uc_discounts_schema() {
         "type" => "int",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("Number of times this discount can be applied to a single cart (0 for unlimited)."),
+        "description" => "Number of times this discount can be applied to a single cart (0 for unlimited).",
       ),
       "limit_max_times_applied" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Whether or not to further limit the maximum times applied to the number of qualifying products."),
+        "description" => "Whether or not to further limit the maximum times applied to the number of qualifying products.",
       ),
       "can_be_combined_with_other_discounts" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Whether or not this discount will be applied if other discounts are."),
+        "description" => "Whether or not this discount will be applied if other discounts are.",
       ),
       'add_to_cart' => array(
         'type' => 'int',
         'size' => 'tiny',
         'not null' => FALSE,
         'default' => 0,
-        'description' => t('Indicates whether free items are added to cart by the module.'),
+        'description' => 'Indicates whether free items are added to cart by the module.',
       ),
       "max_uses" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Number of times this discount can be applied (0 for no limit)."),
+        "description" => "Number of times this discount can be applied (0 for no limit).",
       ),
       "max_uses_per_user" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("Number of times this discount can be applied to a particular user (0 for unlimited)."),
+        "description" => "Number of times this discount can be applied to a particular user (0 for unlimited).",
       ),
       "max_uses_per_code" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Number of times this discount can be applied for a particular code (0 for unlimited)."),
+        "description" => "Number of times this discount can be applied for a particular code (0 for unlimited).",
       ),
       "has_activation" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Whether or not discount has an activation date."),
+        "description" => "Whether or not discount has an activation date.",
       ),
       "activates_on" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The activation date and time as a unix timestamp."),
+        "description" => "The activation date and time as a unix timestamp.",
       ),
       "has_expiration" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Whether or not discount has an expiration."),
+        "description" => "Whether or not discount has an expiration.",
       ),
       "expiration" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The exipration date and time as a unix timestamp."),
+        "description" => "The exipration date and time as a unix timestamp.",
       ),
       "is_active" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => FALSE,
         "default" => 0,
-        "description" => t("Convenience flag to state whether code is published on site or not."),
+        "description" => "Convenience flag to state whether code is published on site or not.",
       ),
       "weight" => array(
         "type" => "int",
@@ -196,7 +202,7 @@ function uc_discounts_schema() {
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The insert date and time as a unix timestamp."),
+        "description" => "The insert date and time as a unix timestamp.",
       ),
     ),
     "primary key" => array("discount_id"),
@@ -212,7 +218,7 @@ function uc_discounts_schema() {
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "code" => array(
         "type" => "varchar",
@@ -233,19 +239,19 @@ function uc_discounts_schema() {
       "discount_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "product_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_products}.nid of the product being discounted."),
+        "description" => "The {uc_products}.nid of the product being discounted.",
       ),
       "grouping" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+        "description" => "The grouping of this entry since required products be used in discount qualification or application.",
       ),
     ),
     'indexes' => array(
@@ -263,19 +269,19 @@ function uc_discounts_schema() {
       "discount_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "term_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {term}.tid of the term being discounted."),
+        "description" => "The {term}.tid of the term being discounted.",
       ),
       "grouping" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+        "description" => "The grouping of this entry since required products be used in discount qualification or application.",
       ),
     ),
     'indexes' => array(
@@ -293,20 +299,20 @@ function uc_discounts_schema() {
       "discount_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "sku" => array(
         "type" => "varchar",
         "length" => 255,
         "not null" => TRUE,
-        "description" => t("The {uc_products}.model of the product being discounted."),
+        "description" => "The {uc_products}.model of the product being discounted.",
       ),
       "grouping" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+        "description" => "The grouping of this entry since required products be used in discount qualification or application.",
       ),
     ),
     'indexes' => array(
@@ -324,20 +330,20 @@ function uc_discounts_schema() {
       "discount_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "class" => array(
         "type" => "varchar",
         "length" => 32,
         "not null" => TRUE,
-        "description" => t("The {node_type}.type of the product being discounted."),
+        "description" => "The {node_type}.type of the product being discounted.",
       ),
       "grouping" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+        "description" => "The grouping of this entry since required products be used in discount qualification or application.",
       ),
     ),
     'indexes' => array(
@@ -355,19 +361,19 @@ function uc_discounts_schema() {
       "discount_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "author_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {users}.uid of the author being discounted."),
+        "description" => "The {users}.uid of the author being discounted.",
       ),
       "grouping" => array(
         "type" => "int",
         "size" => "tiny",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("The grouping of this entry since required products be used in discount qualification or application."),
+        "description" => "The grouping of this entry since required products be used in discount qualification or application.",
       ),
     ),
     'indexes' => array(
@@ -385,12 +391,12 @@ function uc_discounts_schema() {
       "discount_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "role_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {role}.rid of the role required."),
+        "description" => "The {role}.rid of the role required.",
       ),
     ),
     "primary key" => array("discount_role_id"),
@@ -406,44 +412,44 @@ function uc_discounts_schema() {
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The {uc_discounts}.discount_id of the discount."),
+        "description" => "The {uc_discounts}.discount_id of the discount.",
       ),
       "user_id" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The {users}.uid of the user who used the discount or (0 if anonymous)."),
+        "description" => "The {users}.uid of the user who used the discount or (0 if anonymous).",
       ),
       "order_id" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The {uc_orders}.order_id of the user's order."),
+        "description" => "The {uc_orders}.order_id of the user's order.",
       ),
       "code" => array(
         "type" => "varchar",
         "length" => 100,
         "not null" => TRUE,
         "default" => "",
-        "description" => t("Code used for discount."),
+        "description" => "Code used for discount.",
       ),
       "times_applied" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 1,
-        "description" => t("Number of times this discount was applied."),
+        "description" => "Number of times this discount was applied.",
       ),
       "amount" => array(
         "type" => "float",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("Total amount of discount."),
+        "description" => "Total amount of discount.",
       ),
       "insert_timestamp" => array(
         "type" => "int",
         "not null" => TRUE,
         "default" => 0,
-        "description" => t("The insert date and time as a unix timestamp."),
+        "description" => "The insert date and time as a unix timestamp.",
       ),
     ),
     "primary key" => array("discount_use_id"),
@@ -454,12 +460,12 @@ function uc_discounts_schema() {
       "order_id" => array(
         "type" => "int",
         "not null" => TRUE,
-        "description" => t("The {uc_orders}.order_id of the user's order."),
+        "description" => "The {uc_orders}.order_id of the user's order.",
       ),
       "codes" => array(
         "type" => "text",
         "not null" => TRUE,
-        "description" => t("Newline delimited codes string for order."),
+        "description" => "Newline delimited codes string for order.",
       ),
     ),
   );
@@ -468,13 +474,21 @@ function uc_discounts_schema() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function uc_discounts_install() {
-  drupal_install_schema("uc_discounts");
+  // TODO The drupal_(un)install_schema functions are called automatically in D7.
+  // drupal_install_schema("uc_discounts")
 
   //Weight must be less than uc_payment's
-  db_query("UPDATE {system} SET weight=-10 WHERE name='uc_discounts'");
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("UPDATE {system} SET weight=-10 WHERE name='uc_discounts'") */
+  db_update('system')
+  ->fields(array(
+    'weight' => -10,
+  ))
+  ->condition('name', 'uc_discounts')
+  ->execute();
 
   //Print out a nice message directing administrators towards the configuration screen.
   drupal_set_message(st("UC Discounts (Alternative) settings are available under !link",
@@ -483,23 +497,29 @@ function uc_discounts_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function uc_discounts_uninstall() {
-  drupal_uninstall_schema("uc_discounts");
+  // TODO The drupal_(un)install_schema functions are called automatically in D7.
+  // drupal_uninstall_schema("uc_discounts")
 }
 
 //Add {uc_discounts_roles} table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_1() {
   $queries = array();
 
   $schema = uc_discounts_roles_schema();
-  db_create_table($queries, "uc_discounts_roles", $schema["uc_discounts_roles"]);
+  db_create_table("uc_discounts_roles", $schema["uc_discounts_roles"]);
 
   switch ($GLOBALS["db_type"]) {
     case "mysql":
     case "mysqli":
-      $queries[] = update_sql("ALTER TABLE {uc_discounts} ADD has_role_filter tinyint NOT NULL default 0 AFTER filter_type");
+      // TODO update_sql has been removed. Use the database API for any schema or data changes.
+      $queries[] = array() /* update_sql("ALTER TABLE {uc_discounts} ADD has_role_filter tinyint NOT NULL default 0 AFTER filter_type") */;
       break;
 
     case "pgsql":
@@ -509,21 +529,31 @@ function uc_discounts_update_1() {
       break;
   }
 
-  return $queries;
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $queries */;
 }
 
 //Add has_qualifying_amount_max and qualifying_amount_max columns to uc_discounts table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_2() {
   $queries = array();
 
   switch ($GLOBALS["db_type"]) {
     case "mysql":
     case "mysqli":
-      $queries[] = update_sql("ALTER TABLE {uc_discounts} ADD has_qualifying_amount_max tinyint NOT NULL default 0 AFTER qualifying_amount");
-      $queries[] = update_sql("ALTER TABLE {uc_discounts} ADD qualifying_amount_max float NOT NULL default 0 AFTER has_qualifying_amount_max");
+      // TODO update_sql has been removed. Use the database API for any schema or data changes.
+      $queries[] = array() /* update_sql("ALTER TABLE {uc_discounts} ADD has_qualifying_amount_max tinyint NOT NULL default 0 AFTER qualifying_amount") */;
+      // TODO update_sql has been removed. Use the database API for any schema or data changes.
+      $queries[] = array() /* update_sql("ALTER TABLE {uc_discounts} ADD qualifying_amount_max float NOT NULL default 0 AFTER has_qualifying_amount_max") */;
 
       //Fixes update bug that existed in uc_discounts_update_1 (but is fixed now)
-      $queries[] = update_sql("ALTER TABLE {uc_discounts} MODIFY has_role_filter tinyint NOT NULL");
+      // TODO update_sql has been removed. Use the database API for any schema or data changes.
+      $queries[] = array() /* update_sql("ALTER TABLE {uc_discounts} MODIFY has_role_filter tinyint NOT NULL") */;
       break;
 
     case "pgsql":
@@ -536,17 +566,25 @@ function uc_discounts_update_2() {
       break;
   }
 
-  return $queries;
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $queries */;
 }
 
 //Add max_uses_per_code column to uc_discounts table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_3() {
   $queries = array();
 
   switch ($GLOBALS["db_type"]) {
     case "mysql":
     case "mysqli":
-      $queries[] = update_sql("ALTER TABLE {uc_discounts} ADD max_uses_per_code int NOT NULL default 0 AFTER max_uses_per_user");
+      // TODO update_sql has been removed. Use the database API for any schema or data changes.
+      $queries[] = array() /* update_sql("ALTER TABLE {uc_discounts} ADD max_uses_per_code int NOT NULL default 0 AFTER max_uses_per_user") */;
       break;
 
     case "pgsql":
@@ -556,24 +594,39 @@ function uc_discounts_update_3() {
       break;
   }
 
-  return $queries;
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $queries */;
 }
 
 //Add uc_discounts_skus table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_4() {
   $schema = uc_discounts_skus_schema();
-  db_create_table($queries, "uc_discounts_skus", $schema["uc_discounts_skus"]);
-  return $queries;
+  db_create_table("uc_discounts_skus", $schema["uc_discounts_skus"]);
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $queries */;
 }
 
 //Add required_product column to uc_discounts table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_5() {
   $queries = array();
 
   switch ($GLOBALS["db_type"]) {
     case "mysql":
     case "mysqli":
-      $queries[] = update_sql("ALTER TABLE {uc_discounts} ADD required_product varchar(255) NOT NULL default '' AFTER requires_single_product_to_qualify");
+      // TODO update_sql has been removed. Use the database API for any schema or data changes.
+      $queries[] = array() /* update_sql("ALTER TABLE {uc_discounts} ADD required_product varchar(255) NOT NULL default '' AFTER requires_single_product_to_qualify") */;
       break;
 
     case "pgsql":
@@ -583,21 +636,38 @@ function uc_discounts_update_5() {
       break;
   }
 
-  return $queries;
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $queries */;
 }
 
 //Add uc_discounts_classes table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_6() {
   $schema = uc_discounts_classes_schema();
-  db_create_table($queries, "uc_discounts_classes", $schema["uc_discounts_classes"]);
-  return $queries;
+  db_create_table("uc_discounts_classes", $schema["uc_discounts_classes"]);
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $queries */;
 }
 
 //Rename is_published to is_active
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_7() {
-  db_change_field($ret, 'uc_discounts', 'is_published', 'is_active',array('type' => 'int', 'size' => 'tiny', 'not null' => FALSE, 'default' => 0, ));
-  
-  return $ret;
+  db_change_field('uc_discounts', 'is_published', 'is_active', array('type' => 'int', 'size' => 'tiny', 'not null' => FALSE, 'default' => 0));
+
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }
 
 /**
@@ -606,9 +676,12 @@ function uc_discounts_update_7() {
 function uc_discounts_update_6001() {
   $schema = uc_discounts_schema();
   $ret = array();
-  db_add_field($ret, 'uc_discounts', 'has_activation', $schema['uc_discounts']['fields']['has_activation']);
-  db_add_field($ret, 'uc_discounts', 'activates_on', $schema['uc_discounts']['fields']['activates_on']);
-  return $ret;
+  db_add_field('uc_discounts', 'has_activation', $schema['uc_discounts']['fields']['has_activation']);
+  db_add_field('uc_discounts', 'activates_on', $schema['uc_discounts']['fields']['activates_on']);
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }
 
 /**
@@ -617,10 +690,19 @@ function uc_discounts_update_6001() {
 function uc_discounts_update_6002() {
   $schema = uc_discounts_schema();
   $ret = array();
-  db_add_field($ret, 'uc_discounts', 'use_only_discounted_products_to_qualify', $schema['uc_discounts']['fields']['use_only_discounted_products_to_qualify']);
+  db_add_field('uc_discounts', 'use_only_discounted_products_to_qualify', $schema['uc_discounts']['fields']['use_only_discounted_products_to_qualify']);
   // This was the default before this feature was added
-  db_query("UPDATE {uc_discounts} SET use_only_discounted_products_to_qualify=1");
-  return $ret;
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("UPDATE {uc_discounts} SET use_only_discounted_products_to_qualify=1") */
+  db_update('uc_discounts')
+  ->fields(array(
+    'use_only_discounted_products_to_qualify' => 1,
+  ))
+  ->execute();
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }
 
 /**
@@ -629,12 +711,26 @@ function uc_discounts_update_6002() {
 function uc_discounts_update_6003() {
   $schema = uc_discounts_schema();
   $ret = array();
-  db_add_field($ret, 'uc_discounts', 'limit_max_times_applied', $schema['uc_discounts']['fields']['limit_max_times_applied']);
-  db_query("UPDATE {uc_discounts} SET required_product = '' WHERE required_product = 'none'");
-  return $ret;
+  db_add_field('uc_discounts', 'limit_max_times_applied', $schema['uc_discounts']['fields']['limit_max_times_applied']);
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("UPDATE {uc_discounts} SET required_product = '' WHERE required_product = 'none'") */
+  db_update('uc_discounts')
+  ->fields(array(
+    'required_product' => '',
+  ))
+  ->condition('required_product', 'none')
+  ->execute();
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }
 
 //Add uc_discounts_authors table
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_update_6004() {
   $schema["uc_discounts_authors"] = array(
     "fields" => array(
@@ -656,8 +752,11 @@ function uc_discounts_update_6004() {
     "primary key" => array("discount_author_id"),
   );
   $ret = array();
-  db_create_table($ret, 'uc_discounts_authors', $schema['uc_discounts_authors']);
-  return $ret;
+  db_create_table('uc_discounts_authors', $schema['uc_discounts_authors']);
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }
 
 /**
@@ -666,24 +765,36 @@ function uc_discounts_update_6004() {
 function uc_discounts_update_6005() {
   $schema = uc_discounts_schema();
   $ret = array();
-  db_add_field($ret, 'uc_discounts', 'required_product_type', $schema['uc_discounts']['fields']['required_product_type']);
-  db_add_field($ret, 'uc_discounts_products', 'grouping', $schema['uc_discounts_products']['fields']['grouping']);
-  db_add_index($ret, 'uc_discounts_products', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field($ret, 'uc_discounts_terms', 'grouping', $schema['uc_discounts_terms']['fields']['grouping']);
-  db_add_index($ret, 'uc_discounts_terms', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field($ret, 'uc_discounts_skus', 'grouping', $schema['uc_discounts_skus']['fields']['grouping']);
-  db_add_index($ret, 'uc_discounts_skus', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field($ret, 'uc_discounts_classes', 'grouping', $schema['uc_discounts_classes']['fields']['grouping']);
-  db_add_index($ret, 'uc_discounts_classes', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field($ret, 'uc_discounts_authors', 'grouping', $schema['uc_discounts_authors']['fields']['grouping']);
-  db_add_index($ret, 'uc_discounts_authors', 'discount_id_grouping', array('discount_id', 'grouping'));
-  $result = db_query("SELECT * FROM {uc_discounts} WHERE required_product != ''");
+  db_add_field('uc_discounts', 'required_product_type', $schema['uc_discounts']['fields']['required_product_type']);
+  db_add_field('uc_discounts_products', 'grouping', $schema['uc_discounts_products']['fields']['grouping']);
+  db_add_index('uc_discounts_products', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field('uc_discounts_terms', 'grouping', $schema['uc_discounts_terms']['fields']['grouping']);
+  db_add_index('uc_discounts_terms', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field('uc_discounts_skus', 'grouping', $schema['uc_discounts_skus']['fields']['grouping']);
+  db_add_index('uc_discounts_skus', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field('uc_discounts_classes', 'grouping', $schema['uc_discounts_classes']['fields']['grouping']);
+  db_add_index('uc_discounts_classes', 'discount_id_grouping', array('discount_id', 'grouping'));
+  db_add_field('uc_discounts_authors', 'grouping', $schema['uc_discounts_authors']['fields']['grouping']);
+  db_add_index('uc_discounts_authors', 'discount_id_grouping', array('discount_id', 'grouping'));
+  $result = db_query("SELECT * FROM {uc_discounts} WHERE required_product != :required_product", array(':required_product' => ''));
   while ($discount = db_fetch_object($result)) {
-    db_query("INSERT INTO {uc_discounts_skus} SET discount_id = %d, sku = '%s', grouping = %d", $discount->discount_id, $discount->required_product, DISCOUNT_FILTER_GROUPING_QUALIFICATION);
-    db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", FILTER_TYPE_SKUS, $discount->discount_id);
+    // TODO Please convert this statement to the D7 database API syntax.
+    /* db_query("INSERT INTO {uc_discounts_skus} SET discount_id = %d, sku = '%s', grouping = %d", $discount->discount_id, $discount->required_product, DISCOUNT_FILTER_GROUPING_QUALIFICATION) */
+    NULL;
+    // TODO Please review the conversion of this statement to the D7 database API syntax.
+    /* db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", FILTER_TYPE_SKUS, $discount->discount_id) */
+    db_update('uc_discounts')
+  ->fields(array(
+      'required_product_type' => FILTER_TYPE_SKUS,
+    ))
+  ->condition('discount_id', $discount->discount_id)
+  ->execute();
   }
-  db_drop_field($ret, 'uc_discounts', 'required_product');
-  return $ret;
+  db_drop_field('uc_discounts', 'required_product');
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }
 
 /**
@@ -692,6 +803,9 @@ function uc_discounts_update_6005() {
 function uc_discounts_update_6006() {
   $schema = uc_discounts_schema();
   $ret = array();
-  db_add_field($ret, 'uc_discounts', 'add_to_cart', $schema['uc_discounts']['fields']['add_to_cart']);
-  return $ret;
+  db_add_field('uc_discounts', 'add_to_cart', $schema['uc_discounts']['fields']['add_to_cart']);
+  // hook_update_N() no longer returns a $ret array. Instead, return
+  // nothing or a translated string indicating the update ran successfully.
+  // See http://drupal.org/node/224333#update_sql.
+  return t('TODO Add a descriptive string here to show in the UI.') /* $ret */;
 }

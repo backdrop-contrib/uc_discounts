@@ -1,4 +1,8 @@
 <?php
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_views_data() {
   $data['uc_discounts_order_codes']['table']['group'] = t('UC Discounts');
 

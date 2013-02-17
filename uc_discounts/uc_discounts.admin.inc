@@ -8,67 +8,132 @@ function uc_discounts_admin_list() {
   );
 
   $header = array(
-    array('data' => t('Active'), 'field' => 'is_active'),
-    array('data' => t('Name'), 'field' => 'name'),
-    array('data' => t('Short Description'), 'field' => 'short_description'),
-    array('data' => t('Qualifying Type'), 'field' => 'qualifying_type'),
-    array('data' => t('Type'), 'field' => 'discount_type'),
-    array('data' => t('Amount'), 'field' => 'discount_amount'),
-    array('data' => t('Weight'), 'field' => 'weight'),
-    array('data' => t('Created At'), 'field' => 'insert_timestamp', 'sort' => 'desc'),
-    array('data' => t('Expires At'), 'field' => 'expiration'),
+    array(
+      'data' => t('Active'),
+      'field' => 'is_active',
+    ),
+    array(
+      'data' => t('Name'),
+      'field' => 'name',
+    ),
+    array(
+      'data' => t('Short Description'),
+      'field' => 'short_description',
+    ),
+    array(
+      'data' => t('Qualifying Type'),
+      'field' => 'qualifying_type',
+    ),
+    array(
+      'data' => t('Type'),
+      'field' => 'discount_type',
+    ),
+    array(
+      'data' => t('Amount'),
+      'field' => 'discount_amount',
+    ),
+    array(
+      'data' => t('Weight'),
+      'field' => 'weight',
+    ),
+    array(
+      'data' => t('Created At'),
+      'field' => 'insert_timestamp',
+      'sort' => 'desc',
+    ),
+    array(
+      'data' => t('Expires At'),
+      'field' => 'expiration',
+    ),
     array('data' => t('Operations')),
   );
 
-  $query     = "SELECT * FROM {uc_discounts}";
+  $select = db_select('uc_discounts', 'd')
+            ->fields('d')
+            ->extend('PagerDefault')
+            ->limit(50)
+            ->extend('TableSort')
+            ->orderByHeader($header);
+            
   if (!empty($search_params['name'])) {
-    $name = db_escape_string('%' . $search_params['name'] . '%');
-    $query .= " WHERE name LIKE '$name' OR description LIKE '$name' OR short_description LIKE '$name'";
+    $name = '%' . $search_params['name'] . '%';
+    $select->condition(db_or()
+                       ->condition('d.name',$name,'LIKE')
+                       ->condition('d.description',$name,'LIKE')
+                       ->condition('d.short_description',$name,'LIKE'));
   }
-  $tablesort = tablesort_sql($header);
-  $result    = pager_query($query . $tablesort, 50);
-
+  
+  $result = $select->execute()->fetchAll();
+  
   $rows = array();
-  while ($discount = db_fetch_object($result)) {
-    $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
-    $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
+  foreach ($result as $discount) {
+    //$total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
+    //$total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
     $operations = array(
-      l(t("usage"), "admin/reports/uc_discounts/discount/". $discount->discount_id),
-      l(t("edit"), "admin/store/uc_discounts/edit/". $discount->discount_id),
-      l(t("copy"), "admin/store/uc_discounts/copy/". $discount->discount_id),
-      l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
+      l(t("usage"), "admin/reports/uc_discounts/discount/" . $discount->discount_id),
+      l(t("edit"), "admin/store/uc_discounts/edit/" . $discount->discount_id),
+      l(t("copy"), "admin/store/uc_discounts/copy/" . $discount->discount_id),
+      l(t("delete"), "admin/store/uc_discounts/delete/" . $discount->discount_id),
     );
 
-    $rows[] = array('data' =>
-      array(
-        array('data' => ($discount->is_active ? '&#10003;' : 'X'), 'class' => ($discount->is_active ? 'is_active' : 'is_inactive')),
+    $rows[] = array(
+      'data' => array(
+        array(
+          'data' => ($discount->is_active ? '&#10003;' : 'X'),
+          'class' => array(($discount->is_active ? 'is_active' : 'is_inactive')),
+        ),
         $discount->name,
         $discount->short_description,
         qualifying_type_name($discount->qualifying_type),
         discount_type_name($discount->discount_type),
-        array('data' => discount_amount_formatted($discount), 'class' => 'numeric'),
-        array('data' => $discount->weight, 'class' => 'numeric'),
-        array('data' => format_date($discount->insert_timestamp, 'small'), 'class' => 'date'),
-        array('data' => ($discount->has_expiration ? format_date($discount->expiration, 'small') : 'N/A'), 'class' => 'date'),
-        array('data' => implode(' ', $operations), 'class' => 'operations'),
+        array(
+          'data' => discount_amount_formatted($discount),
+          'class' => array('numeric'),
+        ),
+        array(
+          'data' => $discount->weight,
+          'class' => array('numeric'),
+        ),
+        array(
+          'data' => format_date($discount->insert_timestamp, 'short'),
+          'class' => array('date'),
+        ),
+        array(
+          'data' => ($discount->has_expiration ? format_date($discount->expiration, 'short') : t('N/A')),
+          'class' => array('date'),
+        ),
+        array(
+          'data' => implode(' ', $operations),
+          'class' => array('operations'),
+        ),
       ),
     );
   }
 
   if (empty($rows)) {
-    $rows[] = array(array('data' => t('No discounts.'), 'colspan' => count($header)));
+    $rows[] = array(
+        'data' => array(
+          array(
+            'data' => t('No discounts.'),
+            'colspan' => count($header),
+          )
+        )
+    );
   }
-
-  $output = drupal_get_form('uc_discounts_search_form', $search_params);
-  $output .= theme('table', $header, $rows, array('class' => 'uc-discounts'));
-  $output .= theme('pager', NULL, 50, 0);
+  
+  $output['content'] = array(
+    'search_form' => drupal_get_form('uc_discounts_search_form', $search_params),
+    'list_table' => array('#markup' => theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
+    'pager' =>  array('#theme' => 'pager', '#weight' => 5),
+  );
+    
   return $output;
 }
 
 /**
  * Create a form for searching the discounts
  */
-function uc_discounts_search_form(&$form_state, $values) {
+function uc_discounts_search_form($form, &$form_state, $values) {
   $form = array();
 
   $form['search'] = array(
@@ -92,11 +157,15 @@ function uc_discounts_search_form(&$form_state, $values) {
   return $form;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_search_form_submit($form, &$form_state) {
   $args = array(
     $form_state['values']['name'],
   );
-  $form_state['redirect'] = array('admin/store/uc_discounts/list/'. implode('/', $args));
+  $form_state['redirect'] = array('admin/store/uc_discounts/list/' . implode('/', $args));
 }
 
 /**
@@ -105,23 +174,26 @@ function uc_discounts_search_form_submit($form, &$form_state) {
  * @ingroup forms
  * @see uc_discounts_form_submit()
  */
-function uc_discounts_form($form_state, $discount_id = 0) {
-  drupal_add_js(drupal_get_path('module', 'uc_discounts') .'/uc_discounts_admin.js');
+function uc_discounts_form($form, &$form_state, $discount_id = 0) {
+  drupal_add_js(drupal_get_path('module', 'uc_discounts') . '/uc_discounts_admin.js', array('scope' => 'footer'));
   $form           = array();
   $form_submitted = $form_state["submitted"];
   $is_edit        = $discount_id != 0;
-
+  
   if (!$form_submitted && $is_edit) {
     $form_state["values"] = (array) uc_discounts_load($discount_id);
   }
 
-  $form["discount_id"] = array("#type" => "hidden", "#value" => $form_state["values"]["discount_id"]);
+  $form["discount_id"] = array(
+    "#type" => "hidden",
+    "#value" => isset($form_state["values"]["discount_id"])?$form_state["values"]["discount_id"]:'',
+  );
 
   $form["name"] = array(
     "#type" => "textfield",
     "#title" => t("Name"),
     "#description" => t("Shown in admin reports and logs."),
-    "#default_value" => $form_state["values"]["name"],
+    "#default_value" => isset($form_state["values"]["name"])?$form_state["values"]["name"]:'',
     "#size" => 50,
     "#required" => TRUE,
   );
@@ -130,7 +202,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "textfield",
     "#title" => t("Short Description"),
     "#description" => t("Description displayed to user during checkout and in order review."),
-    "#default_value" => $form_state["values"]["short_description"],
+    "#default_value" => isset($form_state["values"]["short_description"])?$form_state["values"]["short_description"]:'',
     "#size" => 75,
     "#required" => TRUE,
   );
@@ -139,7 +211,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "textfield",
     "#title" => t("Description"),
     "#description" => t("Internal description for discount administrators."),
-    "#default_value" => $form_state["values"]["description"],
+    "#default_value" => isset($form_state["values"]["description"])?$form_state["values"]["description"]:'',
     "#size" => 75,
   );
 
@@ -168,12 +240,12 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     '#attributes' => array('onchange' => "jQuery('#discount-activates-on-wrapper').toggle();"),
   );
 
-  $activates_on = isset($form_state["values"]["activates_on"]) ? $form_state["values"]["activates_on"] : time();
+  $activates_on = isset($form_state["values"]["activates_on"]) ? $form_state["values"]["activates_on"] : REQUEST_TIME;
   $display_string = $has_activation ? "" : " style='display:none'";
   $form["activates_on"] = array(
     "#type" => "date_popup",
     "#date_type" => "DATE_UNIX",
-    "#title" => t("Discount activation date") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#title" => t("Discount activation date") . sprintf("<span title='" . t("This field is required.") . "' class='form-required'>*</span>"),
     "#description" => t("Date and time when the discount will become active.  Note that if the 'Is active' field is not checked, this will be ignored."),
     "#default_value" => date("Y-m-d H:i:s", $activates_on),
     '#prefix' => "<div id=\"discount-activates-on-wrapper\"$display_string>",
@@ -189,12 +261,12 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     '#attributes' => array('onchange' => "jQuery('#discount-expiration-wrapper').toggle();"),
   );
 
-  $expiration = isset($form_state["values"]["expiration"]) ? $form_state["values"]["expiration"] : time();
+  $expiration = isset($form_state["values"]["expiration"]) ? $form_state["values"]["expiration"] : REQUEST_TIME;
   $display_string = $has_expiration ? "" : " style='display:none'";
   $form["expiration"] = array(
     "#type" => "date_popup",
     "#date_type" => "DATE_UNIX",
-    "#title" => t("Discount expiration") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#title" => t("Discount expiration") . sprintf("<span title='" . t("This field is required.") . "' class='form-required'>*</span>"),
     "#description" => t("Date and time when the discount expires."),
     "#default_value" => date("Y-m-d H:i:s", $expiration),
     '#prefix' => "<div id=\"discount-expiration-wrapper\"$display_string>",
@@ -203,7 +275,9 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 
   //Add custom weight range [-50, 50]
   $options = array();
-  for ($i = -50; $i <= 50; $i++) $options[$i] = $i;
+  for ($i = -50; $i <= 50; $i++) {
+    $options[$i] = $i;
+  }
   $form["weight"] = array(
     "#type" => "select",
     "#title" => t("Weight"),
@@ -224,14 +298,14 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#title" => t("Qualification type"),
     "#description" => t("The type of qualification used to determine if a cart qualifies for this discount."),
     "#options" => qualifying_type_options(),
-    "#default_value" => $form_state["values"]["qualifying_type"],
+    "#default_value" => isset($form_state["values"]["qualifying_type"])?$form_state["values"]["qualifying_type"]:'',
   );
 
   $form["qualifications"]["qualifying_amount"] = array(
     "#type" => "textfield",
     "#title" => t("Minimum qualification amount"),
     "#description" => t("The amount of qualification type required. E.g. 50 (for $50), 5 (for 5 items). Remember for a discount like 'buy 4 get 1 free' the qualifying amount is '5'.  For a discount like 'spend at least $25, get $5 off' the qualifying amount is '30'."),
-    "#default_value" => $form_state["values"]["qualifying_amount"],
+    "#default_value" => isset($form_state["values"]["qualifying_amount"])?$form_state["values"]["qualifying_amount"]:'',
     "#size" => 15,
     "#required" => TRUE,
   );
@@ -250,7 +324,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     "#type" => "textfield",
     "#title" => t("Maximum qualifying amount"),
     "#description" => t("Maximum amount to NOT exceed to qualify for the discount.  E.g. 50 (for $50), 5 (for 5 items)."),
-    "#default_value" => $form_state["values"]["qualifying_amount_max"],
+    "#default_value" => isset($form_state["values"]["qualifying_amount_max"])?$form_state["values"]["qualifying_amount_max"]:'',
     "#size" => 15,
     "#required" => FALSE,
     "#prefix" => "<div id='discount-qualifying-amount-max-wrapper'$display_string>",
@@ -279,7 +353,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
   $display_string = $requires_code ? "" : " style='display:none'";
   $form["qualifications"]["codes"] = array(
     "#type" => "textarea",
-    "#title" => t("Discount codes") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#title" => t("Discount codes") . sprintf("<span title='" . t("This field is required.") . "' class='form-required'>*</span>"),
     "#description" => t("Enter discount codes in box above, one code per line.  Spaces are permitted but may confuse consumers.  You may use the !link if you need to create a lot of unique codes.", array('!link' => l(t('discount code generator'), "admin/store/uc_discounts/generate_codes/$discount_id"))),
     "#default_value" => $codes_string,
     "#rows" => 5,
@@ -306,13 +380,17 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 
   //Create roles form element
   $options = array();
-  $result = db_query("SELECT rid, name FROM {role} ORDER BY rid");
+  $result = db_query("SELECT rid, name
+                     FROM {role}
+                     ORDER BY rid");
   $options[ALL_ROLES] = t("<All Roles>");
-  while ($row = db_fetch_object($result)) $options[$row->rid] = $row->name;
+  foreach ($result as $row) {
+    $options[$row->rid] = $row->name;
+  }
   $display_string = ($has_role_filter) ? "" : " style='display:none'";
   $form["qualifications"]["role_ids"] = array(
     "#type" => "select",
-    "#title" => t("Roles") . sprintf("<span title='". t("This field is required.") ."' class='form-required'>*</span>"),
+    "#title" => t("Roles") . sprintf("<span title='" . t("This field is required.") . "' class='form-required'>*</span>"),
     "#description" => t("Select all roles that this discount applies to or &lt;All Roles&gt; to apply to all roles."),
     "#options" => $options,
     "#default_value" => $role_ids,
@@ -349,14 +427,14 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     '#title' => t('Discount type'),
     '#description' => t('Type of discount to apply.'),
     '#options' => discount_type_options(),
-    '#default_value' => $form_state['values']['discount_type'],
+    '#default_value' => isset($form_state['values']['discount_type'])?$form_state['values']['discount_type']:'',
   );
 
   $form['application']['discount_amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Discount amount'),
     '#description' => t('The amount of discount.  E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)'),
-    '#default_value' => $form_state['values']['discount_amount'],
+    '#default_value' => isset($form_state['values']['discount_amount'])?$form_state['values']['discount_amount']:'',
     '#size' => 15,
     '#required' => TRUE,
   );
@@ -414,7 +492,10 @@ function uc_discounts_form($form_state, $discount_id = 0) {
     '#required' => TRUE,
   );
 
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
 
   return $form;
 }
@@ -422,7 +503,7 @@ function uc_discounts_form($form_state, $discount_id = 0) {
 /**
  * Helper function that creates a series of dropdowns for selecting a product via product_id, sku, class, term, or author
  */
-function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $discount_id) {
+function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $discount_id) {
   $fieldset_name = $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? 'application' : 'qualifications';
 
   $form[$fieldset_name]['filter'] = array(
@@ -439,8 +520,9 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
   }
   else {
     $filter_type = isset($form_state['values']['filter_type']) ? $form_state['values']['filter_type'] : FILTER_TYPE_PRODUCTS;
-    $name = 'filter_type';;
+    $name = 'filter_type';
   }
+  $filter_name = $name;
 
   $options[FILTER_TYPE_PRODUCTS] = t('Filter By Products');
   $options[FILTER_TYPE_TERMS] = t('Filter By Terms');
@@ -454,17 +536,20 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
     "#options" => $options,
     "#default_value" => $filter_type,
     "#required" => TRUE,
-    '#attributes' => array('class' => 'filter-type'),
+    '#attributes' => array('class' => array('filter-type')),
   );
 
   $name = "$grouping-filter-select-" . FILTER_TYPE_PRODUCTS;
   $product_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : get_product_ids_for_discount($discount_id, $grouping, FALSE);
   $options = array();
-  $result = db_query('SELECT n.nid as nid, n.title as title, p.model as model FROM {uc_products} p INNER JOIN {node} n ON p.nid=n.nid ORDER BY title');
+  $result = db_query('SELECT n.nid as nid, n.title as title, p.model as model
+                     FROM {uc_products} p
+                     INNER JOIN {node} n ON p.nid=n.nid
+                     ORDER BY title');
   if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
     $options[ALL_PRODUCTS] = t("<All Products>");
   }
-  while ($row = db_fetch_object($result)) {
+  foreach ($result as $row) {
     $options[$row->nid] = "$row->title  ($row->model)";
   }
   $form[$fieldset_name]['filter'][$name] = array(
@@ -474,15 +559,22 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
     "#options" => $options,
     "#default_value" => $product_ids,
     "#multiple" => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_PRODUCTS),
+      ),
+    ),
   );
 
   $name = "$grouping-filter-select-" . FILTER_TYPE_TERMS;
   $term_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : get_term_ids_for_discount($discount_id, $grouping, FALSE);
   $options = array();
-  if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
-    $options = array(ALL_TERMS => t("<All Terms>"));
+  $result = db_query("SELECT tid, name FROM {taxonomy_term_data} ORDER BY weight");
+  $options[ALL_TERMS] = t("<All Terms>");
+ foreach ($result as $row) {
+   $options[$row->tid] = "$row->name";
   }
-  $options += taxonomy_form_all();
+  
   $form[$fieldset_name]['filter'][$name] = array(
     "#type" => "select",
     "#title" => t("Terms"),
@@ -490,16 +582,24 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
     "#options" => $options,
     "#default_value" => $term_ids,
     "#multiple" => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_TERMS),
+      ),
+    ),
   );
 
   $name = "$grouping-filter-select-" . FILTER_TYPE_SKUS;
   $skus = isset($form_state['values'][$name]) ? $form_state['values'][$name] : get_skus_for_discount($discount_id, $grouping, FALSE);
   $options = array();
-  $result = db_query('SELECT p.model, n.title FROM {uc_products} p, {node} n WHERE p.nid=n.nid ORDER BY p.model');
+  $result = db_query('SELECT p.model, n.title
+                     FROM {uc_products} p, {node} n
+                     WHERE p.nid = n.nid
+                     ORDER BY p.model');
   if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
     $options[ALL_SKUS] = t("<All SKUs>");
   }
-  while ($row = db_fetch_object($result)) {
+  foreach ($result as $row) {
     $options[$row->model] = "$row->model ($row->title)";
   }
   $form[$fieldset_name]['filter'][$name] = array(
@@ -509,6 +609,11 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
     "#options" => $options,
     "#default_value" => $skus,
     "#multiple" => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_SKUS),
+      ),
+    ),
   );
 
   $name = "$grouping-filter-select-" . FILTER_TYPE_CLASS;
@@ -518,7 +623,7 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
   if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
     $options[ALL_CLASSES] = t("<All Product Classes>");
   }
-  foreach($result as $type) {
+  foreach ($result as $type) {
     $options[$type] = $type;
   }
   $form[$fieldset_name]['filter'][$name] = array(
@@ -528,18 +633,29 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
     "#options" => $options,
     "#default_value" => $classes,
     "#multiple" => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_CLASS),
+      ),
+    ),
   );
 
   $name = "$grouping-filter-select-" . FILTER_TYPE_AUTHORS;
   $author_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : get_author_ids_for_discount($discount_id, $grouping, FALSE);
   $options = array();
-  $result = db_query('SELECT uid, name FROM {users} u INNER JOIN {node} n USING(uid)
-                      WHERE u.uid > 0 AND n.type IN(' . db_placeholders(uc_product_types(), 'varchar') . ')
-                      GROUP BY u.uid ORDER BY name', uc_product_types());
+  // TODO Please convert this statement to the D7 database API syntax.
+  $result = db_query('SELECT uid, name
+                     FROM {users} u
+                     INNER JOIN {node} n USING(uid)
+                     WHERE u.uid > 0
+                     AND n.type IN(:uc_product_types)
+                     GROUP BY u.uid
+                     ORDER BY name',
+                     array(':uc_product_types'=>uc_product_types()));
   if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
     $options[ALL_AUTHORS] = t("<All Authors>");
   }
-  while ($row = db_fetch_object($result)) {
+  foreach ($result as $row) {
     $options[$row->uid] = $row->name;
   }
   $form[$fieldset_name]['filter'][$name] = array(
@@ -549,6 +665,11 @@ function _uc_discounts_product_filter_form(&$form, $form_state, $grouping, $disc
     "#options" => $options,
     "#default_value" => $author_ids,
     "#multiple" => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_AUTHORS),
+      ),
+    ),
   );
 }
 
@@ -604,12 +725,12 @@ function uc_discounts_form_validate($form, &$form_state) {
     form_set_error("roles", t("Roles are required because 'Filter based on roles' is checked"));
     $has_errors = TRUE;
   }
-
+/*
   if ($values["has_expiration"] && !date_is_valid($values["expiration"])) {
     form_set_error("expiration", t("Expiration are required because 'Discount expires' is checked"));
     $has_errors = TRUE;
   }
-
+                                                                                           */
   //Form requires rebuilding form so codes and expiration blocks will display correctly
   if ($has_errors) {
     $form_state["rebuild"] = TRUE;
@@ -623,8 +744,8 @@ function uc_discounts_form_submit($form, &$form_state) {
   $codes = explode("\n", $form_state["values"]["codes"]);
 
   //Set expiration to a valid value because it is not nullable
-  $expiration = isset($form_state["values"]["expiration"]) ? date_convert(date_make_date($form_state["values"]["expiration"]), DATE_OBJECT, DATE_UNIX) : 0;
-  $activates_on = isset($form_state["values"]["activates_on"]) ? date_convert(date_make_date($form_state["values"]["activates_on"]), DATE_OBJECT, DATE_UNIX) : 0;
+  $expiration = isset($form_state["values"]["expiration"]) ? strtotime($form_state["values"]["expiration"]):0; //date_convert(date_make_date($form_state["values"]["expiration"]), DATE_OBJECT, DATE_UNIX) : 0;
+  $activates_on = isset($form_state["values"]["activates_on"]) ? strtotime($form_state["values"]["activates_on"]):0; //date_convert(date_make_date($form_state["values"]["activates_on"]), DATE_OBJECT, DATE_UNIX) : 0;
 
   //Set discount_amount
   if (($index = strpos($form_state["values"]["discount_amount"], "%")) !== FALSE) {
@@ -664,7 +785,7 @@ function uc_discounts_form_submit($form, &$form_state) {
   $discount->is_active = $form_state['values']['is_active'];
   $discount->weight = $form_state['values']['weight'];
   if (empty($form_state['values']['discount_id'])) {
-    $discount->insert_timestamp = time();
+    $discount->insert_timestamp = REQUEST_TIME;
     drupal_write_record('uc_discounts', $discount);
   }
   else {
@@ -687,7 +808,10 @@ function uc_discounts_form_submit($form, &$form_state) {
       if (empty($code)) {
         continue;
       }
-      $new_code = array('discount_id' => $discount->discount_id, 'code' => $code);
+      $new_code = array(
+        'discount_id' => $discount->discount_id,
+        'code' => $code,
+      );
       drupal_write_record('uc_discounts_codes', $new_code);
     }
   }
@@ -699,7 +823,11 @@ function uc_discounts_form_submit($form, &$form_state) {
       $ids = $form_state["values"]["$grouping-filter-select-" . FILTER_TYPE_PRODUCTS];
       $ids = in_array(ALL_PRODUCTS, $ids) ? array(ALL_PRODUCTS) : array_filter($ids);
       foreach ($ids as $id) {
-        $new_product = array('discount_id' => $discount->discount_id, 'product_id' => $id, 'grouping' => $grouping);
+        $new_product = array(
+          'discount_id' => $discount->discount_id,
+          'product_id' => $id,
+          'grouping' => $grouping,
+        );
         drupal_write_record('uc_discounts_products', $new_product);
       }
     }
@@ -707,7 +835,11 @@ function uc_discounts_form_submit($form, &$form_state) {
       $ids = $form_state["values"]["$grouping-filter-select-" . FILTER_TYPE_TERMS];
       $ids = in_array(ALL_TERMS, $ids) ? array(ALL_TERMS) : array_filter($ids);
       foreach ($ids as $id) {
-        $new_term = array('discount_id' => $discount->discount_id, 'term_id' => $id, 'grouping' => $grouping);
+        $new_term = array(
+          'discount_id' => $discount->discount_id,
+          'term_id' => $id,
+          'grouping' => $grouping,
+        );
         drupal_write_record('uc_discounts_terms', $new_term);
       }
     }
@@ -716,7 +848,11 @@ function uc_discounts_form_submit($form, &$form_state) {
       //Empty SKU is ALL_SKUS
       $ids = in_array(ALL_SKUS, $ids) ? array() : array_filter($ids);
       foreach ($ids as $id) {
-        $new_sku = array('discount_id' => $discount->discount_id, 'sku' => $id, 'grouping', $grouping);
+        $new_sku = array(
+          'discount_id' => $discount->discount_id,
+          'sku' => $id,
+          'grouping' => $grouping,
+        );
         drupal_write_record('uc_discounts_skus', $new_sku);
       }
     }
@@ -725,7 +861,11 @@ function uc_discounts_form_submit($form, &$form_state) {
       //Empty Class is ALL_CLASSES
       $ids = in_array(ALL_CLASSES, $ids) ? array() : array_filter($ids);
       foreach ($ids as $id) {
-        $new_class = array('discount_id' => $discount->discount_id, 'class' => $id, 'grouping' => $grouping);
+        $new_class = array(
+          'discount_id' => $discount->discount_id,
+          'class' => $id,
+          'grouping' => $grouping,
+        );
         drupal_write_record('uc_discounts_classes', $new_class);
       }
     }
@@ -733,7 +873,11 @@ function uc_discounts_form_submit($form, &$form_state) {
       $ids = $form_state["values"]["$grouping-filter-select-" . FILTER_TYPE_AUTHORS];
       $ids = in_array(ALL_AUTHORS, $ids) ? array(ALL_AUTHORS) : array_filter($ids);
       foreach ($ids as $id) {
-        $new_author = array('discount_id' => $discount->discount_id, 'author_id' => $id, 'grouping' => $grouping);
+        $new_author = array(
+          'discount_id' => $discount->discount_id,
+          'author_id' => $id,
+          'grouping' => $grouping,
+        );
         drupal_write_record('uc_discounts_authors', $new_author);
       }
     }
@@ -744,7 +888,10 @@ function uc_discounts_form_submit($form, &$form_state) {
     $role_ids = ($form_state["values"]["has_role_filter"]) ? $form_state["values"]["role_ids"] : array();
     $role_ids = in_array(ALL_ROLES, $role_ids) ? array(ALL_ROLES) : array_filter($role_ids);
     foreach ($role_ids as $role_id) {
-      $new_role = array('discount_id' => $discount->discount_id, 'role_id' => $role_id);
+      $new_role = array(
+        'discount_id' => $discount->discount_id,
+        'role_id' => $role_id,
+      );
       drupal_write_record('uc_discounts_roles', $new_role);
     }
   }
@@ -764,13 +911,17 @@ function uc_discounts_form_submit($form, &$form_state) {
 function uc_discounts_copy($original_discount_id) {
   $discount = uc_discounts_load($original_discount_id);
   $discount->name = t("Copy of @discount", array("@discount" => $discount->name));
-  $discount->insert_timestamp = time();
+  $discount->insert_timestamp = REQUEST_TIME;
+  unset($discount->discount_id);
   drupal_write_record('uc_discounts', $discount);
 
   //Copy discount's codes
   $codes = get_codes_for_discount($original_discount_id);
   foreach ($codes as $code) {
-    $new_code = array('discount_id' => $discount->discount_id, 'code' => $code);
+    $new_code = array(
+      'discount_id' => $discount->discount_id,
+      'code' => $code,
+    );
     drupal_write_record('uc_discounts_codes', $new_code);
   }
 
@@ -778,35 +929,55 @@ function uc_discounts_copy($original_discount_id) {
     //Copy discount's products
     $product_ids = get_product_ids_for_discount($original_discount_id, $grouping);
     foreach ($product_ids as $product_id) {
-      $new_product = array('discount_id' => $discount->discount_id, 'product_id' => $product_id, 'grouping' => $grouping);
+      $new_product = array(
+        'discount_id' => $discount->discount_id,
+        'product_id' => $product_id,
+        'grouping' => $grouping,
+      );
       drupal_write_record('uc_discounts_products', $new_product);
     }
 
     //Copy discount's terms
     $term_ids = get_term_ids_for_discount($original_discount_id, $grouping);
     foreach ($term_ids as $term_id) {
-      $new_term = array('discount_id' => $discount->discount_id, 'term_id' => $term_id, 'grouping' => $grouping);
+      $new_term = array(
+        'discount_id' => $discount->discount_id,
+        'term_id' => $term_id,
+        'grouping' => $grouping,
+      );
       drupal_write_record('uc_discounts_terms', $new_term);
     }
 
     //Copy discount's SKUs
     $skus = get_skus_for_discount($original_discount_id, $grouping);
     foreach ($skus as $sku) {
-      $new_sku = array('discount_id' => $discount->discount_id, 'sku' => $sku, 'grouping' => $grouping);
+      $new_sku = array(
+        'discount_id' => $discount->discount_id,
+        'sku' => $sku,
+        'grouping' => $grouping,
+      );
       drupal_write_record('uc_discounts_skus', $new_sku);
     }
 
     //Copy discount's Classes
     $classes = get_classes_for_discount($original_discount_id, $grouping);
     foreach ($classes as $class) {
-      $new_class = array('discount_id' => $discount->discount_id, 'class' => $class, 'grouping' => $grouping);
+      $new_class = array(
+        'discount_id' => $discount->discount_id,
+        'class' => $class,
+        'grouping' => $grouping,
+      );
       drupal_write_record('uc_discounts_classes', $new_class);
     }
 
     //Copy discount's authors
     $author_ids = get_author_ids_for_discount($original_discount_id, $grouping);
     foreach ($author_ids as $author_id) {
-      $new_author = array('discount_id' => $discount->discount_id, 'author_id' => $author_id, 'grouping' => $grouping);
+      $new_author = array(
+        'discount_id' => $discount->discount_id,
+        'author_id' => $author_id,
+        'grouping' => $grouping,
+      );
       drupal_write_record('uc_discounts_authors', $new_author);
     }
   }
@@ -814,7 +985,10 @@ function uc_discounts_copy($original_discount_id) {
   //Copy discount's roles
   $role_ids = get_role_ids_for_discount($original_discount_id);
   foreach ($role_ids as $role_id) {
-    $new_role = array('discount_id' => $discount->discount_id, 'role_id' => $role_id);
+    $new_role = array(
+      'discount_id' => $discount->discount_id,
+      'role_id' => $role_id,
+    );
     drupal_write_record('uc_discounts_roles', $new_role);
   }
 
@@ -832,9 +1006,12 @@ function uc_discounts_copy($original_discount_id) {
  * @ingroup forms
  * @see uc_discounts_delete_submit()
  */
-function uc_discounts_delete($form_state, $discount_id) {
+function uc_discounts_delete($form, &$form_state, $discount_id) {
   $discount = uc_discounts_load($discount_id);
-  $form     = array("discount_id" => array("#type" => "value", "#value" => $discount_id));
+  $form     = array("discount_id" => array(
+      "#type" => "value",
+      "#value" => $discount_id,
+    ));
   $output   = confirm_form($form, t("Delete @row?", array("@row" => $discount->name)), 'admin/store/uc_discounts');
   return $output;
 }
@@ -858,56 +1035,118 @@ function uc_discounts_delete_submit($form, &$form_state) {
 function uc_discounts_report() {
   $op = arg(4) == 'download' ? 'download' : 'show';
   $header = array(
-    array('data' => t('Active'), 'field' => 'd.is_active'),
-    array('data' => t('Name'), 'field' => 'd.name'),
-    array('data' => t('Short Description'), 'field' => 'd.short_description'),
-    array('data' => t('Qualifying Type'), 'field' => 'd.qualifying_type'),
-    array('data' => t('Type'), 'field' => 'd.discount_type'),
-    array('data' => t('Uses'), 'field' => 'use_count'),
-    array('data' => t('Times Applied'), 'field' => 'total_times_applied'),
-    array('data' => t('Discounted Amount'), 'field' => 'total_amount'),
-    array('data' => t('Revenue Amount'), 'field' => 'total_revenue'),
-    array('data' => t('Weight'), 'field' => 'd.weight'),
-    array('data' => t('Created At'), 'field' => 'insert_timestamp', 'sort' => 'desc'),
+    array(
+      'data' => t('Active'),
+      'field' => 'd.is_active',
+    ),
+    array(
+      'data' => t('Name'),
+      'field' => 'd.name',
+    ),
+    array(
+      'data' => t('Short Description'),
+      'field' => 'd.short_description',
+    ),
+    array(
+      'data' => t('Qualifying Type'),
+      'field' => 'd.qualifying_type',
+    ),
+    array(
+      'data' => t('Type'),
+      'field' => 'd.discount_type',
+    ),
+    array(
+      'data' => t('Uses'),
+      'field' => 'use_count',
+    ),
+    array(
+      'data' => t('Times Applied'),
+      'field' => 'total_times_applied',
+    ),
+    array(
+      'data' => t('Discounted Amount'),
+      'field' => 'total_amount',
+    ),
+    array(
+      'data' => t('Revenue Amount'),
+      'field' => 'total_revenue',
+    ),
+    array(
+      'data' => t('Weight'),
+      'field' => 'd.weight',
+    ),
+    array(
+      'data' => t('Created At'),
+      'field' => 'insert_timestamp',
+      'sort' => 'desc',
+    ),
     array('data' => t('Operations')),
   );
 
-  $query     = "SELECT d.*,
-                       COUNT(du.discount_use_id) total_use_count,
-                       SUM(du.times_applied) total_times_applied,
-                       SUM(du.amount) total_amount,
-                       SUM(o.order_total) total_revenue
-                FROM {uc_discounts} d
-                LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
-                LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = 'completed' AND o.order_total > 0
-                GROUP BY d.discount_id";
-  $query .= tablesort_sql($header);
-  $count_sql = 'SELECT COUNT(*) FROM {uc_discounts}';
-  $result = $op == 'download' ? db_query($query) : pager_query($query, 50, 0, $count_sql);
+  // TODO Please convert this statement to the D7 database API syntax.
+  $select = db_select('uc_discounts', 'd')
+            ->extend('TableSort')
+            ->orderByHeader($header);
+  if ($op != 'download') {
+    $select = $select
+              ->extend('PagerDefault')
+              ->limit(50);
+  }
+  $select
+  ->fields('d')
+  ->groupBy('d.discount_id');
+  
+  $select->leftjoin('uc_discounts_uses', 'du', 'd.discount_id=du.discount_id');
+  $select->leftjoin('uc_orders', 'o', 'o.order_id=du.order_id AND o.order_status = :order_status AND o.order_total > 0', array(':order_status' => 'completed'));
+  
+  $select->addExpression('COUNT(du.discount_use_id)', 'total_use_count');
+  $select->addExpression('SUM(du.times_applied)', 'total_times_applied');
+  $select->addExpression('SUM(du.amount)', 'total_amount');
+  $select->addExpression('SUM(o.order_total)', 'total_revenue');
+  
+  $result = $select->execute();
 
   $rows = array();
-  while ($discount = db_fetch_object($result)) {
+  foreach ($result as $discount) {
     $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
     $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
     $operations = array(
-      l(t('usage'), 'admin/reports/uc_discounts/discount/'. $discount->discount_id),
-      l(t('edit'), 'admin/store/uc_discounts/edit/'. $discount->discount_id),
-      l(t('delete'), 'admin/store/uc_discounts/delete/'. $discount->discount_id),
+      l(t('usage'), 'admin/reports/uc_discounts/discount/' . $discount->discount_id),
+      l(t('edit'), 'admin/store/uc_discounts/edit/' . $discount->discount_id),
+      l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
     );
 
     $rows[] = array(
-      array('data' => ($discount->is_active ? '&#10003;' : 'X'), 'class' => ($discount->is_active ? 'is_active' : 'is_inactive')),
+      array(
+        'data' => ($discount->is_active ? '&#10003;' : 'X'),
+        'class' => array(($discount->is_active ? 'is_active' : 'is_inactive')),
+      ),
       $discount->name,
       $discount->short_description,
       qualifying_type_name($discount->qualifying_type),
       discount_type_name($discount->discount_type),
-      array('data' => $total_use_count, 'class' => 'numeric'),
-      array('data' => $total_times_applied, 'class' => 'numeric'),
+      array(
+        'data' => $total_use_count,
+        'class' => array('numeric'),
+      ),
+      array(
+        'data' => $total_times_applied,
+        'class' => array('numeric'),
+      ),
       uc_currency_format($discount->total_amount),
       uc_currency_format($discount->total_revenue),
-      array('data' => $discount->weight, 'class' => 'weight'),
-      array('data' => format_date($discount->insert_timestamp, 'small'), 'class' => 'date'),
-      array('data' => implode(' ', $operations), 'class' => 'operations'),
+      array(
+        'data' => $discount->weight,
+        'class' => array('weight'),
+      ),
+      array(
+        'data' => format_date($discount->insert_timestamp, 'short'),
+        'class' => array('date'),
+      ),
+      array(
+        'data' => implode(' ', $operations),
+        'class' => array('operations'),
+      ),
     );
   }
 
@@ -919,11 +1158,11 @@ function uc_discounts_report() {
       'Cache-Control: private',
       'Content-Transfer-Encoding: binary',
       'Content-Disposition: attachment; filename="discount_usage_report.csv"',
-      'Content-Type: text/csv'
+      'Content-Type: text/csv',
     );
     foreach ($http_headers as $http_header) {
       $http_header = preg_replace('/\r?\n(?!\t| )/', '', $http_header);
-      drupal_set_header($http_header);
+      drupal_add_http_header($http_header);
     }
 
     $fp = fopen('php://output', 'w');
@@ -946,12 +1185,18 @@ function uc_discounts_report() {
   }
   else {
     if (empty($rows)) {
-      $rows[] = array(array('data' => t('No discounts.'), 'colspan' => count($header)));
+      $rows[] = array(array(
+          'data' => t('No discounts.'),
+          'colspan' => count($header),
+        ));
     }
+    
+    $output['content'] = array(
+      'table' => array('#markup' =>theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
+      'pager' =>  array('#theme' => 'pager','#weight' => 5,),
+      'link' => array('#markup' =>l(t('Export to CSV'), 'admin/reports/uc_discounts/all/download')),
+    );
 
-    $output .= theme('table', $header, $rows, array('class' => 'uc-discounts'));
-    $output .= theme('pager', NULL, 50, 0);
-    $output .= l(t('Export to CSV'), 'admin/reports/uc_discounts/all/download');
     return $output;
   }
 }
@@ -961,10 +1206,7 @@ function uc_discounts_report() {
  */
 function uc_discounts_report_for_discount($discount_id) {
   //Add link to all discount data
-  $output = l(t("Report for all discounts."), "admin/reports/uc_discounts/all");
-
-  $output .= "<br/><br/>";
-
+  $output['content']['title'] = array('#markup' =>l(t("Report for all discounts."), "admin/reports/uc_discounts/all")."<br/><br/>");
 
   //Add table for discount's data
 
@@ -974,17 +1216,20 @@ function uc_discounts_report_for_discount($discount_id) {
     t("Times Applied"),
     t("Discounted Amount"),
     t("Revenue Amount"),
-    array("data" => t("Operations"), "colspan" => 3),
+    array(
+      "data" => t("Operations"),
+      "colspan" => 3,
+    ),
   );
 
-  $query               = "SELECT d.*, COUNT(du.discount_use_id) total_use_count,
+  $discount            = db_query("SELECT d.*, COUNT(du.discount_use_id) total_use_count,
                             SUM(du.times_applied) total_times_applied, SUM(du.amount) total_amount, SUM(o.order_total) total_revenue
                           FROM {uc_discounts} d
                           LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
                           LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = 'completed' AND o.order_total > 0
-                          WHERE d.discount_id=%d
-                          GROUP BY d.discount_id";
-  $discount            = db_fetch_object(db_query($query, $discount_id));
+                          WHERE d.discount_id = :d_discount_id
+                          GROUP BY d.discount_id",
+                          array(':d_discount_id' => $discount_id))->fetchObject();
   $total_use_count     = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
   $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
   $discounts[]         = array(
@@ -993,41 +1238,66 @@ function uc_discounts_report_for_discount($discount_id) {
     $total_times_applied,
     uc_currency_format($discount->total_amount),
     uc_currency_format($discount->total_revenue),
-    l(t("edit"), "admin/store/uc_discounts/edit/". $discount->discount_id),
-    l(t("copy"), "admin/store/uc_discounts/copy/". $discount->discount_id),
-    l(t("delete"), "admin/store/uc_discounts/delete/". $discount->discount_id),
+    l(t("edit"), "admin/store/uc_discounts/edit/" . $discount->discount_id),
+    l(t("copy"), "admin/store/uc_discounts/copy/" . $discount->discount_id),
+    l(t("delete"), "admin/store/uc_discounts/delete/" . $discount->discount_id),
   );
-  $output .= theme("table", $header, $discounts);
-
-  $output .= "<br/><br/>";
-
+  $output['content']['table1'] = array('#markup' =>theme("table", array('header' => $header, 'rows' => $discounts))."<br/><br/>");
 
   //Add table of discount's usage data
 
   $header = array(
-    array("data" => t("User"), "field" => "user_id"),
-    array("data" => t("Order"), "field" => "order_id"),
-    array("data" => t("Code"), "field" => "code"),
-    array("data" => t("Times Applied"), "field" => "times_applied"),
-    array("data" => t("Amount"), "field" => "amount"),
-    array("data" => t("Date"), "field" => "insert_timestamp", "sort" => "asc"),
+    array(
+      "data" => t("User"),
+      "field" => "user_id",
+    ),
+    array(
+      "data" => t("Order"),
+      "field" => "order_id",
+    ),
+    array(
+      "data" => t("Code"),
+      "field" => "code",
+    ),
+    array(
+      "data" => t("Times Applied"),
+      "field" => "times_applied",
+    ),
+    array(
+      "data" => t("Amount"),
+      "field" => "amount",
+    ),
+    array(
+      "data" => t("Date"),
+      "field" => "insert_timestamp",
+      "sort" => "asc",
+    ),
   );
 
-  $query = sprintf("SELECT du.*, u.uid user_id, u.name username, u.mail email FROM {uc_discounts_uses} du" . " LEFT JOIN {users} u ON du.user_id=u.uid" . " WHERE discount_id=%d", $discount_id
-  );
-  $tablesort = tablesort_sql($header);
-  $result = pager_query($query . $tablesort, 50);
-
+  $select = db_select('uc_discounts_uses', 'du')
+            ->extend('PagerDefault')
+            ->limit(50)
+            ->extend('TableSort')
+            ->orderByHeader($header)
+            ->fields('du')
+            ->condition('discount_id',$discount_id);
+            
+  $select->leftjoin('users', 'u', 'du.user_id=u.uid');
+  $select->addExpression('u.uid', 'user_id');
+  $select->addExpression('u.name', 'username');
+  $select->addExpression('u.mail', 'email');
+  
+  $result = $select->execute();
+  
   $rows = array();
-  while ($use = db_fetch_object($result)) {
-    $user_description = ($use->user_id != 0) ? $use->username ." (". $use->email .")" : t("Anonymous");
+  foreach ($result as $use) {
+    $user_description = ($use->user_id != 0) ? $use->username . " (" . $use->email . ")" : t("Anonymous");
 
-    $rows[] = array("data" =>
-      //Cell data
-      array(
+    $rows[] = array(
+      "data" => array(
         $user_description,
         $use->order_id,
-        (!empty($use->code)) ? $use->code : check_plain("<". t("no code") .">"),
+        (!empty($use->code)) ? $use->code : check_plain("<" . t("no code") . ">"),
         $use->times_applied,
         uc_currency_format($use->amount),
         date("Y-m-d H:i:s", $use->insert_timestamp),
@@ -1036,14 +1306,16 @@ function uc_discounts_report_for_discount($discount_id) {
   }
 
   if (empty($rows)) {
-
-    $rows[] = array(array("data" => t("No discount data available."), "colspan" => 11));
-
+    $rows[] = array(
+      'data' => array(
+        "data" => t("No discount data available."),
+        "colspan" => 11,
+      )
+    );
   }
 
-  $output .= theme("table", $header, $rows, array("id" => "uc_discounts_report"));
-  $output .= theme("pager", NULL, 50, 0);
-
+  $output['content']['table2'] = array('#markup' =>theme("table", array('header' => $header, 'rows' => $rows, 'attributes' => array("id" => "uc_discounts_report"))));
+  $output['content']['pager'] = array('#theme' => 'pager','#weight' => 5);
 
   return $output;
 }
@@ -1051,47 +1323,57 @@ function uc_discounts_report_for_discount($discount_id) {
 /**
  * Allows admin to generate a list of unique codes that can be used for things like mail blasts
  */
-function uc_discounts_generate_codes(&$form_state, $discount_id) {
-}
+function uc_discounts_generate_codes(&$form_state, $discount_id) { }
 
 /**
  * @see uc_discounts_generate_codes()
  */
-function uc_discounts_generate_codes_form(&$form_state, $discount_id) {
+function uc_discounts_generate_codes_form($form, &$form_state, $discount_id) {
   $form['about'] = array(
-    '#value' => '<p>' . t('Generate unqiue codes for this discount.  After generating them simply copy and paste them into the Codes textarea for your discount.') . '</p>',
+    '#markup' => '<p>' . t('Generate unqiue codes for this discount.  After generating them simply copy and paste them into the Codes textarea for your discount.') . '</p>',
+  );
+  $form['discount_link'] = array(
+    '#markup' => '<p>'.t('Discount').'#: '.l($discount_id, 'admin/store/uc_discounts/edit/'.$discount_id).'</p>',
   );
   $form['num'] = array(
     '#title' => t('Number of codes'),
     '#type' => 'textfield',
-    '#default_value' => $form_state['values']['num'],
+    '#default_value' => isset($form_state['values']['num'])?$form_state['values']['num']:'',
     '#required' => TRUE,
     '#size' => 5,
   );
   $form['pattern'] = array(
     '#title' => t('Code pattern'),
     '#description' => t('The pattern for generating the codes.  %d will be replaced with a random digit, %s will be replaced with a random letter.'),
-    '#default_value' => empty($form_state['values']['pattern']) ? 'code%d%s%d' : $form_state['values']['pattern'],
+    '#default_value' => isset($form_state['values']['pattern']) ? $form_state['values']['pattern'] : 'code%d%s%d',
     '#type' => 'textfield',
     '#required' => TRUE,
     '#size' => 15,
   );
-  $form['discount_id'] = array('#type' => 'value', '#value' => $discount_id);
+  $form['discount_id'] = array(
+    '#type' => 'value',
+    '#value' => $discount_id,
+  );
   $form['submit'] = array(
     '#value' => t('Generate codes'),
     '#type' => 'submit',
   );
 
-  if (!empty($form_state['storage']['codes'])) {
+  if (!empty($_SESSION['codes'])) {
     $form['codes'] = array(
-      '#value' => "<p><em>" . t('Copy these codes into the Codes textarea for your discount. Note that this list also contains any existing codes for the discount.') . "</em></p>
-                   <code class=\"uc-discounts-generated-codes\">{$form_state['storage']['codes']}</code>",
+      '#markup' => "<p><em>" . t('Copy these codes into the Codes textarea for your discount. Note that this list also contains any existing codes for the discount.') . "</em></p>
+                   <code class=\"uc-discounts-generated-codes\">{$_SESSION['codes']}</code>",
     );
+    unset($_SESSION['codes']);
   }
 
   return $form;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_generate_codes_form_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['num']) || $form_state['values']['num'] <= 0) {
     form_set_error('num', t('Number of discounts must be a number greater than 0.'));
@@ -1102,9 +1384,13 @@ function uc_discounts_generate_codes_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function uc_discounts_generate_codes_form_submit($form, &$form_state) {
   $codes = get_codes_for_discount($form_state['values']['discount_id']);
-  foreach(range(1, $form_state['values']['num']) as $num) {
+  foreach (range(1, $form_state['values']['num']) as $num) {
     while (true) {
       $code = preg_replace_callback('/%(s|d)/', '_uc_discounts_get_random_string', $form_state['values']['pattern']);
       if (!in_array($code, $codes)) {
@@ -1114,7 +1400,7 @@ function uc_discounts_generate_codes_form_submit($form, &$form_state) {
     }
   }
 
-  $form_state['storage']['codes'] = implode("\n", $codes);
+  $_SESSION['codes'] = implode("\n", $codes);
 }
 
 /**

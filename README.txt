@@ -6,16 +6,18 @@ License - GPL (see LICENSE)
 Overview:
 --------
 The uc_discounts_alt module allows for coded and codeless discounts designed for 
-Ubercart 2.
+use with Ubercart.
 
 
 Installation:
 ------------
 1. Place this module directory in your modules folder (this will usually be 
    "sites/all/modules/" or "sites/all/modules/ubercart").
-2. Go to "administer" -> "modules" and enable the module.
+2. Go to "Administration" -> "Modules" and enable the "Discounts" module under
+   "Ubercart - core (optional)".
 
 How to install the codeless_discounts_field:
+** Codeless discounts module has not yet been ported to drupal 7 **
   Enable the module
   go to <site>/admin/content/node-type/product/fields and under "Add" "New Field" enter:
   Label: Codeless Discount
@@ -27,6 +29,7 @@ How to install the codeless_discounts_field:
     field (see theme_codeless_discounts_field_get_codeless_discount_html_for_product).
 
 How to install the product_price_alterer_field:
+** Price alterer field module has not yet been ported to drupal 7 **
   Enable the module
   go to <site>/admin/content/node-type/product/fields and under "Add" "New Field" enter:
   Label: Discounted price (change label to your choosing)

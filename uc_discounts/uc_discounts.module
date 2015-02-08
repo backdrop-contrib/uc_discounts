@@ -243,7 +243,7 @@ function uc_discounts_menu() {
  *
  * Manages order->uc_discounts_codes (array of code) and order->discounts (array of uses)
  */
-function uc_discounts_uc_order($op, &$arg1, $arg2) {
+function uc_discounts_uc_order($op, $arg1, $arg2) {
   switch ($op) {
     case 'load':
       //Get order's codes from database
@@ -252,7 +252,7 @@ function uc_discounts_uc_order($op, &$arg1, $arg2) {
 
     case 'save':
       //If discount line items need updating
-      if ($arg1->uc_discounts_line_items_need_updating) {
+      if (!empty($arg1->uc_discounts_line_items_need_updating)) {
         //Delete existing order codes
         uc_discounts_order_codes_delete($arg1->order_id);
 
@@ -289,10 +289,12 @@ function uc_discounts_uc_order($op, &$arg1, $arg2) {
         }
 
         //Add discount line items
-        foreach ($arg1->uc_discounts_line_items as $line_item) {
-          if ($line_item['amount'] != 0) {
-            uc_order_line_item_add($arg1->order_id, $line_item['type'], $line_item['title'], $line_item['amount'], $line_item['weight'], $line_item['data']);
-            $new_order_line_items[] = $line_item;
+        if(!empty($arg1->uc_discounts_line_items)) {
+          foreach ($arg1->uc_discounts_line_items as $line_item) {
+            if ($line_item['amount'] != 0) {
+              uc_order_line_item_add($arg1->order_id, $line_item['type'], $line_item['title'], $line_item['amount'], $line_item['weight'], $line_item['data']);
+              $new_order_line_items[] = $line_item;
+            }
           }
         }
 
@@ -326,6 +328,20 @@ function uc_discounts_uc_order($op, &$arg1, $arg2) {
       uc_discounts_order_codes_delete($arg1->order_id);
       //TO DO: determine if uses should be deleted or put global setting in for user to decide
       break;
+      
+     case 'total':
+        // Regenerate discount amounts
+        $errors    = array();
+        $warnings  = array();
+        $messages  = array();
+        $discounts = get_discounts_for_order($arg1, $errors, $warnings, $messages);
+        add_discount_line_items_to_order($arg1, $discounts);
+        if (!empty($messages)) {
+          $arg1->uc_discounts_line_items_need_updating = true;
+        } else {
+          $arg1->uc_discounts_line_items_need_updating = false;
+        }
+        break; 
   }
 }
 

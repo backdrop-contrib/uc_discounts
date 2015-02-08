@@ -6,12 +6,3 @@ dependencies[] = uc_store
 dependencies[] = uc_product
 package = "Ubercart - core (optional)"
 core = 7.x
-
-
-; Information added by drupal.org packaging script on 2011-09-28
-version = "7.x-2.x-dev"
-core = 7.x
-project = "uc_discounts_alt"
-datestamp = "1321859079"
-
-

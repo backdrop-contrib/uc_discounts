@@ -5,17 +5,3 @@ dependencies[] = uc_discounts
 dependencies[] = content
 package = CCK
 core = 6.x
-
-; Information added by drupal.org packaging script on 2010-07-11
-version = "6.x-2.x-dev"
-core = "6.x"
-project = "uc_discounts_alt"
-datestamp = "1278836081"
-
-
-; Information added by drupal.org packaging script on 2010-12-30
-version = "6.x-2.0"
-core = "6.x"
-project = "uc_discounts_alt"
-datestamp = "1293741199"
-

@@ -3,7 +3,7 @@ Drupal.behaviors.ucDiscountsAdminForm = {
   attach: function(context) {
     $('#uc-discounts-form .filter-type', context).change(update_visible_filters);
     $('#uc-discounts-form .filter-type', context).change();
-  
+
     function update_visible_filters() {
       var filter_id = $(this).val();
       $('.form-item', $(this).parents('fieldset:first')).each(function() {

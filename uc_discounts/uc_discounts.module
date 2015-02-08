@@ -328,7 +328,7 @@ function uc_discounts_uc_order($op, $arg1, $arg2) {
       uc_discounts_order_codes_delete($arg1->order_id);
       //TO DO: determine if uses should be deleted or put global setting in for user to decide
       break;
-      
+
      case 'total':
         // Regenerate discount amounts
         $errors    = array();
@@ -341,7 +341,7 @@ function uc_discounts_uc_order($op, $arg1, $arg2) {
         } else {
           $arg1->uc_discounts_line_items_need_updating = false;
         }
-        break; 
+        break;
   }
 }
 
@@ -472,11 +472,11 @@ function uc_discounts_uc_cart_pane($items) {
   if (!is_null($items)) {
     $body = array(
       '#markup' => uc_discounts_uc_cart_pane_output($items),
-      '#prefix' => '<div id="cart-form-pane">', 
+      '#prefix' => '<div id="cart-form-pane">',
       '#suffix' => '</div>',
     );
   }
-  
+
   $panes['uc_discounts_pane'] = array(
     'title' => t('Discounts'),
     'enabled' => TRUE,
@@ -807,7 +807,7 @@ function uc_discounts_uc_checkout_pane_content($op) {
         $product_total = $item->price * $item->qty;
         $total += $product_total;
         $desc = check_plain($item->title) . uc_product_get_description($item);
-        
+
         $output .= '<tr valign="top"><td>' . $item->qty . '&times;</td><td width="100%">' . $desc
                    . '</td><td nowrap="nowrap">' . $product_total . '</td></tr>';
       }

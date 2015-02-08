@@ -40,7 +40,7 @@ function uc_discounts_rules_condition_info() {
         'options list' => 'uc_discounts_discount_id_options',
       ),
     ),
-    
+
   );
   return $conditions;
 }
@@ -91,7 +91,7 @@ function uc_discounts_condition_total_after_discounts($order, $order_total_value
 /**
  * Option list callback for discount ids
  */
-function uc_discounts_discount_id_options() { 
+function uc_discounts_discount_id_options() {
   $discounts = db_select('uc_discounts', 'ud')
           ->fields('ud')
           ->orderBy('name', 'asc')

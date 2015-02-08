@@ -54,7 +54,7 @@ function uc_discounts_admin_list() {
             ->limit(50)
             ->extend('TableSort')
             ->orderByHeader($header);
-            
+
   if (!empty($search_params['name'])) {
     $name = '%' . $search_params['name'] . '%';
     $select->condition(db_or()
@@ -62,9 +62,9 @@ function uc_discounts_admin_list() {
                        ->condition('d.description',$name,'LIKE')
                        ->condition('d.short_description',$name,'LIKE'));
   }
-  
+
   $result = $select->execute()->fetchAll();
-  
+
   $rows = array();
   foreach ($result as $discount) {
     //$total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
@@ -120,13 +120,13 @@ function uc_discounts_admin_list() {
         )
     );
   }
-  
+
   $output['content'] = array(
     'search_form' => drupal_get_form('uc_discounts_search_form', $search_params),
     'list_table' => array('#markup' => theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
     'pager' =>  array('#theme' => 'pager', '#weight' => 5),
   );
-    
+
   return $output;
 }
 
@@ -179,7 +179,7 @@ function uc_discounts_form($form, &$form_state, $discount_id = 0) {
   $form           = array();
   $form_submitted = $form_state["submitted"];
   $is_edit        = $discount_id != 0;
-  
+
   if (!$form_submitted && $is_edit) {
     $form_state["values"] = (array) uc_discounts_load($discount_id);
   }
@@ -574,7 +574,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
  foreach ($result as $row) {
    $options[$row->tid] = "$row->name";
   }
-  
+
   $form[$fieldset_name]['filter'][$name] = array(
     "#type" => "select",
     "#title" => t("Terms"),
@@ -1095,15 +1095,15 @@ function uc_discounts_report() {
   $select
   ->fields('d')
   ->groupBy('d.discount_id');
-  
+
   $select->leftjoin('uc_discounts_uses', 'du', 'd.discount_id=du.discount_id');
   $select->leftjoin('uc_orders', 'o', 'o.order_id=du.order_id AND o.order_status = :order_status AND o.order_total > 0', array(':order_status' => 'completed'));
-  
+
   $select->addExpression('COUNT(du.discount_use_id)', 'total_use_count');
   $select->addExpression('SUM(du.times_applied)', 'total_times_applied');
   $select->addExpression('SUM(du.amount)', 'total_amount');
   $select->addExpression('SUM(o.order_total)', 'total_revenue');
-  
+
   $result = $select->execute();
 
   $rows = array();
@@ -1190,7 +1190,7 @@ function uc_discounts_report() {
           'colspan' => count($header),
         ));
     }
-    
+
     $output['content'] = array(
       'table' => array('#markup' =>theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
       'pager' =>  array('#theme' => 'pager','#weight' => 5,),
@@ -1281,14 +1281,14 @@ function uc_discounts_report_for_discount($discount_id) {
             ->orderByHeader($header)
             ->fields('du')
             ->condition('discount_id',$discount_id);
-            
+
   $select->leftjoin('users', 'u', 'du.user_id=u.uid');
   $select->addExpression('u.uid', 'user_id');
   $select->addExpression('u.name', 'username');
   $select->addExpression('u.mail', 'email');
-  
+
   $result = $select->execute();
-  
+
   $rows = array();
   foreach ($result as $use) {
     $user_description = ($use->user_id != 0) ? $use->username . " (" . $use->email . ")" : t("Anonymous");

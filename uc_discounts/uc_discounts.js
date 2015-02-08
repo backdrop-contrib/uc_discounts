@@ -8,7 +8,7 @@ function uc_discountsOnLoad(e) {
   uc_discountsProcessCodes(context, e);
 
   //Add click event listener to discounts pane button once
-  $("input[id*=uc-discounts-button]:not(.uc_discountsOnLoad-processed)", 
+  $("input[id*=uc-discounts-button]:not(.uc_discountsOnLoad-processed)",
     context).addClass("uc_discountsOnLoad-processed").click(function(e) {
       uc_discountsProcessCodes(context, e);
       //Return false to prevent default actions and propogation

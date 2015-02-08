@@ -795,7 +795,7 @@ function uc_discounts_uc_checkout_pane_content($op) {
         $output .= '<tr valign="top"><td>' . $item->qty . '&times;</td><td width="100%">' . $desc
                    . '</td><td nowrap="nowrap">' . $product_total . '</td></tr>';
       }
-      dsm($discount_amount);
+
       if ($discount_amount > 0) {
         $final_price = $total - $discount_amount;
         $output .= '<tr valign="top"><td colspan="2"><strong>' . t('Discount') . ': </strong></td><td nowrap="nowrap">' . $discount_amount . '</td></tr>';

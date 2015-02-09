@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Display a list of discounts.
+ * Generates admin page listing all saved discounts.
  */
 function uc_discounts_admin_list() {
   $search_params = array(
@@ -132,7 +132,10 @@ function uc_discounts_admin_list() {
 }
 
 /**
- * Create a form for searching the discounts
+ * Creates an admin form for searching discounts by name.
+ * 
+ * @ingroup forms
+ * @see uc_discounts_search_form_submit()
  */
 function uc_discounts_search_form($form, &$form_state, $values) {
   $form = array();
@@ -159,8 +162,10 @@ function uc_discounts_search_form($form, &$form_state, $values) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Form submit handler for uc_discounts_search_form().
+ * 
+ * @ingroup forms
+ * @see uc_discounts_search_form()
  */
 function uc_discounts_search_form_submit($form, &$form_state) {
   $args = array(
@@ -170,7 +175,7 @@ function uc_discounts_search_form_submit($form, &$form_state) {
 }
 
 /**
- * Create or edit a discount.
+ * Generates admin form to create or edit a discount.
  *
  * @ingroup forms
  * @see uc_discounts_form_submit()
@@ -321,14 +326,14 @@ function uc_discounts_form($form, &$form_state, $discount_id = 0) {
 
   $display_string = ($has_qualifying_amount_max) ? '' : ' style="display:none"';
   $form['qualifications']['qualifying_amount_max'] = array(
-  '#type' => 'textfield',
-  '#title' => t('Maximum qualifying amount'),
-  '#description' => t('Maximum amount to NOT exceed to qualify for the discount.  E.g. 50 (for $50), 5 (for 5 items).'),
-  '#default_value' => isset($form_state['values']['qualifying_amount_max'])?$form_state['values']['qualifying_amount_max']:'',
-  '#size' => 15,
-  '#required' => FALSE,
-  '#prefix' => '<div id="discount-qualifying-amount-max-wrapper"' . $display_string . '>',
-  '#suffix' => '</div>',
+    '#type' => 'textfield',
+    '#title' => t('Maximum qualifying amount'),
+    '#description' => t('Maximum amount to NOT exceed to qualify for the discount.  E.g. 50 (for $50), 5 (for 5 items).'),
+    '#default_value' => isset($form_state['values']['qualifying_amount_max']) ? $form_state['values']['qualifying_amount_max'] : '',
+    '#size' => 15,
+    '#required' => FALSE,
+    '#prefix' => '<div id="discount-qualifying-amount-max-wrapper"' . $display_string . '>',
+    '#suffix' => '</div>',
   );
 
   $requires_code = isset($form_state['values']['requires_code']) ? $form_state['values']['requires_code'] : FALSE;
@@ -738,6 +743,9 @@ function uc_discounts_form_validate($form, &$form_state) {
 
 /**
  * Submit handler for uc_discounts_form().
+ * 
+ * @ingroup forms
+ * @see uc_discounts_form()
  */
 function uc_discounts_form_submit($form, &$form_state) {
   $codes = explode("\n", $form_state['values']['codes']);
@@ -904,7 +912,9 @@ function uc_discounts_form_submit($form, &$form_state) {
 }
 
 /**
- * Copy a discount.
+ * Generates admin form to create a copy of existing discount.
+ * 
+ * @ingroup forms
  */
 function uc_discounts_copy($original_discount_id) {
   $discount = uc_discounts_load($original_discount_id);
@@ -999,7 +1009,7 @@ function uc_discounts_copy($original_discount_id) {
 }
 
 /**
- * Delete a discount.
+ * Generates an admin form to delete a discount.
  *
  * @ingroup forms
  * @see uc_discounts_delete_submit()
@@ -1017,6 +1027,9 @@ function uc_discounts_delete($form, &$form_state, $discount_id) {
 
 /**
  * Submit handler for uc_discounts_delete().
+ * 
+ * @ingroup forms
+ * @see uc_discounts_delete()
  */
 function uc_discounts_delete_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
@@ -1029,7 +1042,10 @@ function uc_discounts_delete_submit($form, &$form_state) {
 }
 
 /**
- * Generate report for all discounts.
+ * Generate admin report page content of all discount usage.
+ * 
+ * @return array
+ *  Array of page content.
  */
 function uc_discounts_report() {
   $op = arg(4) == 'download' ? 'download' : 'show';
@@ -1201,7 +1217,11 @@ function uc_discounts_report() {
 }
 
 /**
- * Generate report for discount.
+ * Generate admin report page content of discount usage for discount ID.
+ * 
+ * @param int $discount_id
+ * @return array
+ *  Array of page content.
  */
 function uc_discounts_report_for_discount($discount_id) {
   //Add link to all discount data
@@ -1227,8 +1247,7 @@ function uc_discounts_report_for_discount($discount_id) {
                           LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
                           LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = "completed" AND o.order_total > 0
                           WHERE d.discount_id = :d_discount_id
-                          GROUP BY d.discount_id',
-  array(':d_discount_id' => $discount_id))->fetchObject();
+                          GROUP BY d.discount_id', array(':d_discount_id' => $discount_id))->fetchObject();
   $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
   $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
   $discounts[] = array(
@@ -1320,14 +1339,24 @@ function uc_discounts_report_for_discount($discount_id) {
 }
 
 /**
- * Allows admin to generate a list of unique codes that can be used for things like mail blasts
+ * Generate unique discount codes for a specified discount id.
  */
 function uc_discounts_generate_codes(&$form_state, $discount_id) {
   
 }
 
 /**
+ * Generate an admin form used to automatically create discount codes.
+ * 
+ * @param array $form
+ * @param array $form_state
+ * @param int $discount_id
+ * @return string
+ * 
+ * @ingroup forms
  * @see uc_discounts_generate_codes()
+ * @see uc_discounts_generate_codes_form_submit()
+ * @see uc_discounts_generate_codes_form_validate()
  */
 function uc_discounts_generate_codes_form($form, &$form_state, $discount_id) {
   $form['about'] = array(
@@ -1372,8 +1401,12 @@ function uc_discounts_generate_codes_form($form, &$form_state, $discount_id) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Form validation handler for uc_discounts_generate_codes_form().
+ * 
+ * @ingroup forms
+ * @see uc_discounts_generate_codes()
+ * @see uc_discounts_generate_codes_form()
+ * @see uc_discounts_generate_codes_form_submit()
  */
 function uc_discounts_generate_codes_form_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['num']) || $form_state['values']['num'] <= 0) {
@@ -1386,8 +1419,12 @@ function uc_discounts_generate_codes_form_validate($form, &$form_state) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Submit handler for uc_discounts_generate_codes_form().
+ * 
+ * @ingroup forms
+ * @see uc_discounts_generate_codes()
+ * @see uc_discounts_generate_codes_form()
+ * @see uc_discounts_generate_codes_form_validate()
  */
 function uc_discounts_generate_codes_form_submit($form, &$form_state) {
   $codes = uc_discounts_get_codes_for_discount_id($form_state['values']['discount_id']);

@@ -404,11 +404,11 @@ function uc_discounts_uc_order_pane() {
 function uc_discounts_uc_order_pane_callback($op, $arg1) {
   switch ($op) {
     case 'edit-form':
-      $form['uc-discounts']['uc-discounts-codes'] = array(
+      $form['uc_discounts']['uc_discounts_codes'] = array(
         '#type' => 'textarea',
         '#rows' => 3,
       );
-      $form['uc-discounts']['uc-discounts-button'] = array(
+      $form['uc_discounts']['uc_discounts_button'] = array(
         '#type' => 'submit',
         '#value' => t('Apply discounts'),
       );
@@ -424,7 +424,7 @@ function uc_discounts_uc_order_pane_callback($op, $arg1) {
 
     case t('Apply discounts'):
       if ($order = uc_order_load($arg1['order_id'])) {
-        $order->uc_discounts_codes = array_merge($order->uc_discounts_codes, uc_discounts_codes_to_array($arg1['uc-discounts-codes']));
+        $order->uc_discounts_codes = array_merge($order->uc_discounts_codes, uc_discounts_codes_to_array($arg1['uc_discounts_codes']));
         $result = uc_discounts_apply($order, TRUE, FALSE);
         drupal_set_message($result['message'], ($result['success'] ? 'notice' : 'error'));
 
@@ -472,8 +472,9 @@ function uc_discounts_uc_cart_pane($items) {
       '#suffix' => '</div>',
     );
   }
-
-  $panes['uc_discounts_pane'] = array(
+  
+  $panes = array();
+  $panes['uc_discounts'] = array(
     'title' => t('Discounts'),
     'enabled' => TRUE,
     'weight' => 1,
@@ -552,10 +553,13 @@ function uc_discounts_uc_cart_pane_output($items) {
  */
 function uc_discounts_uc_checkout_pane() {
   $panes['uc_discounts'] = array(
-    "callback" => "uc_discounts_uc_checkout_pane_discounts",
+    'callback' => 'uc_discounts_uc_checkout_pane_discounts',
+    'title' => t('Discount codes'),
+    'desc' => t('Displays entry form for customers to add discount codes.'),
+    'weight' => 5,
     'process' => TRUE,
-    "title" => t("Enter discount codes"),
-    "weight" => 5,
+    'collapsible' => TRUE,
+    'enabled' => TRUE,
   );
   return $panes;
 }
@@ -606,32 +610,32 @@ function uc_discounts_uc_checkout_pane_discounts($op, &$arg1, $arg2) {
       if (!empty($arg1->order_id)) {
         $codes_string = uc_discounts_codes_to_str(uc_discounts_get_codes_for_order($arg1->order_id));
       }
-
-      $contents["uc-discounts-codes"] = array(
-        "#type" => "textarea",
-        "#default_value" => $codes_string,
-        "#rows" => 5,
-        "#prefix" => "<div class='discount-codes-wrapper'>",
-        "#suffix" => "</div>",
+      $contents = array();
+      $contents['uc_discounts_codes'] = array(
+        '#type' => 'textarea',
+        '#default_value' => $codes_string,
+        '#rows' => 5,
+        '#prefix' => '<div class="discount-codes-wrapper">',
+        '#suffix' => '</div>',
       );
 
-      $contents["uc-discounts-placeholder"] = array(
-        "#type" => "hidden",
-        "#prefix" => "<div class='uc-discounts-messages-container'>",
-        "#suffix" => "</div>",
+      $contents['uc_discounts_placeholder'] = array(
+        '#type' => 'hidden',
+        '#prefix' => '<div class="uc-discounts-messages-container">',
+        '#suffix' => '</div>',
       );
 
-      $contents["uc-discounts-button"] = array(
-        "#type" => "button",
-        "#value" => t("Click to calculate discounts"),
+      $contents['uc_discounts_button'] = array(
+        '#type' => 'button',
+        '#value' => t('Click to calculate discounts'),
       );
 
-      return array("description" => $description, "contents" => $contents);
+      return array('description' => $description, 'contents' => $contents);
 
     case "process":
       // Save form values from checkout pane in order ($arg1).
-      if (isset($arg2['uc-discounts-codes'])) {
-        $arg1->uc_discounts_codes = uc_discounts_codes_to_array($arg2['uc-discounts-codes']);
+      if (!empty($arg2['panes']['uc_discounts']['uc_discounts_codes']['#value'])) {
+        $arg1->uc_discounts_codes = uc_discounts_codes_to_array($arg2['panes']['uc_discounts']['uc_discounts_codes']['#value']);
       }
       $context1 = 'pane_submit';
       drupal_alter('uc_discounts_codes', $arg1, $context1);
@@ -719,7 +723,7 @@ function uc_discounts_js_calculate() {
     $order->products = uc_cart_get_contents();
   }
 
-  $order->uc_discounts_codes = uc_discounts_codes_to_array($_POST['uc-discounts-codes']);
+  $order->uc_discounts_codes = uc_discounts_codes_to_array($_POST['uc_discounts_codes']);
   $context = 'js_calculate';
   drupal_alter('uc_discounts_codes', $order, $context);
 
@@ -1539,14 +1543,15 @@ function get_discounts_for_order($order, &$errors = NULL, &$warnings = NULL, &$m
 
     //Get code for discount (if one exists)
     $discount->code = NULL;
-    if (!empty($escaped_codes_string)) {
-      $query = sprintf("SELECT code FROM {uc_discounts_codes} WHERE code IN(%s) AND discount_id=%d",
-        $escaped_codes_string, $discount->discount_id
-      );
-      // TODO Please convert this statement to the D7 database API syntax.
-      $row = db_query($query)->fetchArray();
-      if (!empty($row)) {
-        $discount->code = $row["code"];
+    if (!empty($order->uc_discounts_codes)) {
+      $code = db_select('uc_discounts_codes', 'dc')
+        ->fields('dc', array('code'))
+        ->condition('discount_id', $discount->discount_id)
+        ->condition('code', $order->uc_discounts_codes, 'IN')
+        ->execute()
+        ->fetchField();
+      if (!empty($code)) {
+        $discount->code = $code;
       }
     }
 

@@ -152,7 +152,7 @@ function uc_discounts_menu() {
   $items['admin/store/uc_discounts'] = array(
     'title' => 'Discounts',
     'description' => 'View list of discounts.',
-    'page callback' => 'uc_discounts_admin_list',
+    'page callback' => 'uc_discounts_admin_discounts_list',
     'access arguments' => array('configure discounts'),
     'file' => 'uc_discounts.admin.inc',
     'type' => MENU_NORMAL_ITEM,
@@ -166,7 +166,7 @@ function uc_discounts_menu() {
   $items['admin/store/uc_discounts/add'] = array(
     'title' => 'Add discount',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_discounts_form'),
+    'page arguments' => array('uc_discounts_admin_discount_edit_form'),
     'access arguments' => array('configure discounts'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
@@ -175,14 +175,14 @@ function uc_discounts_menu() {
   $items['admin/store/uc_discounts/edit/%'] = array(
     'title' => 'Edit discount rule',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_discounts_form', 4),
+    'page arguments' => array('uc_discounts_admin_discount_edit_form', 4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
   );
   $items['admin/store/uc_discounts/copy/%'] = array(
-    'page callback' => 'uc_discounts_copy',
-    'page arguments' => array(4),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_discounts_admin_discount_copy_form', 4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
@@ -190,7 +190,7 @@ function uc_discounts_menu() {
   $items['admin/store/uc_discounts/delete/%'] = array(
     'title' => 'Delete discount rule',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_discounts_delete', 4),
+    'page arguments' => array('uc_discounts_admin_discount_delete_form', 4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
@@ -198,7 +198,7 @@ function uc_discounts_menu() {
   $items['admin/store/uc_discounts/generate_codes/%'] = array(
     'title' => 'Generate codes',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_discounts_generate_codes_form', 4),
+    'page arguments' => array('uc_discounts_admin_generate_codes_form', 4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',
@@ -212,21 +212,24 @@ function uc_discounts_menu() {
   $items['admin/reports/uc_discounts/all'] = array(
     'title' => 'Ubercart discounts usage data',
     'description' => 'View usage data for each Ubercart discount.',
-    'page callback' => 'uc_discounts_report',
+    'page callback' => 'uc_discounts_admin_report_discounts_list',
+    'page arguments' => array(FALSE),
     'access arguments' => array('access site reports'),
     'file' => 'uc_discounts.admin.inc',
   );
   $items['admin/reports/uc_discounts/all/download'] = array(
     'title' => 'Download Ubercart discounts usage data',
     'description' => 'Download usage data for each Ubercart discount.',
-    'page callback' => 'uc_discounts_report',
+    'page callback' => 'uc_discounts_admin_report_discounts_list',
+    'page arguments' => array(TRUE),
     'access arguments' => array('access site reports'),
     'file' => 'uc_discounts.admin.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/reports/uc_discounts/discount'] = array(
+  $items['admin/reports/uc_discounts/discount/%'] = array(
     'title' => 'Ubercart discount usage data',
-    'page callback' => 'uc_discounts_report_for_discount',
+    'page callback' => 'uc_discounts_admin_report_discount',
+    'page arguments' => array('uc_discounts_admin_report_discount', 4),
     'access arguments' => array('access site reports'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',

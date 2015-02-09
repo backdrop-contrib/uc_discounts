@@ -3,7 +3,7 @@
 /**
  * Generates admin page listing all saved discounts.
  */
-function uc_discounts_admin_list() {
+function uc_discounts_admin_discounts_list() {
   $search_params = array(
     'name' => arg(4),
   );
@@ -123,7 +123,7 @@ function uc_discounts_admin_list() {
   }
 
   $output['content'] = array(
-    'search_form' => drupal_get_form('uc_discounts_search_form', $search_params),
+    'search_form' => drupal_get_form('uc_discounts_admin_discounts_search_form', $search_params),
     'list_table' => array('#markup' => theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
     'pager' => array('#theme' => 'pager', '#weight' => 5),
   );
@@ -135,9 +135,10 @@ function uc_discounts_admin_list() {
  * Creates an admin form for searching discounts by name.
  * 
  * @ingroup forms
- * @see uc_discounts_search_form_submit()
+ * @see uc_discounts_admin_discounts_list()
+ * @see uc_discounts_admin_search_discounts_form_submit()
  */
-function uc_discounts_search_form($form, &$form_state, $values) {
+function uc_discounts_admin_discounts_search_form($form, &$form_state, $values) {
   $form = array();
 
   $form['search'] = array(
@@ -162,12 +163,12 @@ function uc_discounts_search_form($form, &$form_state, $values) {
 }
 
 /**
- * Form submit handler for uc_discounts_search_form().
+ * Form submit handler for uc_discounts_admin_search_discounts_form().
  * 
  * @ingroup forms
- * @see uc_discounts_search_form()
+ * @see uc_discounts_admin_search_discounts_form()
  */
-function uc_discounts_search_form_submit($form, &$form_state) {
+function uc_discounts_admin_discounts_search_form_submit($form, &$form_state) {
   $args = array(
     $form_state['values']['name'],
   );
@@ -178,9 +179,10 @@ function uc_discounts_search_form_submit($form, &$form_state) {
  * Generates admin form to create or edit a discount.
  *
  * @ingroup forms
- * @see uc_discounts_form_submit()
+ * @see uc_discounts_admin_discount_edit_form_submit()
+ * @see uc_discounts_admin_discount_edit_form_validate()
  */
-function uc_discounts_form($form, &$form_state, $discount_id = 0) {
+function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id = 0) {
   drupal_add_js(drupal_get_path('module', 'uc_discounts') . '/uc_discounts_admin.js', array('scope' => 'footer'));
   $form = array();
   $form_submitted = $form_state['submitted'];
@@ -678,9 +680,13 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
 }
 
 /**
- * Validate handler for uc_discounts_form().
+ * Validate handler for uc_discounts_admin_discount_edit_form().
+ *
+ * @ingroup forms
+ * @see uc_discounts_admin_discount_edit_form()
+ * @see uc_discounts_admin_discount_edit_form_submit()
  */
-function uc_discounts_form_validate($form, &$form_state) {
+function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
   $values = $form_state['values'];
   $has_errors = FALSE;
 
@@ -742,12 +748,13 @@ function uc_discounts_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for uc_discounts_form().
+ * Submit handler for uc_discounts_admin_discount_edit_form().
  * 
  * @ingroup forms
- * @see uc_discounts_form()
+ * @see uc_discounts_admin_discount_edit_form()
+ * @see uc_discounts_admin_discount_edit_form_validate()
  */
-function uc_discounts_form_submit($form, &$form_state) {
+function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   $codes = explode("\n", $form_state['values']['codes']);
 
   //Set expiration to a valid value because it is not nullable
@@ -916,7 +923,7 @@ function uc_discounts_form_submit($form, &$form_state) {
  * 
  * @ingroup forms
  */
-function uc_discounts_copy($original_discount_id) {
+function uc_discounts_admin_discount_copy_form($original_discount_id) {
   $discount = uc_discounts_load($original_discount_id);
   $discount->name = t('Copy of @discount', array('@discount' => $discount->name));
   $discount->insert_timestamp = REQUEST_TIME;
@@ -1012,9 +1019,9 @@ function uc_discounts_copy($original_discount_id) {
  * Generates an admin form to delete a discount.
  *
  * @ingroup forms
- * @see uc_discounts_delete_submit()
+ * @see uc_discounts_admin_discount_delete_form_submit()
  */
-function uc_discounts_delete($form, &$form_state, $discount_id) {
+function uc_discounts_admin_discount_delete_form($form, &$form_state, $discount_id) {
   $discount = uc_discounts_load($discount_id);
   $form = array(
     'discount_id' => array(
@@ -1026,12 +1033,12 @@ function uc_discounts_delete($form, &$form_state, $discount_id) {
 }
 
 /**
- * Submit handler for uc_discounts_delete().
+ * Submit handler for uc_discounts_admin_discount_delete_form().
  * 
  * @ingroup forms
- * @see uc_discounts_delete()
+ * @see uc_discounts_admin_discount_delete_form()
  */
-function uc_discounts_delete_submit($form, &$form_state) {
+function uc_discounts_admin_discount_delete_form_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
     $discount = uc_discounts_load($form_state['values']['discount_id']);
     uc_discounts_delete_all($discount);
@@ -1047,7 +1054,7 @@ function uc_discounts_delete_submit($form, &$form_state) {
  * @return array
  *  Array of page content.
  */
-function uc_discounts_report() {
+function uc_discounts_admin_report_discounts_list($download = FALSE) {
   $op = arg(4) == 'download' ? 'download' : 'show';
   $header = array(
     array(
@@ -1223,7 +1230,7 @@ function uc_discounts_report() {
  * @return array
  *  Array of page content.
  */
-function uc_discounts_report_for_discount($discount_id) {
+function uc_discounts_admin_report_discount($discount_id) {
   //Add link to all discount data
   $output['content']['title'] = array('#markup' => l(t('Report for all discounts.'), 'admin/reports/uc_discounts/all') . '<br /><br />');
 
@@ -1341,7 +1348,7 @@ function uc_discounts_report_for_discount($discount_id) {
 /**
  * Generate unique discount codes for a specified discount id.
  */
-function uc_discounts_generate_codes(&$form_state, $discount_id) {
+function uc_discounts_admin_generate_codes(&$form_state, $discount_id) {
   
 }
 
@@ -1354,11 +1361,11 @@ function uc_discounts_generate_codes(&$form_state, $discount_id) {
  * @return string
  * 
  * @ingroup forms
- * @see uc_discounts_generate_codes()
- * @see uc_discounts_generate_codes_form_submit()
- * @see uc_discounts_generate_codes_form_validate()
+ * @see uc_discounts_admin_generate_codes()
+ * @see uc_discounts_admin_generate_codes_form_submit()
+ * @see uc_discounts_admin_generate_codes_form_validate()
  */
-function uc_discounts_generate_codes_form($form, &$form_state, $discount_id) {
+function uc_discounts_admin_generate_codes_form($form, &$form_state, $discount_id) {
   $form['about'] = array(
     '#markup' => '<p>' . t('Generate unqiue codes for this discount.  After generating them simply copy and paste them into the Codes textarea for your discount.') . '</p>',
   );
@@ -1401,14 +1408,14 @@ function uc_discounts_generate_codes_form($form, &$form_state, $discount_id) {
 }
 
 /**
- * Form validation handler for uc_discounts_generate_codes_form().
+ * Form validation handler for uc_discounts_admin_generate_codes_form().
  * 
  * @ingroup forms
- * @see uc_discounts_generate_codes()
- * @see uc_discounts_generate_codes_form()
- * @see uc_discounts_generate_codes_form_submit()
+ * @see uc_discounts_admin_generate_codes()
+ * @see uc_discounts_admin_generate_codes_form()
+ * @see uc_discounts_admin_generate_codes_form_submit()
  */
-function uc_discounts_generate_codes_form_validate($form, &$form_state) {
+function uc_discounts_admin_generate_codes_form_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['num']) || $form_state['values']['num'] <= 0) {
     form_set_error('num', t('Number of discounts must be a number greater than 0.'));
   }
@@ -1422,11 +1429,11 @@ function uc_discounts_generate_codes_form_validate($form, &$form_state) {
  * Submit handler for uc_discounts_generate_codes_form().
  * 
  * @ingroup forms
- * @see uc_discounts_generate_codes()
- * @see uc_discounts_generate_codes_form()
- * @see uc_discounts_generate_codes_form_validate()
+ * @see uc_discounts_admin_generate_codes()
+ * @see uc_discounts_admin_generate_codes_form()
+ * @see uc_discounts_admin_generate_codes_form_validate()
  */
-function uc_discounts_generate_codes_form_submit($form, &$form_state) {
+function uc_discounts_admin_generate_codes_form_submit($form, &$form_state) {
   $codes = uc_discounts_get_codes_for_discount_id($form_state['values']['discount_id']);
   foreach (range(1, $form_state['values']['num']) as $num) {
     while (true) {

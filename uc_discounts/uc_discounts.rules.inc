@@ -52,7 +52,7 @@ function uc_discounts_condition_discount_applied_condition($order, $discount_id)
   global $user;
 
   $order->uc_discounts_codes = $_SESSION['uc_discounts_codes'];
-  $discounts = get_discounts_for_order($order);
+  $discounts = uc_discounts_get_discounts_for_order($order);
   foreach ($discounts as $discount) {
     if (in_array($discount->discount_id, $discount_id)) {
       return TRUE;
@@ -68,7 +68,7 @@ function uc_discounts_condition_discount_applied_condition($order, $discount_id)
  */
 function uc_discounts_condition_total_after_discounts($order, $order_total_value, $operator_comparison) {
   $order->uc_discounts_codes = $_SESSION['uc_discounts_codes'];
-  $discounts = get_discounts_for_order($order);
+  $discounts = uc_discounts_get_discounts_for_order($order);
   $total_discount = 0;
   foreach ($discounts as $discount) {
     $total_discount += $discount->amount;

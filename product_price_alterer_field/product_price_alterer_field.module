@@ -1,9 +1,8 @@
 <?php
-//$Id: product_price_alterer_field.module,v 1.16 2009/08/22 21:30:39 ryangroe Exp $
-
-
 /**
- * See http://drupal.org/node/106716 for more information.
+ * @file
+ * Provides discounts based on ubercart products based on product quantity
+ * purchased using attached product field.
  */
 
 /**

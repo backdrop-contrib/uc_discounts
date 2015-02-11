@@ -1,9 +1,7 @@
 <?php
-
-
 /**
  * @file
- * Install hooks for codeless_discounts_field.module.
+ * Install hooks for codeless_discounts_field module.
  */
 
 /**

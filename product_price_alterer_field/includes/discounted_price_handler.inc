@@ -1,5 +1,8 @@
 <?php
-//$Id: discounted_price_handler.inc,v 1.2 2009/08/22 21:30:39 ryangroe Exp $
+/**
+ * @file
+ * Views handler integration for product_price_alterer_field module.
+ */
 
 /**
  * Renders a discounted price field.

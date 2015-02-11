@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Admin forms and functions for uc_discounts module.
+ */
 
 /**
  * Generates admin page listing all saved discounts.

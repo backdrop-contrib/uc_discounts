@@ -1,5 +1,10 @@
 <?php
 /**
+ * @file
+ * Integrates product_price_alterer module with views module.
+ */
+
+/**
  * Implementation of hook_views_handlers()
  * Register all of the basic handlers views uses.
  */

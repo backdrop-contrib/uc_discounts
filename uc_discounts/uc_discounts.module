@@ -1,13 +1,10 @@
 <?php
-//$Id: uc_discounts.module,v 1.29.2.31 2010/12/30 19:37:21 jrust Exp $
-
-
 /**
  * @file
- * Discounts module for Ubercart 2.0+.
- *
- * Allows discount rules to be set up and applied to orders.
+ * Provides discount functionality for Ubercart orders using customer entered
+ * (coded) discounts or automatic (codeless) discounts. 
  */
+
 module_load_include('inc', 'uc_discounts', 'uc_discounts.ca');
 
 define('UC_DISCOUNTS_QUALIFYING_TYPE_MINIMUM_PRICE', 1);

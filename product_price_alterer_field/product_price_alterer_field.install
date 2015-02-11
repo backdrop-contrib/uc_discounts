@@ -1,10 +1,7 @@
 <?php
-//$Id: product_price_alterer_field.install,v 1.2 2009/08/22 21:30:39 ryangroe Exp $
-
-
 /**
  * @file
- * Install hooks for product_price_alterer_field.module.
+ * Install hooks for product_price_alterer_field module.
  */
 
 /**

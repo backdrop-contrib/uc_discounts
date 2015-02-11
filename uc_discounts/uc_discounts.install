@@ -1,16 +1,11 @@
 <?php
 /**
  * @file
- * Install, update and uninstall functions for the uc_discounts module.
- *
+ * Install, update, and uninstall functions for uc_discounts module.
  */
 
-//$Id: uc_discounts.install,v 1.9.2.6 2010/12/28 00:06:23 jrust Exp $
-
-
 /**
- * @file
- * Install hooks for uc_discounts.module.
+ * Implements hook_schema().
  */
 function uc_discounts_schema() {
   $schema = array();

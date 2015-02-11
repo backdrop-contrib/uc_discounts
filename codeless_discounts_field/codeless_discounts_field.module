@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Attach automatic (codeless) discounts to products using fields.
+ */
 
 /**
  * See http://drupal.org/node/106716 for more information.

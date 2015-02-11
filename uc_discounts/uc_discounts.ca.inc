@@ -1,5 +1,10 @@
 <?php
 /**
+ * @file
+ * Conditional action functions for uc_discounts module.
+ */
+
+/**
  * Implements hook_ca_condition().
  */
 function uc_discounts_ca_condition() {

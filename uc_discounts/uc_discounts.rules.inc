@@ -1,5 +1,10 @@
 <?php
 /**
+ * @file
+ * Rules integration for uc_discounts module.
+ */
+
+/**
  * Implements hook_rules_condition_info().
  */
 function uc_discounts_rules_condition_info() {

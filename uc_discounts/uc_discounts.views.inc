@@ -1,9 +1,14 @@
 <?php
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * @file
+ * Views integration for uc_discounts module.
+ */
+
+/**
+ * Implements hook_views_data().
  */
 function uc_discounts_views_data() {
+  $data = array();
   $data['uc_discounts_order_codes']['table']['group'] = t('UC Discounts');
 
   $data['uc_discounts_order_codes']['table']['join'] = array(

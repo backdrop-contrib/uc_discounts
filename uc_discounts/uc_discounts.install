@@ -779,13 +779,13 @@ function uc_discounts_update_6005() {
   $result = db_query("SELECT * FROM {uc_discounts} WHERE required_product != :required_product", array(':required_product' => ''));
   while ($discount = db_fetch_object($result)) {
     // TODO Please convert this statement to the D7 database API syntax.
-    /* db_query("INSERT INTO {uc_discounts_skus} SET discount_id = %d, sku = '%s', grouping = %d", $discount->discount_id, $discount->required_product, DISCOUNT_FILTER_GROUPING_QUALIFICATION) */
+    /* db_query("INSERT INTO {uc_discounts_skus} SET discount_id = %d, sku = '%s', grouping = %d", $discount->discount_id, $discount->required_product, UC_DISCOUNTS_GROUPING_QUALIFICATION) */
     NULL;
     // TODO Please review the conversion of this statement to the D7 database API syntax.
-    /* db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", FILTER_TYPE_SKUS, $discount->discount_id) */
+    /* db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", UC_DISCOUNTS_FILTER_TYPE_SKUS, $discount->discount_id) */
     db_update('uc_discounts')
   ->fields(array(
-      'required_product_type' => FILTER_TYPE_SKUS,
+      'required_product_type' => UC_DISCOUNTS_FILTER_TYPE_SKUS,
     ))
   ->condition('discount_id', $discount->discount_id)
   ->execute();

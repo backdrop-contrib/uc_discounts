@@ -390,7 +390,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
   $result = db_query('SELECT rid, name
                      FROM {role}
                      ORDER BY rid');
-  $options[ALL_ROLES] = t('<All Roles>');
+  $options[UC_DISCOUNTS_OPTION_ALL_ROLES] = t('<All Roles>');
   foreach ($result as $row) {
     $options[$row->rid] = $row->name;
   }
@@ -420,7 +420,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#default_value' => isset($form_state['values']['use_only_discounted_products_to_qualify']) ? $form_state['values']['use_only_discounted_products_to_qualify'] : FALSE,
   );
 
-  _uc_discounts_product_filter_form($form, $form_state, DISCOUNT_FILTER_GROUPING_QUALIFICATION, $discount_id);
+  _uc_discounts_product_filter_form($form, $form_state, UC_DISCOUNTS_GROUPING_QUALIFICATION, $discount_id);
 
   $form['application'] = array(
     '#type' => 'fieldset',
@@ -446,7 +446,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#required' => TRUE,
   );
 
-  _uc_discounts_product_filter_form($form, $form_state, DISCOUNT_FILTER_GROUPING_APPLICATION, $discount_id);
+  _uc_discounts_product_filter_form($form, $form_state, UC_DISCOUNTS_GROUPING_APPLICATION, $discount_id);
 
   $form['application']['add_to_cart'] = array(
     '#type' => 'checkbox',
@@ -511,31 +511,31 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
  * Helper function that creates a series of dropdowns for selecting a product via product_id, sku, class, term, or author
  */
 function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $discount_id) {
-  $fieldset_name = $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? 'application' : 'qualifications';
+  $fieldset_name = $grouping == UC_DISCOUNTS_GROUPING_APPLICATION ? 'application' : 'qualifications';
 
   $form[$fieldset_name]['filter'] = array(
     '#type' => 'fieldset',
-    '#title' => $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? t('Discounted products') : t('Required products'),
-    '#description' => $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? t('Select the products which will be discounted.') : t('If products are selected, at least one of them will be required.'),
+    '#title' => $grouping == UC_DISCOUNTS_GROUPING_APPLICATION ? t('Discounted products') : t('Required products'),
+    '#description' => $grouping == UC_DISCOUNTS_GROUPING_APPLICATION ? t('Select the products which will be discounted.') : t('If products are selected, at least one of them will be required.'),
   );
 
   $options = array();
-  if ($grouping == DISCOUNT_FILTER_GROUPING_QUALIFICATION) {
-    $options[FILTER_TYPE_NONE] = t('No specific product');
-    $filter_type = isset($form_state['values']['required_product_type']) ? $form_state['values']['required_product_type'] : FILTER_TYPE_NONE;
+  if ($grouping == UC_DISCOUNTS_GROUPING_QUALIFICATION) {
+    $options[UC_DISCOUNTS_FILTER_TYPE_NONE] = t('No specific product');
+    $filter_type = isset($form_state['values']['required_product_type']) ? $form_state['values']['required_product_type'] : UC_DISCOUNTS_FILTER_TYPE_NONE;
     $name = 'required_product_type';
   }
   else {
-    $filter_type = isset($form_state['values']['filter_type']) ? $form_state['values']['filter_type'] : FILTER_TYPE_PRODUCTS;
+    $filter_type = isset($form_state['values']['filter_type']) ? $form_state['values']['filter_type'] : UC_DISCOUNTS_FILTER_TYPE_PRODUCTS;
     $name = 'filter_type';
   }
   $filter_name = $name;
 
-  $options[FILTER_TYPE_PRODUCTS] = t('Filter By Products');
-  $options[FILTER_TYPE_TERMS] = t('Filter By Terms');
-  $options[FILTER_TYPE_SKUS] = t('Filter By SKUs');
-  $options[FILTER_TYPE_CLASS] = t('Filter by Class');
-  $options[FILTER_TYPE_AUTHORS] = t('Filter by Authors');
+  $options[UC_DISCOUNTS_FILTER_TYPE_PRODUCTS] = t('Filter By Products');
+  $options[UC_DISCOUNTS_FILTER_TYPE_TERMS] = t('Filter By Terms');
+  $options[UC_DISCOUNTS_FILTER_TYPE_SKUS] = t('Filter By SKUs');
+  $options[UC_DISCOUNTS_FILTER_TYPE_CLASS] = t('Filter by Class');
+  $options[UC_DISCOUNTS_FILTER_TYPE_AUTHORS] = t('Filter by Authors');
   $form[$fieldset_name]['filter'][$name] = array(
     '#type' => 'select',
     '#title' => t('Filter Type'),
@@ -546,15 +546,15 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#attributes' => array('class' => array('filter-type')),
   );
 
-  $name = $grouping . '-filter-select-' . FILTER_TYPE_PRODUCTS;
+  $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_PRODUCTS;
   $product_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : uc_discounts_get_product_ids_for_discount_id($discount_id, $grouping, FALSE);
   $options = array();
   $result = db_query('SELECT n.nid as nid, n.title as title, p.model as model
                      FROM {uc_products} p
                      INNER JOIN {node} n ON p.nid=n.nid
                      ORDER BY title');
-  if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
-    $options[ALL_PRODUCTS] = t('<All Products>');
+  if ($grouping == UC_DISCOUNTS_GROUPING_APPLICATION) {
+    $options[UC_DISCOUNTS_OPTION_ALL_PRODUCTS] = t('<All Products>');
   }
   foreach ($result as $row) {
     $options[$row->nid] = $row->title . ' (' . $row->model . ')';
@@ -568,16 +568,16 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
-        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_PRODUCTS),
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_PRODUCTS),
       ),
     ),
   );
 
-  $name = $grouping . '-filter-select-' . FILTER_TYPE_TERMS;
+  $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_TERMS;
   $term_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : uc_discounts_get_term_ids_for_discount_id($discount_id, $grouping, FALSE);
   $options = array();
   $result = db_query('SELECT tid, name FROM {taxonomy_term_data} ORDER BY weight');
-  $options[ALL_TERMS] = t('<All Terms>');
+  $options[UC_DISCOUNTS_OPTION_ALL_TERMS] = t('<All Terms>');
   foreach ($result as $row) {
     $options[$row->tid] = $row->name;
   }
@@ -591,20 +591,20 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
-        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_TERMS),
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_TERMS),
       ),
     ),
   );
 
-  $name = $grouping . '-filter-select-' . FILTER_TYPE_SKUS;
+  $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_SKUS;
   $skus = isset($form_state['values'][$name]) ? $form_state['values'][$name] : uc_discounts_get_skus_for_discount_id($discount_id, $grouping, FALSE);
   $options = array();
   $result = db_query('SELECT p.model, n.title
                      FROM {uc_products} p, {node} n
                      WHERE p.nid = n.nid
                      ORDER BY p.model');
-  if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
-    $options[ALL_SKUS] = t('<All SKUs>');
+  if ($grouping == UC_DISCOUNTS_GROUPING_APPLICATION) {
+    $options[UC_DISCOUNTS_OPTION_ALL_SKUS] = t('<All SKUs>');
   }
   foreach ($result as $row) {
     $options[$row->model] = $row->model . ' (' . $row->title . ')';
@@ -618,17 +618,17 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
-        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_SKUS),
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_SKUS),
       ),
     ),
   );
 
-  $name = $grouping . '-filter-select-' . FILTER_TYPE_CLASS;
+  $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_CLASS;
   $classes = isset($form_state['values'][$name]) ? $form_state['values'][$name] : uc_discounts_get_classes_for_discount_id($discount_id, $grouping, FALSE);
   $options = array();
   $result = uc_product_types();
-  if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
-    $options[ALL_CLASSES] = t('<All Product Classes>');
+  if ($grouping == UC_DISCOUNTS_GROUPING_APPLICATION) {
+    $options[UC_DISCOUNTS_OPTION_ALL_CLASSES] = t('<All Product Classes>');
   }
   foreach ($result as $type) {
     $options[$type] = $type;
@@ -642,12 +642,12 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
-        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_CLASS),
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_CLASS),
       ),
     ),
   );
 
-  $name = $grouping . '-filter-select-' . FILTER_TYPE_AUTHORS;
+  $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_AUTHORS;
   $author_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : uc_discounts_get_author_ids_for_discount_id($discount_id, $grouping, FALSE);
   $options = array();
   // TODO Please convert this statement to the D7 database API syntax.
@@ -658,8 +658,8 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
                      AND n.type IN(:uc_product_types)
                      GROUP BY u.uid
                      ORDER BY name', array(':uc_product_types' => uc_product_types()));
-  if ($grouping == DISCOUNT_FILTER_GROUPING_APPLICATION) {
-    $options[ALL_AUTHORS] = t('<All Authors>');
+  if ($grouping == UC_DISCOUNTS_GROUPING_APPLICATION) {
+    $options[UC_DISCOUNTS_OPTION_ALL_AUTHORS] = t('<All Authors>');
   }
   foreach ($result as $row) {
     $options[$row->uid] = $row->name;
@@ -673,7 +673,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
-        ':input[name="' . $filter_name . '"]' => array('value' => FILTER_TYPE_AUTHORS),
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_AUTHORS),
       ),
     ),
   );
@@ -725,7 +725,7 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
   }
 
 
-  $ids = $form_state['values'][DISCOUNT_FILTER_GROUPING_APPLICATION . '-filter-select-' . $values['filter_type']];
+  $ids = $form_state['values'][UC_DISCOUNTS_GROUPING_APPLICATION . '-filter-select-' . $values['filter_type']];
   if (empty($ids)) {
     form_set_error('filter_type', t('At least one product must be selected.'));
     $has_errors = TRUE;
@@ -830,11 +830,11 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   }
 
   // Insert required products
-  foreach (array(DISCOUNT_FILTER_GROUPING_APPLICATION, DISCOUNT_FILTER_GROUPING_QUALIFICATION) as $grouping) {
-    $name = $grouping == DISCOUNT_FILTER_GROUPING_APPLICATION ? 'filter_type' : 'required_product_type';
-    if ($form_state['values'][$name] == FILTER_TYPE_PRODUCTS) {
-      $ids = $form_state['values'][$grouping . '-filter-select-' . FILTER_TYPE_PRODUCTS];
-      $ids = in_array(ALL_PRODUCTS, $ids) ? array(ALL_PRODUCTS) : array_filter($ids);
+  foreach (array(UC_DISCOUNTS_GROUPING_APPLICATION, UC_DISCOUNTS_GROUPING_QUALIFICATION) as $grouping) {
+    $name = $grouping == UC_DISCOUNTS_GROUPING_APPLICATION ? 'filter_type' : 'required_product_type';
+    if ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_PRODUCTS) {
+      $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_PRODUCTS];
+      $ids = in_array(UC_DISCOUNTS_OPTION_ALL_PRODUCTS, $ids) ? array(UC_DISCOUNTS_OPTION_ALL_PRODUCTS) : array_filter($ids);
       foreach ($ids as $id) {
         $new_product = array(
           'discount_id' => $discount->discount_id,
@@ -844,9 +844,9 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
         drupal_write_record('uc_discounts_products', $new_product);
       }
     }
-    elseif ($form_state['values'][$name] == FILTER_TYPE_TERMS) {
-      $ids = $form_state['values'][$grouping . '-filter-select-' . FILTER_TYPE_TERMS];
-      $ids = in_array(ALL_TERMS, $ids) ? array(ALL_TERMS) : array_filter($ids);
+    elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_TERMS) {
+      $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_TERMS];
+      $ids = in_array(UC_DISCOUNTS_OPTION_ALL_TERMS, $ids) ? array(UC_DISCOUNTS_OPTION_ALL_TERMS) : array_filter($ids);
       foreach ($ids as $id) {
         $new_term = array(
           'discount_id' => $discount->discount_id,
@@ -856,10 +856,10 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
         drupal_write_record('uc_discounts_terms', $new_term);
       }
     }
-    elseif ($form_state['values'][$name] == FILTER_TYPE_SKUS) {
-      $ids = $form_state['values'][$grouping . '-filter-select-' . FILTER_TYPE_SKUS];
-      //Empty SKU is ALL_SKUS
-      $ids = in_array(ALL_SKUS, $ids) ? array() : array_filter($ids);
+    elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_SKUS) {
+      $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_SKUS];
+      //Empty SKU is UC_DISCOUNTS_OPTION_ALL_SKUS
+      $ids = in_array(UC_DISCOUNTS_OPTION_ALL_SKUS, $ids) ? array() : array_filter($ids);
       foreach ($ids as $id) {
         $new_sku = array(
           'discount_id' => $discount->discount_id,
@@ -869,10 +869,10 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
         drupal_write_record('uc_discounts_skus', $new_sku);
       }
     }
-    elseif ($form_state['values'][$name] == FILTER_TYPE_CLASS) {
-      $ids = $form_state['values'][$grouping . '-filter-select-' . FILTER_TYPE_CLASS];
-      //Empty Class is ALL_CLASSES
-      $ids = in_array(ALL_CLASSES, $ids) ? array() : array_filter($ids);
+    elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_CLASS) {
+      $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_CLASS];
+      //Empty Class is UC_DISCOUNTS_OPTION_ALL_CLASSES
+      $ids = in_array(UC_DISCOUNTS_OPTION_ALL_CLASSES, $ids) ? array() : array_filter($ids);
       foreach ($ids as $id) {
         $new_class = array(
           'discount_id' => $discount->discount_id,
@@ -882,9 +882,9 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
         drupal_write_record('uc_discounts_classes', $new_class);
       }
     }
-    if ($form_state['values'][$name] == FILTER_TYPE_AUTHORS) {
-      $ids = $form_state['values'][$grouping . '-filter-select-' . FILTER_TYPE_AUTHORS];
-      $ids = in_array(ALL_AUTHORS, $ids) ? array(ALL_AUTHORS) : array_filter($ids);
+    if ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_AUTHORS) {
+      $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_AUTHORS];
+      $ids = in_array(UC_DISCOUNTS_OPTION_ALL_AUTHORS, $ids) ? array(UC_DISCOUNTS_OPTION_ALL_AUTHORS) : array_filter($ids);
       foreach ($ids as $id) {
         $new_author = array(
           'discount_id' => $discount->discount_id,
@@ -899,7 +899,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   //Insert roles
   if ($form_state['values']['has_role_filter']) {
     $role_ids = ($form_state['values']['has_role_filter']) ? $form_state['values']['role_ids'] : array();
-    $role_ids = in_array(ALL_ROLES, $role_ids) ? array(ALL_ROLES) : array_filter($role_ids);
+    $role_ids = in_array(UC_DISCOUNTS_OPTION_ALL_ROLES, $role_ids) ? array(UC_DISCOUNTS_OPTION_ALL_ROLES) : array_filter($role_ids);
     foreach ($role_ids as $role_id) {
       $new_role = array(
         'discount_id' => $discount->discount_id,
@@ -940,7 +940,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
     drupal_write_record('uc_discounts_codes', $new_code);
   }
 
-  foreach (array(DISCOUNT_FILTER_GROUPING_APPLICATION, DISCOUNT_FILTER_GROUPING_QUALIFICATION) as $grouping) {
+  foreach (array(UC_DISCOUNTS_GROUPING_APPLICATION, UC_DISCOUNTS_GROUPING_QUALIFICATION) as $grouping) {
     //Copy discount's products
     $product_ids = uc_discounts_get_product_ids_for_discount_id($original_discount_id, $grouping);
     foreach ($product_ids as $product_id) {

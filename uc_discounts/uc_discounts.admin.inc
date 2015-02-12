@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Admin forms and functions for uc_discounts module.

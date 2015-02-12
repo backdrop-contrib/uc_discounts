@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Views handler integration for product_price_alterer_field module.
@@ -10,6 +11,7 @@
  * @ingroup views_field_handlers
  */
 class discounted_price_handler extends views_handler_field {
+
   function query() {
     $this->ensure_my_table();
     $this->add_additional_fields();
@@ -28,4 +30,5 @@ class discounted_price_handler extends views_handler_field {
     add_product_price_altering_javascript($node);
     return check_plain($output);
   }
+
 }

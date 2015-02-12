@@ -1,9 +1,9 @@
 <?php
+
 /**
  * @file
  * Attach automatic (codeless) discounts to products using fields.
  */
-
 /**
  * See http://drupal.org/node/106716 for more information.
  */
@@ -114,11 +114,10 @@ function theme_codeless_discounts_field_get_codeless_discount_html_for_product($
   foreach ($discounts as $discount) {
     $description = $discount->short_description;
     if ($discount->has_expiration) {
-      $description .= " (". t("Expires:") ." ". date("Y-m-d H:i", $discount->expiration) .")";
+      $description .= " (" . t("Expires:") . " " . date("Y-m-d H:i", $discount->expiration) . ")";
     }
     $descriptions[] = $description;
   }
 
   return join("<br/>", $descriptions);
 }
-

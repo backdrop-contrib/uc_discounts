@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Integrates product_price_alterer module with views module.

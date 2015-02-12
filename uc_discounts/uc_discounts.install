@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Install, update, and uninstall functions for uc_discounts module.
@@ -474,21 +475,19 @@ function uc_discounts_schema() {
 function uc_discounts_install() {
   // TODO The drupal_(un)install_schema functions are called automatically in D7.
   // drupal_install_schema("uc_discounts")
-
   //Weight must be less than uc_payment's
   // TODO Please review the conversion of this statement to the D7 database API syntax.
   /* db_query("UPDATE {system} SET weight=-10 WHERE name='uc_discounts'") */
   db_update('system')
-  ->fields(array(
-    'weight' => -10,
-  ))
-  ->condition('name', 'uc_discounts')
-  ->execute();
+    ->fields(array(
+      'weight' => -10,
+    ))
+    ->condition('name', 'uc_discounts')
+    ->execute();
 
   //Print out a nice message directing administrators towards the configuration screen.
-  drupal_set_message(st("UC Discounts (Alternative) settings are available under !link",
-      array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
-    ));
+  drupal_set_message(st("UC Discounts (Alternative) settings are available under !link", array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
+  ));
 }
 
 /**
@@ -518,8 +517,7 @@ function uc_discounts_update_1() {
       break;
 
     case "pgsql":
-      db_add_column($queries, "uc_discounts", "has_role_filter", "tinyint",
-        array("size" => "tiny", "not null" => TRUE, "default" => 0)
+      db_add_column($queries, "uc_discounts", "has_role_filter", "tinyint", array("size" => "tiny", "not null" => TRUE, "default" => 0)
       );
       break;
   }
@@ -552,11 +550,9 @@ function uc_discounts_update_2() {
       break;
 
     case "pgsql":
-      db_add_column($queries, "uc_discounts", "has_qualifying_amount_max", "tinyint",
-        array("not null" => TRUE, "default" => 0)
+      db_add_column($queries, "uc_discounts", "has_qualifying_amount_max", "tinyint", array("not null" => TRUE, "default" => 0)
       );
-      db_add_column($queries, "uc_discounts", "qualifying_amount_max", "float",
-        array("not null" => TRUE, "default" => 0)
+      db_add_column($queries, "uc_discounts", "qualifying_amount_max", "float", array("not null" => TRUE, "default" => 0)
       );
       break;
   }
@@ -583,8 +579,7 @@ function uc_discounts_update_3() {
       break;
 
     case "pgsql":
-      db_add_column($queries, "uc_discounts", "max_uses_per_code", "int",
-        array("not null" => TRUE, "default" => 0)
+      db_add_column($queries, "uc_discounts", "max_uses_per_code", "int", array("not null" => TRUE, "default" => 0)
       );
       break;
   }
@@ -625,8 +620,7 @@ function uc_discounts_update_5() {
       break;
 
     case "pgsql":
-      db_add_column($queries, "uc_discounts", "required_product", "varchar(255)",
-        array("not null" => TRUE, "default" => "")
+      db_add_column($queries, "uc_discounts", "required_product", "varchar(255)", array("not null" => TRUE, "default" => "")
       );
       break;
   }
@@ -690,10 +684,10 @@ function uc_discounts_update_6002() {
   // TODO Please review the conversion of this statement to the D7 database API syntax.
   /* db_query("UPDATE {uc_discounts} SET use_only_discounted_products_to_qualify=1") */
   db_update('uc_discounts')
-  ->fields(array(
-    'use_only_discounted_products_to_qualify' => 1,
-  ))
-  ->execute();
+    ->fields(array(
+      'use_only_discounted_products_to_qualify' => 1,
+    ))
+    ->execute();
   // hook_update_N() no longer returns a $ret array. Instead, return
   // nothing or a translated string indicating the update ran successfully.
   // See http://drupal.org/node/224333#update_sql.
@@ -710,11 +704,11 @@ function uc_discounts_update_6003() {
   // TODO Please review the conversion of this statement to the D7 database API syntax.
   /* db_query("UPDATE {uc_discounts} SET required_product = '' WHERE required_product = 'none'") */
   db_update('uc_discounts')
-  ->fields(array(
-    'required_product' => '',
-  ))
-  ->condition('required_product', 'none')
-  ->execute();
+    ->fields(array(
+      'required_product' => '',
+    ))
+    ->condition('required_product', 'none')
+    ->execute();
   // hook_update_N() no longer returns a $ret array. Instead, return
   // nothing or a translated string indicating the update ran successfully.
   // See http://drupal.org/node/224333#update_sql.
@@ -779,11 +773,11 @@ function uc_discounts_update_6005() {
     // TODO Please review the conversion of this statement to the D7 database API syntax.
     /* db_query("UPDATE {uc_discounts} SET required_product_type = %d WHERE discount_id = %d", UC_DISCOUNTS_FILTER_TYPE_SKUS, $discount->discount_id) */
     db_update('uc_discounts')
-  ->fields(array(
-      'required_product_type' => UC_DISCOUNTS_FILTER_TYPE_SKUS,
-    ))
-  ->condition('discount_id', $discount->discount_id)
-  ->execute();
+      ->fields(array(
+        'required_product_type' => UC_DISCOUNTS_FILTER_TYPE_SKUS,
+      ))
+      ->condition('discount_id', $discount->discount_id)
+      ->execute();
   }
   db_drop_field('uc_discounts', 'required_product');
   // hook_update_N() no longer returns a $ret array. Instead, return

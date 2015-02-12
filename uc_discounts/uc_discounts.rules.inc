@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Rules integration for uc_discounts module.
@@ -45,7 +46,6 @@ function uc_discounts_rules_condition_info() {
         'options list' => 'uc_discounts_discount_id_options',
       ),
     ),
-
   );
   return $conditions;
 }
@@ -98,10 +98,10 @@ function uc_discounts_condition_total_after_discounts($order, $order_total_value
  */
 function uc_discounts_discount_id_options() {
   $discounts = db_select('uc_discounts', 'ud')
-          ->fields('ud')
-          ->orderBy('name', 'asc')
-          ->execute()->fetchAll();
-  foreach($discounts as $discount) {
+      ->fields('ud')
+      ->orderBy('name', 'asc')
+      ->execute()->fetchAll();
+  foreach ($discounts as $discount) {
     $options[$discount->discount_id] = $discount->name;
   }
 

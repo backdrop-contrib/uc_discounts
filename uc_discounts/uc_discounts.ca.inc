@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Conditional action functions for uc_discounts module.
@@ -136,4 +137,3 @@ function uc_discounts_condition_total_form($form_state, $settings = array()) {
 
   return $form;
 }
-

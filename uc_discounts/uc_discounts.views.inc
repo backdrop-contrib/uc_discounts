@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Views integration for uc_discounts module.

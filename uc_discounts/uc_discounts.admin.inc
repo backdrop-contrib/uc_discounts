@@ -188,7 +188,6 @@ function uc_discounts_admin_discounts_search_form_submit($form, &$form_state) {
  * @see uc_discounts_admin_discount_edit_form_validate()
  */
 function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id = 0) {
-  drupal_add_js(drupal_get_path('module', 'uc_discounts') . '/uc_discounts_admin.js', array('scope' => 'footer'));
   $form = array();
   $form_submitted = $form_state['submitted'];
   $is_edit = $discount_id != 0;
@@ -249,19 +248,23 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#title' => t('Discount activates'),
     '#description' => t('Whether or not this discount rule will only become active after a given date.'),
     '#default_value' => $has_activation,
-    '#attributes' => array('onchange' => "jQuery('#discount-activates-on-wrapper').toggle();"),
   );
 
   $activates_on = isset($form_state['values']['activates_on']) ? $form_state['values']['activates_on'] : REQUEST_TIME;
-  $display_string = $has_activation ? '' : ' style="display:none"';
   $form['activates_on'] = array(
     '#type' => 'date_popup',
     '#date_type' => 'DATE_UNIX',
-    '#title' => t('Discount activation date') . sprintf('<span title="' . t('This field is required.') . '" class="form-required">*</span>'),
+    '#title' => t('Discount activation date'),
     '#description' => t('Date and time when the discount will become active.  Note that if the %is_active field is not checked, this will be ignored.', array('%is_active' => t('Is active'))),
     '#default_value' => date('Y-m-d H:i:s', $activates_on),
-    '#prefix' => '<div id="discount-activates-on-wrapper"' . $display_string . '>',
-    '#suffix' => '</div>',
+    '#states' => array(
+      'visible' => array(
+        'input[name="has_activation"]' => array('checked' => TRUE),
+      ),
+      'required' => array(
+        'input[name="has_activation"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $has_expiration = isset($form_state['values']['has_expiration']) ? $form_state['values']['has_expiration'] : FALSE;
@@ -270,19 +273,23 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#title' => t('Discount expires'),
     '#description' => t('Whether or not this discount rule will expire on a given date.'),
     '#default_value' => $has_expiration,
-    '#attributes' => array('onchange' => "jQuery('#discount-expiration-wrapper').toggle();"),
   );
 
   $expiration = isset($form_state['values']['expiration']) ? $form_state['values']['expiration'] : REQUEST_TIME;
-  $display_string = $has_expiration ? '' : ' style="display:none"';
   $form['expiration'] = array(
     '#type' => 'date_popup',
     '#date_type' => 'DATE_UNIX',
-    '#title' => t('Discount expiration') . sprintf('<span title="' . t('This field is required.') . '" class="form-required">*</span>'),
+    '#title' => t('Discount expiration'),
     '#description' => t('Date and time when the discount expires.'),
     '#default_value' => date('Y-m-d H:i:s', $expiration),
-    '#prefix' => '<div id="discount-expiration-wrapper"' . $display_string . '>',
-    '#suffix' => '</div>',
+    '#states' => array(
+      'visible' => array(
+        'input[name="has_expiration"]' => array('checked' => TRUE),
+      ),
+      'required' => array(
+        'input[name="has_expiration"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   //Add custom weight range [-50, 50]
@@ -313,13 +320,21 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#default_value' => isset($form_state['values']['qualifying_type']) ? $form_state['values']['qualifying_type'] : '',
   );
 
+  $min_qual_amount_title = t('Minimum qualification amount');
   $form['qualifications']['qualifying_amount'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum qualification amount'),
+    '#title' => $min_qual_amount_title,
     '#description' => t('The amount of qualification type required. E.g. 50 (for $50), 5 (for 5 items). Remember for a discount like "buy 4 get 1 free" the qualifying amount is "5". For a discount like "spend at least $25, get $5 off" the qualifying amount is "30".'),
     '#default_value' => isset($form_state['values']['qualifying_amount']) ? $form_state['values']['qualifying_amount'] : '',
     '#size' => 15,
     '#required' => TRUE,
+  );
+  
+  $form['qualifications']['use_only_discounted_products_to_qualify'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use only %discounted_products to determine if %min_qual_amount_title is met.', array('%discounted_products' => t('Discounted Products'), '%min_qual_amount_title' => $min_qual_amount_title)),
+    '#description' => t('If checked, uses only the products included by the %discounted_products input.  Otherwise it will be based off %required_products or all products in the cart.', array('%discounted_products' => t('Discounted Products'), '%required_products' => t('Required Products'))),
+    '#default_value' => isset($form_state['values']['use_only_discounted_products_to_qualify']) ? $form_state['values']['use_only_discounted_products_to_qualify'] : FALSE,
   );
 
   $has_qualifying_amount_max = isset($form_state['values']['has_qualifying_amount_max']) ? $form_state['values']['has_qualifying_amount_max'] : FALSE;
@@ -328,19 +343,22 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#title' => t('Has max qualifying amount.'),
     '#description' => t('Whether or not discount has a maximum amount above which the discount will not be applied.'),
     '#default_value' => $has_qualifying_amount_max,
-    '#attributes' => array('onchange' => "jQuery('#discount-qualifying-amount-max-wrapper').toggle();"),
   );
 
-  $display_string = ($has_qualifying_amount_max) ? '' : ' style="display:none"';
   $form['qualifications']['qualifying_amount_max'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum qualifying amount'),
     '#description' => t('Maximum amount to NOT exceed to qualify for the discount.  E.g. 50 (for $50), 5 (for 5 items).'),
     '#default_value' => isset($form_state['values']['qualifying_amount_max']) ? $form_state['values']['qualifying_amount_max'] : '',
     '#size' => 15,
-    '#required' => FALSE,
-    '#prefix' => '<div id="discount-qualifying-amount-max-wrapper"' . $display_string . '>',
-    '#suffix' => '</div>',
+    '#states' => array(
+      'visible' => array(
+        'input[name="has_qualifying_amount_max"]' => array('checked' => TRUE),
+      ),
+      'required' => array(
+        'input[name="has_qualifying_amount_max"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $requires_code = isset($form_state['values']['requires_code']) ? $form_state['values']['requires_code'] : FALSE;
@@ -348,7 +366,6 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#type' => 'checkbox',
     '#title' => t('Require code to activate discount.'),
     '#default_value' => $requires_code,
-    '#attributes' => array('onchange' => "jQuery('#discount-codes-wrapper').toggle();"),
   );
 
   //Determine codes default value
@@ -362,15 +379,20 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     }
     $codes_string = uc_discounts_codes_to_str($codes);
   }
-  $display_string = $requires_code ? '' : ' style="display:none"';
   $form['qualifications']['codes'] = array(
     '#type' => 'textarea',
-    '#title' => t('Discount codes') . sprintf('<span title="' . t('This field is required.') . '" class="form-required">*</span>'),
+    '#title' => t('Discount codes'),
     '#description' => t('Enter discount codes in box above, one code per line.  Spaces are permitted but may confuse consumers.  You may use the !link if you need to create a lot of unique codes.', array('!link' => l(t('discount code generator'), 'admin/store/uc_discounts/generate_codes/' . $discount_id))),
     '#default_value' => $codes_string,
     '#rows' => 5,
-    '#prefix' => '<div id="discount-codes-wrapper"' . $display_string . '>',
-    '#suffix' => '</div>',
+    '#states' => array(
+      'visible' => array(
+        'input[name="requires_code"]' => array('checked' => TRUE),
+      ),
+      'required' => array(
+        'input[name="requires_code"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $has_role_filter = isset($form_state['values']['has_role_filter']) ? $form_state['values']['has_role_filter'] : FALSE;
@@ -399,16 +421,21 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
   foreach ($result as $row) {
     $options[$row->rid] = $row->name;
   }
-  $display_string = ($has_role_filter) ? '' : ' style="display:none"';
   $form['qualifications']['role_ids'] = array(
     '#type' => 'select',
-    '#title' => t('Roles') . sprintf('<span title="' . t('This field is required.') . '" class="form-required">*</span>'),
+    '#title' => t('Roles'),
     '#description' => t('Select all roles that this discount applies to or &lt;All Roles&gt; to apply to all roles.'),
     '#options' => $options,
     '#default_value' => $role_ids,
     '#multiple' => TRUE,
-    '#prefix' => '<div id="discount-role-ids-wrapper"' . $display_string . '>',
-    '#suffix' => '</div>',
+    '#states' => array(
+      'visible' => array(
+        'input[name="has_role_filter"]' => array('checked' => TRUE),
+      ),
+      'required' => array(
+        'input[name="has_role_filter"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['qualifications']['requires_single_product_to_qualify'] = array(
@@ -416,13 +443,6 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#title' => t('Require single product SKU to qualify.'),
     '#description' => t('Requires products with unique SKUs to meet the qualifying requirements. Otherwise, qualifying requirements can be met by a combination of different products.'),
     '#default_value' => isset($form_state['values']['requires_single_product_to_qualify']) ? $form_state['values']['requires_single_product_to_qualify'] : FALSE,
-  );
-
-  $form['qualifications']['use_only_discounted_products_to_qualify'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Use only Discounted Products to determine if %min_qual_amount is met.', array('!min_qual_amount' => t('Minimum qualification amount'))),
-    '#description' => t('If checked, uses only the products included by the Discounted Products below.  Otherwise it will be based off Required Products or all products in the cart.'),
-    '#default_value' => isset($form_state['values']['use_only_discounted_products_to_qualify']) ? $form_state['values']['use_only_discounted_products_to_qualify'] : FALSE,
   );
 
   _uc_discounts_product_filter_form($form, $form_state, UC_DISCOUNTS_GROUPING_QUALIFICATION, $discount_id);
@@ -575,6 +595,9 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
       'visible' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_PRODUCTS),
       ),
+      'required' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_PRODUCTS),
+      ),
     ),
   );
 
@@ -596,6 +619,9 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_TERMS),
+      ),
+      'required' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_TERMS),
       ),
     ),
@@ -625,6 +651,9 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
       'visible' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_SKUS),
       ),
+      'required' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_SKUS),
+      ),
     ),
   );
 
@@ -647,6 +676,9 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_CLASS),
+      ),
+      'required' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_CLASS),
       ),
     ),
@@ -678,6 +710,9 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#multiple' => TRUE,
     '#states' => array(
       'visible' => array(
+        ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_AUTHORS),
+      ),
+      'required' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_AUTHORS),
       ),
     ),

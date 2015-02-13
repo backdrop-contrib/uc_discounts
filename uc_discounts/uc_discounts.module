@@ -1325,8 +1325,8 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
   if (is_array($order->products) && !empty($order->products)) {
     // Get terms for order's products.
     $result = db_query("SELECT DISTINCT tid
-                       FROM { taxonomy_index}
-                       WHERE nid IN(:nid)", array(':nid' => implode(",", $order_product_ids)));
+                       FROM {taxonomy_index}
+                       WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
     foreach ($result as $row) {
       $temp_term_ids[] = $row->tid;
     }
@@ -1341,7 +1341,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
     // Get SKUs for order's products.
     $result = db_query("SELECT DISTINCT model
                        FROM {uc_products}
-                       WHERE nid IN(:nid)", array(':nid' => implode(",", $order_product_ids)));
+                       WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
     foreach ($result as $row) {
       $temp_skus[] = "'" . ($row->model) . "'";
     }
@@ -1356,7 +1356,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
     // Get classes for order's products.
     $result = db_query("SELECT DISTINCT type
                        FROM {node}
-                       WHERE nid IN(:nid)", array(':nid' => implode(",", $order_product_ids)));
+                       WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
     foreach ($result as $row) {
       $temp_classes[] = "'" . ($row->type) . "'";
     }
@@ -1371,7 +1371,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
     // Get authors for order's products.
     $result = db_query("SELECT DISTINCT uid
                        FROM {node}
-                       WHERE nid IN(:nid)", array(':nid' => implode(",", $order_product_ids)));
+                       WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
     foreach ($result as $row) {
       $temp_authors[] = "'" . ($row->uid) . "'";
     }

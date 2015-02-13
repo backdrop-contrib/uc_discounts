@@ -700,7 +700,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
                      FROM {users} u
                      INNER JOIN {node} n USING(uid)
                      WHERE u.uid > 0
-                     AND n.type IN(:uc_product_types)
+                     AND n.type IN (:uc_product_types)
                      GROUP BY u.uid
                      ORDER BY name', array(':uc_product_types' => uc_product_types()));
   if ($grouping == UC_DISCOUNTS_GROUPING_APPLICATION) {

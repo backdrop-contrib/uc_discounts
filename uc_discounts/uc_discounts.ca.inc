@@ -62,8 +62,8 @@ function uc_discounts_condition_discount_applied($order, $settings) {
 function uc_discounts_condition_discount_applied_form($form_state, $settings = array()) {
   $form = array();
 
-  $result = db_query('SELECT * FROM {uc_discounts} ORDER BY name');
-  while ($discount = db_fetch_object($result)) {
+  $result = db_query('SELECT discount_id, name FROM {uc_discounts} ORDER BY name');
+  foreach ($result as $discount) {
     $options[$discount->discount_id] = $discount->name;
   }
 

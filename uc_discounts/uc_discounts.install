@@ -640,8 +640,8 @@ function uc_discounts_update_6005() {
   db_add_index('uc_discounts_classes', 'discount_id_grouping', array('discount_id', 'grouping'));
   db_add_field('uc_discounts_authors', 'grouping', $grouping_schema);
   db_add_index('uc_discounts_authors', 'discount_id_grouping', array('discount_id', 'grouping'));
-  $result = db_query("SELECT * FROM {uc_discounts} WHERE required_product != :required_product", array(':required_product' => ''));
-  while ($discount = db_fetch_object($result)) {
+  $result = db_query("SELECT discount_id, required_product FROM {uc_discounts} WHERE required_product != :required_product", array(':required_product' => ''));
+  foreach ($result as $discount) {
 
     db_insert('uc_discounts_skus')
       ->fields(array(

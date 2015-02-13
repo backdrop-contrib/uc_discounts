@@ -6,6 +6,10 @@
   width: 100%;
 }
 
+#discount-subtotal-title, #discount-amount-title {
+  font-weight: bold;
+}
+
 .uc-discounts-cart-pane-table {
   text-align: right;
   width: 100%;

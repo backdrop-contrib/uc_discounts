@@ -1273,7 +1273,15 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
       if (is_array($product->data) && !empty($product->data['kit_id'])) {
         $kit_id = $product->data['kit_id'];
         $order_product_ids_set[$kit_id] = TRUE;
-        $kits[$kit_id]['product_qty'] += $product->qty;
+        if (!isset($kits[$kit_id])) {
+          $kits[$kit_id] = array('product_qty' => $product->qty);
+        }
+        elseif (!isset($kits[$kit_id]['product_qty'])) {
+          $kits[$kit_id]['product_qty'] = $product->qty;
+        }
+        else {
+          $kits[$kit_id]['product_qty'] += $product->qty;
+        }
       }
 
       uc_discounts_add_to_existing_map_number_value($order_product_id_subtotal_map, $nid, $product->price * $product->qty);
@@ -1294,7 +1302,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
       foreach ($kit_node->products as $product_in_kit) {
         $pik_nid = $product_in_kit->nid;
         foreach ($order->products as $key => $product) {
-          if ($product->nid == $pik_nid && $product->data['kit_id'] == $kit_id) {
+          if ($product->nid == $pik_nid && isset($product->data['kit_id']) && $product->data['kit_id'] == $kit_id) {
             $kits[$kit_id]['kit_qty'] = $product->qty / $product_in_kit->qty;
             break;
           }

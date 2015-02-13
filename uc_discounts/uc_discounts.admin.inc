@@ -122,14 +122,22 @@ function uc_discounts_admin_discounts_list() {
         array(
           'data' => t('No discounts.'),
           'colspan' => count($header),
-        )
-      )
+        ),
+      ),
     );
   }
 
   $output['content'] = array(
     'search_form' => drupal_get_form('uc_discounts_admin_discounts_search_form', $search_params),
-    'list_table' => array('#markup' => theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
+    'list_table' => array(
+      '#markup' => theme('table', array(
+        'header' => $header,
+        'rows' => $rows,
+        'attributes' => array(
+          'class' => array('uc-discounts')
+        )
+      ))
+    ),
     'pager' => array('#theme' => 'pager', '#weight' => 5),
   );
 
@@ -138,7 +146,7 @@ function uc_discounts_admin_discounts_list() {
 
 /**
  * Creates an admin form for searching discounts by name.
- * 
+ *
  * @ingroup forms
  * @see uc_discounts_admin_discounts_list()
  * @see uc_discounts_admin_search_discounts_form_submit()
@@ -169,7 +177,7 @@ function uc_discounts_admin_discounts_search_form($form, &$form_state, $values) 
 
 /**
  * Form submit handler for uc_discounts_admin_search_discounts_form().
- * 
+ *
  * @ingroup forms
  * @see uc_discounts_admin_search_discounts_form()
  */
@@ -235,7 +243,6 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#default_value' => $is_active,
   );
 
-
   $form['can_be_combined_with_other_discounts'] = array(
     '#type' => 'checkbox',
     '#title' => t('Can be combined with other discounts'),
@@ -292,7 +299,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     ),
   );
 
-  //Add custom weight range [-50, 50]
+  // Add custom weight range [-50, 50].
   $options = array();
   for ($i = -50; $i <= 50; $i++) {
     $options[$i] = $i;
@@ -329,7 +336,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#size' => 15,
     '#required' => TRUE,
   );
-  
+
   $form['qualifications']['use_only_discounted_products_to_qualify'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use only %discounted_products to determine if %min_qual_amount_title is met.', array('%discounted_products' => t('Discounted Products'), '%min_qual_amount_title' => $min_qual_amount_title)),
@@ -368,7 +375,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#default_value' => $requires_code,
   );
 
-  //Determine codes default value
+  // Determine codes default value.
   if (isset($form_state['values']['codes'])) {
     $codes_string = $form_state['values']['codes'];
   }
@@ -403,16 +410,16 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     '#attributes' => array('onchange' => "jQuery('#discount-role-ids-wrapper').toggle();"),
   );
 
-  //Get current discount roles
+  // Get current discount roles.
   $role_ids = null;
   if (isset($form_state['values']['role_ids'])) {
     $role_ids = $form_state['values']['role_ids'];
   }
-  else if ($is_edit) {
+  elseif ($is_edit) {
     $role_ids = uc_discounts_get_role_ids_for_discount_id($discount_id, FALSE);
   }
 
-  //Create roles form element
+  // Create roles form element.
   $options = array();
   $result = db_query('SELECT rid, name
                      FROM {role}
@@ -533,7 +540,8 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
 }
 
 /**
- * Helper function that creates a series of dropdowns for selecting a product via product_id, sku, class, term, or author
+ * Helper function that creates a series of dropdowns for selecting a product
+ * via product_id, sku, class, term, or author.
  */
 function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $discount_id) {
   $fieldset_name = $grouping == UC_DISCOUNTS_GROUPING_APPLICATION ? 'application' : 'qualifications';
@@ -735,7 +743,7 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
     $has_errors = TRUE;
   }
 
-  //Check qualifying_amount_max (if necessary)
+  // Check qualifying_amount_max if necessary.
   if ($values['has_qualifying_amount_max']) {
     if (($index = strpos($values['qualifying_amount_max'], '%')) !== FALSE) {
       $value = substr($values['qualifying_amount_max'], 0, $index);
@@ -750,8 +758,7 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
     }
   }
 
-
-  //Check discount_amount
+  // Check discount_amount.
   if (($index = strpos($values['discount_amount'], '%')) !== FALSE) {
     $value = substr($values['discount_amount'], 0, $index);
   }
@@ -763,7 +770,6 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
     form_set_error('discount_amount', t('Discount amount must be integer, decimal or percentage.'));
     $has_errors = TRUE;
   }
-
 
   $ids = $form_state['values'][UC_DISCOUNTS_GROUPING_APPLICATION . '-filter-select-' . $values['filter_type']];
   if (empty($ids)) {
@@ -781,7 +787,7 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
     $has_errors = TRUE;
     }
    */
-  //Form requires rebuilding form so codes and expiration blocks will display correctly
+  // Form requires rebuilding so codes and expiration blocks display correctly.
   if ($has_errors) {
     $form_state['rebuild'] = TRUE;
   }
@@ -789,7 +795,7 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
 
 /**
  * Submit handler for uc_discounts_admin_discount_edit_form().
- * 
+ *
  * @ingroup forms
  * @see uc_discounts_admin_discount_edit_form()
  * @see uc_discounts_admin_discount_edit_form_validate()
@@ -797,10 +803,10 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
 function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   $codes = explode("\n", $form_state['values']['codes']);
 
-  //Set expiration to a valid value because it is not nullable
+  // Set expiration to a valid value because it is not nullable.
   $expiration = isset($form_state['values']['expiration']) ? strtotime($form_state['values']['expiration']) : 0; //date_convert(date_make_date($form_state['values']['expiration']), DATE_OBJECT, DATE_UNIX) : 0;
   $activates_on = isset($form_state['values']['activates_on']) ? strtotime($form_state['values']['activates_on']) : 0; //date_convert(date_make_date($form_state['values']['activates_on']), DATE_OBJECT, DATE_UNIX) : 0;
-  //Set discount_amount
+  // Set discount_amount.
   if (($index = strpos($form_state['values']['discount_amount'], '%')) !== FALSE) {
     $discount_amount = floatval(substr($form_state['values']['discount_amount'], 0, $index)) / 100;
   }
@@ -844,7 +850,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   else {
     $discount->discount_id = $form_state['values']['discount_id'];
     drupal_write_record('uc_discounts', $discount, 'discount_id');
-    //Delete existing related fields
+    // Delete existing related fields.
     uc_discounts_codes_delete($discount->discount_id);
     uc_discounts_products_delete($discount->discount_id);
     uc_discounts_terms_delete($discount->discount_id);
@@ -854,7 +860,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
     uc_discounts_roles_delete($discount->discount_id);
   }
 
-  //Insert codes (if necessary)
+  // Insert codes if necessary.
   if ($form_state['values']['requires_code']) {
     foreach ($codes as $code) {
       $code = trim($code);
@@ -869,7 +875,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
     }
   }
 
-  // Insert required products
+  // Insert required products.
   foreach (array(UC_DISCOUNTS_GROUPING_APPLICATION, UC_DISCOUNTS_GROUPING_QUALIFICATION) as $grouping) {
     $name = $grouping == UC_DISCOUNTS_GROUPING_APPLICATION ? 'filter_type' : 'required_product_type';
     if ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_PRODUCTS) {
@@ -898,7 +904,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
     }
     elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_SKUS) {
       $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_SKUS];
-      //Empty SKU is UC_DISCOUNTS_OPTION_ALL_SKUS
+      // Empty SKU is UC_DISCOUNTS_OPTION_ALL_SKUS.
       $ids = in_array(UC_DISCOUNTS_OPTION_ALL_SKUS, $ids) ? array() : array_filter($ids);
       foreach ($ids as $id) {
         $new_sku = array(
@@ -911,7 +917,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
     }
     elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_CLASS) {
       $ids = $form_state['values'][$grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_CLASS];
-      //Empty Class is UC_DISCOUNTS_OPTION_ALL_CLASSES
+      // Empty Class is UC_DISCOUNTS_OPTION_ALL_CLASSES.
       $ids = in_array(UC_DISCOUNTS_OPTION_ALL_CLASSES, $ids) ? array() : array_filter($ids);
       foreach ($ids as $id) {
         $new_class = array(
@@ -936,7 +942,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
     }
   }
 
-  //Insert roles
+  // Insert roles.
   if ($form_state['values']['has_role_filter']) {
     $role_ids = ($form_state['values']['has_role_filter']) ? $form_state['values']['role_ids'] : array();
     $role_ids = in_array(UC_DISCOUNTS_OPTION_ALL_ROLES, $role_ids) ? array(UC_DISCOUNTS_OPTION_ALL_ROLES) : array_filter($role_ids);
@@ -960,7 +966,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
 
 /**
  * Generates admin form to create a copy of existing discount.
- * 
+ *
  * @ingroup forms
  */
 function uc_discounts_admin_discount_copy_form($original_discount_id) {
@@ -970,7 +976,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
   unset($discount->discount_id);
   drupal_write_record('uc_discounts', $discount);
 
-  //Copy discount's codes
+  // Copy discount's codes.
   $codes = uc_discounts_get_codes_for_discount_id($original_discount_id);
   foreach ($codes as $code) {
     $new_code = array(
@@ -981,7 +987,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
   }
 
   foreach (array(UC_DISCOUNTS_GROUPING_APPLICATION, UC_DISCOUNTS_GROUPING_QUALIFICATION) as $grouping) {
-    //Copy discount's products
+    // Copy discount's products.
     $product_ids = uc_discounts_get_product_ids_for_discount_id($original_discount_id, $grouping);
     foreach ($product_ids as $product_id) {
       $new_product = array(
@@ -992,7 +998,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
       drupal_write_record('uc_discounts_products', $new_product);
     }
 
-    //Copy discount's terms
+    // Copy discount's terms.
     $term_ids = uc_discounts_get_term_ids_for_discount_id($original_discount_id, $grouping);
     foreach ($term_ids as $term_id) {
       $new_term = array(
@@ -1003,7 +1009,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
       drupal_write_record('uc_discounts_terms', $new_term);
     }
 
-    //Copy discount's SKUs
+    // Copy discount's SKUs.
     $skus = uc_discounts_get_skus_for_discount_id($original_discount_id, $grouping);
     foreach ($skus as $sku) {
       $new_sku = array(
@@ -1014,7 +1020,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
       drupal_write_record('uc_discounts_skus', $new_sku);
     }
 
-    //Copy discount's Classes
+    // Copy discount's Classes.
     $classes = uc_discounts_get_classes_for_discount_id($original_discount_id, $grouping);
     foreach ($classes as $class) {
       $new_class = array(
@@ -1025,7 +1031,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
       drupal_write_record('uc_discounts_classes', $new_class);
     }
 
-    //Copy discount's authors
+    // Copy discount's authors.
     $author_ids = uc_discounts_get_author_ids_for_discount_id($original_discount_id, $grouping);
     foreach ($author_ids as $author_id) {
       $new_author = array(
@@ -1037,7 +1043,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
     }
   }
 
-  //Copy discount's roles
+  // Copy discount's roles.
   $role_ids = uc_discounts_get_role_ids_for_discount_id($original_discount_id);
   foreach ($role_ids as $role_id) {
     $new_role = array(
@@ -1067,14 +1073,15 @@ function uc_discounts_admin_discount_delete_form($form, &$form_state, $discount_
     'discount_id' => array(
       '#type' => 'value',
       '#value' => $discount_id,
-  ));
+    ),
+  );
   $output = confirm_form($form, t('Delete @row?', array('@row' => $discount->name)), 'admin/store/uc_discounts');
   return $output;
 }
 
 /**
  * Submit handler for uc_discounts_admin_discount_delete_form().
- * 
+ *
  * @ingroup forms
  * @see uc_discounts_admin_discount_delete_form()
  */
@@ -1090,9 +1097,9 @@ function uc_discounts_admin_discount_delete_form_submit($form, &$form_state) {
 
 /**
  * Generate admin report page content of all discount usage.
- * 
+ *
  * @return array
- *  Array of page content.
+ *   Array of page content.
  */
 function uc_discounts_admin_report_discounts_list($download = FALSE) {
   $op = arg(4) == 'download' ? 'download' : 'show';
@@ -1231,13 +1238,13 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
     array_unshift($rows, $header);
     foreach ($rows as $key => $row) {
       $csv_row = array();
-      // remove Operations cell
+      // Remove Operations cell.
       array_pop($row);
       foreach ($row as $cell) {
         $csv_row[] = is_array($cell) ? $cell['data'] : $cell;
       }
       if ($key > 0) {
-        // make is_active CSV friendly
+        // Make is_active CSV friendly.
         $csv_row[0] = $csv_row[0] == 'X' ? 0 : 1;
       }
       fputcsv($fp, $csv_row);
@@ -1247,15 +1254,25 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
   }
   else {
     if (empty($rows)) {
-      $rows[] = array(array(
+      $rows[] = array(
+        array(
           'data' => t('No discounts.'),
           'colspan' => count($header),
-      ));
+        ),
+      );
     }
 
     $output['content'] = array(
-      'table' => array('#markup' => theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('uc-discounts'))))),
-      'pager' => array('#theme' => 'pager', '#weight' => 5,),
+      'table' => array(
+        '#markup' => theme('table', array(
+          'header' => $header,
+          'rows' => $rows,
+          'attributes' => array(
+            'class' => array('uc-discounts'),
+          ),
+        )),
+      ),
+      'pager' => array('#theme' => 'pager', '#weight' => 5),
       'link' => array('#markup' => l(t('Export to CSV'), 'admin/reports/uc_discounts/all/download')),
     );
 
@@ -1265,16 +1282,18 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
 
 /**
  * Generate admin report page content of discount usage for discount ID.
- * 
+ *
  * @param int $discount_id
+ *
  * @return array
- *  Array of page content.
+ *   Array of page content.
  */
 function uc_discounts_admin_report_discount($discount_id) {
-  //Add link to all discount data
+  $output = array();
+  // Add link to all discount data.
   $output['content']['title'] = array('#markup' => l(t('Report for all discounts.'), 'admin/reports/uc_discounts/all') . '<br /><br />');
 
-  //Add table for discount's data
+  // Add table for discount's data.
 
   $header = array(
     t('Name'),
@@ -1307,10 +1326,14 @@ function uc_discounts_admin_report_discount($discount_id) {
     l(t('copy'), 'admin/store/uc_discounts/copy/' . $discount->discount_id),
     l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
   );
-  $output['content']['table1'] = array('#markup' => theme('table', array('header' => $header, 'rows' => $discounts)) . '<br /><br />');
+  $output['content']['table1'] = array(
+    '#markup' => theme('table', array(
+      'header' => $header,
+      'rows' => $discounts,
+    )) . '<br /><br />',
+  );
 
-  //Add table of discount's usage data
-
+  // Add table of discount's usage data.
   $header = array(
     array(
       'data' => t('User'),
@@ -1375,11 +1398,17 @@ function uc_discounts_admin_report_discount($discount_id) {
       'data' => array(
         'data' => t('No discount data available.'),
         'colspan' => 11,
-      )
+      ),
     );
   }
 
-  $output['content']['table2'] = array('#markup' => theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'uc_discounts_report'))));
+  $output['content']['table2'] = array(
+    '#markup' => theme('table', array(
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array('id' => 'uc_discounts_report'),
+    )),
+  );
   $output['content']['pager'] = array('#theme' => 'pager', '#weight' => 5);
 
   return $output;
@@ -1389,17 +1418,18 @@ function uc_discounts_admin_report_discount($discount_id) {
  * Generate unique discount codes for a specified discount id.
  */
 function uc_discounts_admin_generate_codes(&$form_state, $discount_id) {
-  
+
 }
 
 /**
  * Generate an admin form used to automatically create discount codes.
- * 
+ *
  * @param array $form
  * @param array $form_state
  * @param int $discount_id
- * @return string
  * 
+ * @return string
+ *
  * @ingroup forms
  * @see uc_discounts_admin_generate_codes()
  * @see uc_discounts_admin_generate_codes_form_submit()
@@ -1449,7 +1479,7 @@ function uc_discounts_admin_generate_codes_form($form, &$form_state, $discount_i
 
 /**
  * Form validation handler for uc_discounts_admin_generate_codes_form().
- * 
+ *
  * @ingroup forms
  * @see uc_discounts_admin_generate_codes()
  * @see uc_discounts_admin_generate_codes_form()
@@ -1467,7 +1497,7 @@ function uc_discounts_admin_generate_codes_form_validate($form, &$form_state) {
 
 /**
  * Submit handler for uc_discounts_generate_codes_form().
- * 
+ *
  * @ingroup forms
  * @see uc_discounts_admin_generate_codes()
  * @see uc_discounts_admin_generate_codes_form()
@@ -1476,7 +1506,7 @@ function uc_discounts_admin_generate_codes_form_validate($form, &$form_state) {
 function uc_discounts_admin_generate_codes_form_submit($form, &$form_state) {
   $codes = uc_discounts_get_codes_for_discount_id($form_state['values']['discount_id']);
   foreach (range(1, $form_state['values']['num']) as $num) {
-    while (true) {
+    while (TRUE) {
       $code = preg_replace_callback('/%(s|d)/', '_uc_discounts_get_random_string', $form_state['values']['pattern']);
       if (!in_array($code, $codes)) {
         $codes[] = $code;
@@ -1489,7 +1519,7 @@ function uc_discounts_admin_generate_codes_form_submit($form, &$form_state) {
 }
 
 /**
- * Generates a randome digit or letter, used as a callback for preg_replace
+ * Generates a random digit or letter, used as a callback for preg_replace.
  */
 function _uc_discounts_get_random_string($matches) {
   // @see user_password

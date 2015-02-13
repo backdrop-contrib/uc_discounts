@@ -38,7 +38,7 @@ function uc_discounts_ca_condition() {
 }
 
 /**
- * Determines if a discounts has been applied
+ * Determines if a discounts has been applied.
  *
  * @see uc_discounts_condition_discount_applied_form()
  */
@@ -96,12 +96,16 @@ function uc_discounts_condition_total($order, $settings) {
   switch ($settings['order_total_comparison']) {
     case 'less':
       return $total < $settings['order_total_value'];
+
     case 'less_equal':
       return $total <= $settings['order_total_value'];
+
     case 'equal':
       return $total == $settings['order_total_value'];
+
     case 'greater_equal':
       return $total >= $settings['order_total_value'];
+
     case 'greater':
       return $total > $settings['order_total_value'];
   }

@@ -511,7 +511,7 @@ function uc_discounts_uninstall() {
 }
 
 /**
- * Implements hook_update_last_removed()
+ * Implements hook_update_last_removed().
  *
  * Notify drupal that 5.x update functions have been removed.
  */
@@ -522,7 +522,7 @@ function uc_discounts_update_last_removed() {
 }
 
 /**
- * #984718, Add an activates_on date to discounts.
+ * Issue #984718: Add an activates_on date to discounts.
  */
 function uc_discounts_update_6001() {
   $has_activation_schema = array(
@@ -544,8 +544,8 @@ function uc_discounts_update_6001() {
 }
 
 /**
- * #919730, Add the ability for a discount to qualify based on subtotal of all
- * products.
+ * Issue #919730: Add the ability for a discount to qualify based on subtotal of
+ * all products.
  */
 function uc_discounts_update_6002() {
   $use_only_discounted_products_to_qualify_schema = array(
@@ -566,7 +566,8 @@ function uc_discounts_update_6002() {
 }
 
 /**
- * #1100790, Add the ability for a discount max applications to be limited to number of required products in the cart
+ * Issue #1100790: Add the ability for a discount max applications to be limited
+ * to number of required products in the cart.
  */
 function uc_discounts_update_6003() {
   $limit_max__times_applied_schema = array(
@@ -612,7 +613,8 @@ function uc_discounts_update_6004() {
 }
 
 /**
- * #999778, Allow multiple products to be selected for discount qualification
+ * Issue #999778: Allow multiple products to be selected for discount
+ * qualification.
  */
 function uc_discounts_update_6005() {
   $grouping_schema = array(
@@ -649,7 +651,7 @@ function uc_discounts_update_6005() {
         'sku' => $discount->required_product,
         'grouping' => UC_DISCOUNTS_GROUPING_QUALIFICATION))
       ->execute();
-      
+
     db_update('uc_discounts')
       ->fields(array(
         'required_product_type' => UC_DISCOUNTS_FILTER_TYPE_SKUS,
@@ -661,7 +663,7 @@ function uc_discounts_update_6005() {
 }
 
 /**
- * #1220388, Optionally allow free items to be automatically added to cart.
+ * Issue #1220388: Optionally allow free items to be automatically added to cart.
  */
 function uc_discounts_update_6006() {
   $spec = array(
@@ -676,12 +678,12 @@ function uc_discounts_update_6006() {
 }
 
 /**
- * Adds indexes to speed up queries. Add primary key to uc_discounts_order_codes. 
- * 
+ * Adds indexes to speed up queries. Add primary key to uc_discounts_order_codes.
+ *
  * Note: Update numbering jumps to 7200 which indicates:
  * - 7 - Drupal version
  * - 2 - Major module version 2
- * - 00 - Sequential counting with this being the first update in 7.x-2.x  
+ * - 00 - Sequential counting with this being the first update in 7.x-2.x
  */
 function uc_discounts_update_7200() {
   db_add_index('uc_discounts_codes', 'discount_id', array('discount_id'));

@@ -51,7 +51,7 @@ function uc_discounts_rules_condition_info() {
 }
 
 /**
- * Checks if a particluar discount id has been applied on an order
+ * Checks if a particluar discount id has been applied on an order.
  */
 function uc_discounts_condition_discount_applied_condition($order, $discount_id) {
   global $user;
@@ -69,7 +69,6 @@ function uc_discounts_condition_discount_applied_condition($order, $discount_id)
 
 /**
  * Check the current order balance minus any discounts.
- *
  */
 function uc_discounts_condition_total_after_discounts($order, $order_total_value, $operator_comparison) {
   $order->uc_discounts_codes = $_SESSION['uc_discounts_codes'];
@@ -82,19 +81,23 @@ function uc_discounts_condition_total_after_discounts($order, $order_total_value
   switch ($operator_comparison) {
     case 'less':
       return $total < $order_total_value;
+
     case 'less_equal':
       return $total <= $order_total_value;
+
     case 'equal':
       return $total == $order_total_value;
+
     case 'greater_equal':
       return $total >= $order_total_value;
+
     case 'greater':
       return $total > $order_total_value;
   }
 }
 
 /**
- * Option list callback for discount ids
+ * Option list callback for discount ids.
  */
 function uc_discounts_discount_id_options() {
   $discounts = db_select('uc_discounts', 'ud')

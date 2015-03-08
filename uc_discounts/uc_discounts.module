@@ -31,7 +31,7 @@ define('UC_DISCOUNTS_OPTION_ALL_ROLES', "-1");
 define('UC_DISCOUNTS_OPTION_ALL_AUTHORS', "-1");
 define('UC_DISCOUNTS_DISCOUNT_ACTIVE', TRUE);
 define('UC_DISCOUNTS_LINE_ITEM_TYPE', 'uc_discounts');
- // 1 to appear after subtotal.
+// 1 to appear after subtotal.
 define('UC_DISCOUNTS_LINE_ITEM_WEIGHT', 1);
 
 ///////////////////////////////////////////////////////////////////
@@ -1264,6 +1264,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
   $order_product_id_product_array_map = array();
   $order_subtotal = 0;
   $kits = array();
+  $where_clauses = array();
 
   // Create IN string of product node IDs in order.
   if (is_array($order->products) && !empty($order->products)) {
@@ -1313,145 +1314,205 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
 
     $order_product_ids = array_keys($order_product_ids_set);
   }
+
   // Populate product NID array with NIDs from the order.
-  $temp_product_ids = $order_product_ids;
-  $temp_product_ids[] = UC_DISCOUNTS_OPTION_ALL_PRODUCTS;
-  $product_ids_clause = sprintf("d.filter_type<>%d OR dp.product_id IN(%s)", UC_DISCOUNTS_FILTER_TYPE_PRODUCTS, implode(",", $temp_product_ids)
+  $where_product_ids = $order_product_ids;
+  $where_product_ids[] = UC_DISCOUNTS_OPTION_ALL_PRODUCTS;
+  $where_clauses['products'] = array(
+    'sql' => 'd.filter_type <> :filter_type_products OR dp.product_id IN (:product_ids)',
+    'args' => array(
+      ':filter_type_products' => UC_DISCOUNTS_FILTER_TYPE_PRODUCTS,
+      ':product_ids' => $where_product_ids,
+    ),
   );
 
-  // Create IN string of term TIDs in order.
-  $temp_term_ids = array();
-  $temp_term_ids[] = UC_DISCOUNTS_OPTION_ALL_TERMS;
-  if (is_array($order->products) && !empty($order->products)) {
+  // Search for product terms and add where clause to main query.
+  $where_product_terms = array();
+  $where_product_terms[] = UC_DISCOUNTS_OPTION_ALL_TERMS;
+
+  if (!empty($order_product_ids)) {
     // Get terms for order's products.
-    $result = db_query("SELECT DISTINCT tid
+    $where_product_terms_result = db_query("SELECT DISTINCT tid
                        FROM {taxonomy_index}
                        WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
-    foreach ($result as $row) {
-      $temp_term_ids[] = $row->tid;
-    }
+    $where_product_terms += $where_product_terms_result->fetchCol();
   }
-  $term_ids_clause = sprintf("d.filter_type<>%d OR dt.term_id IN(%s)", UC_DISCOUNTS_FILTER_TYPE_TERMS, implode(",", $temp_term_ids)
+
+  $where_clauses['terms'] = array(
+    'sql' => 'd.filter_type <> :filter_type_terms OR dt.term_id IN (:product_terms)',
+    'args' => array(
+      ':filter_type_terms' => UC_DISCOUNTS_FILTER_TYPE_TERMS,
+      ':product_terms' => $where_product_terms,
+    ),
   );
 
   // Create IN string of SKUs in order.
-  $temp_skus = array();
-  $temp_skus[] = "'" . (UC_DISCOUNTS_OPTION_ALL_SKUS) . "'";
-  if (is_array($order->products) && !empty($order->products)) {
+  $where_product_skus = array();
+  $where_product_skus[] = UC_DISCOUNTS_OPTION_ALL_SKUS;
+  if (!empty($order_product_ids)) {
     // Get SKUs for order's products.
     $result = db_query("SELECT DISTINCT model
                        FROM {uc_products}
                        WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
-    foreach ($result as $row) {
-      $temp_skus[] = "'" . ($row->model) . "'";
-    }
+    $where_product_skus += $result->fetchCol();
   }
-  $skus_clause = sprintf("d.filter_type<>%d OR ds.sku IN(%s)", UC_DISCOUNTS_FILTER_TYPE_SKUS, implode(",", $temp_skus)
+  $where_clauses['skus'] = array(
+    'sql' => 'd.filter_type <> :filter_type_skus OR ds.sku IN (:product_skus)',
+    'args' => array(
+      ':filter_type_skus' => UC_DISCOUNTS_FILTER_TYPE_SKUS,
+      ':product_skus' => $where_product_skus,
+    ),
   );
 
   // Create IN string of classes in order.
-  $temp_classes = array();
-  $temp_classes[] = "'" . (UC_DISCOUNTS_OPTION_ALL_CLASSES) . "'";
-  if (is_array($order->products) && !empty($order->products)) {
+  $where_product_classes = array();
+  $where_product_classes[] = UC_DISCOUNTS_OPTION_ALL_CLASSES;
+  if (!empty($order_product_ids)) {
     // Get classes for order's products.
-    $result = db_query("SELECT DISTINCT type
+    $where_product_classes_result = db_query("SELECT DISTINCT type
                        FROM {node}
                        WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
-    foreach ($result as $row) {
-      $temp_classes[] = "'" . ($row->type) . "'";
-    }
+
+    $where_product_classes += $where_product_classes_result->fetchCol();
   }
-  $classes_clause = sprintf("d.filter_type<>%d OR dcl.class IN(%s)", UC_DISCOUNTS_FILTER_TYPE_CLASS, implode(",", $temp_classes)
+  $where_clauses['classes'] = array(
+    'sql' => 'd.filter_type <> :filter_type_class OR dcl.class IN (:product_classes)',
+    'args' => array(
+      ':filter_type_class' => UC_DISCOUNTS_FILTER_TYPE_CLASS,
+      ':product_classes' => $where_product_classes,
+    ),
   );
 
   // Create IN string of authors in order.
-  $temp_authors = array();
-  $temp_authors[] = "'" . (UC_DISCOUNTS_OPTION_ALL_AUTHORS) . "'";
-  if (is_array($order->products) && !empty($order->products)) {
+  $where_authors = array();
+  $where_authors[] = UC_DISCOUNTS_OPTION_ALL_AUTHORS;
+  if (!empty($order_product_ids)) {
     // Get authors for order's products.
-    $result = db_query("SELECT DISTINCT uid
+    $where_authors_result = db_query("SELECT DISTINCT uid
                        FROM {node}
                        WHERE nid IN (:nids)", array(':nids' => $order_product_ids));
-    foreach ($result as $row) {
-      $temp_authors[] = "'" . ($row->uid) . "'";
-    }
+    $where_authors += $where_authors_result->fetchCol();
   }
-  $authors_clause = sprintf("d.filter_type<>%d OR dau.author_id IN(%s)", UC_DISCOUNTS_FILTER_TYPE_AUTHORS, implode(",", $temp_authors)
+  $where_clauses['authors'] = array(
+    'sql' => 'd.filter_type <> :filter_type_authors OR dau.author_id IN (:product_authors)',
+    'args' => array(
+      ':filter_type_authors' => UC_DISCOUNTS_FILTER_TYPE_AUTHORS,
+      ':product_authors' => $where_authors,
+    ),
   );
 
   // Create codes clause.
-  $escaped_codes_string = NULL;
-  $codes_clause = "d.requires_code=0";
-  if (!empty($order->uc_discounts_codes)) {
-    // Create IN string of product node IDs in order.
-    $escaped_codes = array();
-    foreach ($order->uc_discounts_codes as $code) {
-      $escaped_codes[] = "'" . ($code) . "'";
-    }
-    $escaped_codes_string = implode(",", $escaped_codes);
+  $order_discount_codes = array();
+  $where_clauses['codes'] = array(
+    'sql' => 'd.requires_code = 0',
+    'args' => array(),
+  );
 
-    $codes_clause .= sprintf(" OR d.discount_id IN( SELECT discount_id FROM {uc_discounts_codes} WHERE code IN(%s) )", $escaped_codes_string
-    );
+  if (!empty($order->uc_discounts_codes)) {
+    $order_discount_codes = $order->uc_discounts_codes;
+    $valid_codes_result = db_query('SELECT discount_id FROM {uc_discounts_codes} WHERE code IN (:order_discount_codes)', array(':order_discount_codes' => $order_discount_codes));
+    $valid_codes_ids = $valid_codes_result->fetchCol();
+    if (!empty($valid_codes_ids)) {
+      $where_clauses['codes'] = array(
+        'sql' => 'd.requires_code = 0 OR d.discount_id IN (:codes_ids)',
+        'args' => array(':codes_ids' => $valid_codes_ids),
+      );
+    }
   }
 
   // Create roles clause.
   $auth_rid = ($order->uid != 0) ? DRUPAL_AUTHENTICATED_RID : DRUPAL_ANONYMOUS_RID;
-  $roles_clause = sprintf("d.has_role_filter=0 OR d.discount_id IN(SELECT dr.discount_id FROM {uc_discounts_roles} dr LEFT JOIN {users_roles} ur ON (dr.role_id=ur.rid AND ur.uid=%d) WHERE ur.uid IS NOT NULL OR dr.role_id=%d OR dr.role_id=%d)", $order->uid, UC_DISCOUNTS_OPTION_ALL_ROLES, $auth_rid
+
+  $roles_discounts_sql = 'SELECT DISTINCT dr.discount_id FROM {uc_discounts_roles} dr'
+    . ' LEFT JOIN {users_roles} ur ON (ur.rid = dr.role_id AND ur.uid = :uid)'
+    . ' WHERE ur.uid IS NOT NULL'
+    . '  OR dr.role_id = :all_roles'
+    . '  OR dr.role_id = :auth_role';
+  $roles_discounts_args = array(
+    ':uid' => $order->uid,
+    ':all_roles' => UC_DISCOUNTS_OPTION_ALL_ROLES,
+    ':auth_role' => $auth_rid,
   );
+  $roles_discounts_result = db_query($roles_discounts_sql, $roles_discounts_args);
+  $roles_discounts_ids = $roles_discounts_result->fetchCol();
+  if (!empty($roles_discounts_ids)) {
+    $where_clauses['roles'] = array(
+      'sql' => 'd.has_role_filter = 0 OR d.discount_id IN (:role_discounts)',
+      'args' => array(
+        ':role_discounts' => $roles_discounts_ids,
+      ),
+    );
+  }
+  else {
+    $where_clauses['roles'] = array(
+      'sql' => 'd.has_role_filter = 0',
+      'args' => array(),
+    );
+  }
 
   $grouping = UC_DISCOUNTS_GROUPING_APPLICATION;
 
   // Add warnings for expired discounts with codes if necessary.
   if (!empty($order->uc_discounts_codes)) {
-    $query = sprintf("SELECT DISTINCT d.*, dc.code code FROM {uc_discounts} d
-      LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id AND dp.grouping = $grouping
-      LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id AND dt.grouping = $grouping
-      LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id AND ds.grouping = $grouping
-      LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id AND dcl.grouping = $grouping
-      LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id AND dau.grouping = $grouping
-      LEFT JOIN {uc_discounts_roles} dr ON d.discount_id=dr.discount_id
-      LEFT JOIN {uc_discounts_codes} dc ON d.discount_id=dc.discount_id
-      WHERE dc.code IN($escaped_codes_string)
-      AND ($roles_clause)
-      AND ($product_ids_clause)
-      AND ($term_ids_clause)
-      AND ($skus_clause)
-      AND ($classes_clause)
-      AND ($authors_clause)
-      AND (d.has_expiration<>0 AND d.expiration<=%d)
-      AND (d.is_active=%d)
-      ORDER BY weight", REQUEST_TIME, UC_DISCOUNTS_DISCOUNT_ACTIVE
+    $expired_sql = "SELECT DISTINCT d.*, dc.code code FROM {uc_discounts} d
+      LEFT JOIN {uc_discounts_products} dp ON (dp.discount_id = d.discount_id AND dp.grouping = :grouping)
+      LEFT JOIN {uc_discounts_terms} dt ON (dt.discount_id = d.discount_id AND dt.grouping = :grouping)
+      LEFT JOIN {uc_discounts_skus} ds ON (ds.discount_id = d.discount_id AND ds.grouping = :grouping)
+      LEFT JOIN {uc_discounts_classes} dcl ON (dcl.discount_id = d.discount_id AND dcl.grouping = :grouping)
+      LEFT JOIN {uc_discounts_authors} dau ON (dau.discount_id = d.discount_id AND dau.grouping = :grouping)
+      LEFT JOIN {uc_discounts_roles} dr ON (dr.discount_id = d.discount_id)
+      LEFT JOIN {uc_discounts_codes} dc ON (dc.discount_id = d.discount_id)
+      WHERE dc.code IN (:order_discount_codes)
+      AND (d.has_expiration <> 0 AND d.expiration <= :request_time)
+      AND (d.is_active = :discount_active_constant)";
+
+    $expired_args = array(
+      ':grouping' => $grouping,
+      ':order_discount_codes' => $order_discount_codes,
+      ':request_time' => REQUEST_TIME,
+      ':discount_active_constant' => UC_DISCOUNTS_DISCOUNT_ACTIVE
     );
-    $result = db_query($query);
-    foreach ($result as $discount) {
-      $messages['warnings'][] = t('The discount for code "@code" has expired.', array("@code" => $discount->code)
-      );
+
+    foreach ($where_clauses as $key => $clause) {
+      // @todo Why is the 'codes' clause ommited from the original sql?
+      if ($key != 'codes') {
+        $expired_sql .= ' AND (' . $clause['sql'] . ')';
+        $expired_args += $clause['args'];
+      }
+    }
+
+    $expired_sql .= " ORDER BY d.weight";
+    $expired_result = db_query($expired_sql, $expired_args);
+
+    foreach ($expired_result as $discount) {
+      $messages['warnings'][] = t('The discount code %code has expired.', array('%code' => $discount->code));
     }
   }
 
-  $query = sprintf("SELECT DISTINCT d.* FROM {uc_discounts} d
-    LEFT JOIN {uc_discounts_products} dp ON d.discount_id=dp.discount_id AND dp.grouping = $grouping
-    LEFT JOIN {uc_discounts_terms} dt ON d.discount_id=dt.discount_id AND dt.grouping = $grouping
-    LEFT JOIN {uc_discounts_skus} ds ON d.discount_id=ds.discount_id AND ds.grouping = $grouping
-    LEFT JOIN {uc_discounts_classes} dcl ON d.discount_id=dcl.discount_id AND dcl.grouping = $grouping
-    LEFT JOIN {uc_discounts_authors} dau ON d.discount_id=dau.discount_id AND dau.grouping = $grouping
-    WHERE ($codes_clause)
-    AND ($roles_clause)
-    AND ($product_ids_clause)
-    AND ($term_ids_clause)
-    AND ($skus_clause)
-    AND ($classes_clause)
-    AND ($authors_clause)
-    AND (d.has_activation=0 OR d.activates_on<%d)
-    AND (d.has_expiration=0 OR d.expiration>%d)
-    AND (d.is_active=%d)
-    ORDER BY weight", REQUEST_TIME, REQUEST_TIME, UC_DISCOUNTS_DISCOUNT_ACTIVE
+  $valid_discounts_sql = "SELECT DISTINCT d.* FROM {uc_discounts} d
+    LEFT JOIN {uc_discounts_products} dp ON (dp.discount_id = d.discount_id AND dp.grouping = :grouping)
+    LEFT JOIN {uc_discounts_terms} dt ON (dt.discount_id = d.discount_id AND dt.grouping = :grouping)
+    LEFT JOIN {uc_discounts_skus} ds ON (ds.discount_id = d.discount_id AND ds.grouping = :grouping)
+    LEFT JOIN {uc_discounts_classes} dcl ON (dcl.discount_id = d.discount_id AND dcl.grouping = :grouping)
+    LEFT JOIN {uc_discounts_authors} dau ON (dau.discount_id = d.discount_id AND dau.grouping = :grouping)
+    WHERE (d.has_activation = 0 AND d.activates_on < :request_time)
+    AND (d.has_expiration = 0 OR d.expiration > :request_time)
+    AND (d.is_active = :discount_active_constant)";
+  $valid_discounts_args = array(
+    ':grouping' => $grouping,
+    ':request_time' => REQUEST_TIME,
+    ':discount_active_constant' => UC_DISCOUNTS_DISCOUNT_ACTIVE
   );
-  $result = db_query($query);
+  foreach ($where_clauses as $clause) {
+    $valid_discounts_sql .= ' AND (' . $clause['sql'] . ')';
+    $valid_discounts_args += $clause['args'];
+  }
+  $valid_discounts_sql .= " ORDER BY d.weight";
+  $valid_discounts_result = db_query($valid_discounts_sql, $valid_discounts_args);
 
   // Checks if order qualifies for each discount then applies discount.
   // @todo Functionality should be separated?
-  foreach ($result as $discount) {
+  foreach ($valid_discounts_result as $discount) {
     foreach (module_implements('uc_discount') as $module) {
       $function = $module . '_uc_discount';
       $function('load', $discount, $order);
@@ -1463,6 +1524,9 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
     }
 
     // Get code for discount if one exists.
+    // @todo Why is this overwritting the discount code? This validation has
+    // already happened at least once in above code.
+
     $discount->code = NULL;
     if (!empty($order->uc_discounts_codes)) {
       $code = db_select('uc_discounts_codes', 'dc')

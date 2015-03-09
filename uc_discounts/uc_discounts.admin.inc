@@ -1527,3 +1527,26 @@ function _uc_discounts_get_random_string($matches) {
   $str_len = strlen($str) - 1;
   return $str[mt_rand(0, $str_len)];
 }
+
+/**
+ * Displays admin settings form for discounts checkout pane.
+ */
+function uc_discounts_admin_checkout_pane_settings_form($form, &$form_state) {
+  $form['uc_discounts_checkout_allow_user_codes'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow customer to enter discount codes'),
+    '#description' => t('When enabled a text field will be displayed to the'
+      . ' customer during checkout where they can enter discount codes.'),
+    '#default_value' => variable_get('uc_discounts_checkout_allow_user_codes', TRUE),
+  );
+  $form['uc_discounts_checkout_show_messages'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show messages about discounts in discounts checkout pane'),
+    '#description' => t('When enabled messages about call discounts will be'
+      . ' displayed to the customer during checkout in the discounts checkout'
+      . ' pane. This provides additional information beyond the discount text'
+      . ' displayed in the checkout cart pane and checkout payment pane.'),
+    '#default_value' => variable_get('uc_discounts_checkout_show_messages', TRUE),
+  );
+  return $form;
+}

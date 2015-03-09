@@ -247,12 +247,14 @@ function uc_discounts_uc_order($op, $order, $arg2) {
         uc_discounts_order_codes_delete($order->order_id);
 
         // Save order's discount codes as string.
-        $codes_string = uc_discounts_codes_to_str($order->uc_discounts_codes);
-        $new_discount_order_code = array(
-          'order_id' => $order->order_id,
-          'codes' => $codes_string,
-        );
-        drupal_write_record('uc_discounts_order_codes', $new_discount_order_code);
+        if (!empty($order->uc_discounts_codes)) {
+          $codes_string = uc_discounts_codes_to_str($order->uc_discounts_codes);
+          $new_discount_order_code = array(
+            'order_id' => $order->order_id,
+            'codes' => $codes_string,
+          );
+          drupal_write_record('uc_discounts_order_codes', $new_discount_order_code);
+        }
 
         // Get order line items.
         if (is_array($order->line_items)) {
@@ -537,75 +539,98 @@ function uc_discounts_uc_checkout_pane() {
  */
 function uc_discounts_uc_checkout_pane_discounts($op, $order, $form = NULL, &$form_state = NULL) {
   switch ($op) {
-    case "view":
-      $description = t("Enter discount codes in the box below (one per line).");
-      $results = uc_discounts_get_discounts_for_order($order);
-
-      $codes = array();
-      foreach ($results['discounts'] as $discount) {
-        if (!empty($discount->code)) {
-          $codes[] = $discount->code;
-        }
-      }
-      $codes_str = uc_discounts_codes_to_str($codes);
+    case 'view':
+      uc_discounts_apply($order, FALSE, FALSE);
+      $show_codes = variable_get('uc_discounts_checkout_allow_user_codes', TRUE);
+      $show_messages = variable_get('uc_discounts_checkout_show_messages', TRUE);
+      $description = '';
       $contents = array();
-      $contents['codes'] = array(
-        '#type' => 'textarea',
-        '#default_value' => $codes_str,
-        '#rows' => 5,
-      );
 
-      $messages = '';
-      if (count($results['messages']['success'])) {
-        $messages .= '<div class="messages status"><ul>';
-        foreach ($results['messages']['success'] as $message) {
-          $messages .= '<li>' . $message . '</li>';
-        }
-        $messages .= '</ul></div>';
-      }
-      if (count($results['messages']['errors'])) {
-        $messages .= '<div class="messages errors"><ul>';
-        foreach ($results['messages']['errors'] as $error) {
-          $messages .= '<li>' . $error . '</li>';
-        }
-        $messages .= '</ul></div>';
-      }
-      if (count($results['messages']['warnings'])) {
-        $messages .= '<div class="messages warning"><ul>';
-        foreach ($results['messages']['warnings'] as $warning) {
-          $messages .= '<li>' . $warning . '</li>';
-        }
-        $messages .= '</ul></div>';
+      // Get results for coded and codeless discounts. 
+      if ($show_codes || $show_messages) {
+        $results = uc_discounts_get_discounts_for_order($order);
       }
 
-      $contents['messages'] = array(
-        '#markup' => '<div id="uc-discounts-messages-container">' . $messages . '</div>',
-      );
+      // If customer can enter codes then display the codes text field.
+      if ($show_codes) {
+        $description = t("Enter discount codes in the box below (one per line).");
+        $codes = array();
+        foreach ($results['discounts'] as $discount) {
+          if (!empty($discount->code)) {
+            $codes[] = $discount->code;
+          }
+        }
+        $codes_str = uc_discounts_codes_to_str($codes);
+        $contents['codes'] = array(
+          '#type' => 'textarea',
+          '#default_value' => $codes_str,
+          '#rows' => 5,
+        );
+      }
 
-      $contents['button'] = array(
-        '#type' => 'button',
-        '#value' => t('Click to calculate discounts'),
-        '#ajax' => array(
-          'callback' => 'uc_discounts_checkout_pane_ajax_callback',
-          'event' => 'mousedown',
-          'method' => 'replace',
-          'effect' => 'fade',
-          'wrapper' => 'uc-discounts-messages-container',
-          'progress' => array(
-            'type' => 'throbber',
-            'message' => t('Calculating discounts...'),
+      // If customer can see discount messages then display them.
+      if ($show_messages) {
+        $messages = '';
+        if (count($results['messages']['success'])) {
+          $messages .= '<div class="messages status"><ul>';
+          foreach ($results['messages']['success'] as $message) {
+            $messages .= '<li>' . $message . '</li>';
+          }
+          $messages .= '</ul></div>';
+        }
+        if (count($results['messages']['errors'])) {
+          $messages .= '<div class="messages errors"><ul>';
+          foreach ($results['messages']['errors'] as $error) {
+            $messages .= '<li>' . $error . '</li>';
+          }
+          $messages .= '</ul></div>';
+        }
+        if (count($results['messages']['warnings'])) {
+          $messages .= '<div class="messages warning"><ul>';
+          foreach ($results['messages']['warnings'] as $warning) {
+            $messages .= '<li>' . $warning . '</li>';
+          }
+          $messages .= '</ul></div>';
+        }
+
+        $contents['messages'] = array(
+          '#markup' => '<div id="uc-discounts-messages-container">' . $messages . '</div>',
+        );
+      }
+
+      // Add submit button and callback if customer can enter discount codes. 
+      if ($show_codes) {
+        $contents['button'] = array(
+          '#type' => 'button',
+          '#value' => t('Click to calculate discounts'),
+          '#ajax' => array(
+            'callback' => 'uc_discounts_checkout_pane_ajax_callback',
+            'event' => 'mousedown',
+            'method' => 'replace',
+            'effect' => 'fade',
+            'wrapper' => 'uc-discounts-messages-container',
+            'progress' => array(
+              'type' => 'throbber',
+              'message' => t('Calculating discounts...'),
+            ),
           ),
-        ),
-      );
+        );
 
-      // Set callback to refresh the order totals display.
-      $form_state['uc_ajax']['uc_discounts']['panes][uc_discounts][button'] = array(
-        'payment-pane' => 'uc_ajax_replace_checkout_pane',
-      );
+        // Set callback to refresh the order totals display.
+        $form_state['uc_ajax']['uc_discounts']['panes][uc_discounts][button'] = array(
+          'payment-pane' => 'uc_ajax_replace_checkout_pane',
+        );
+      }
 
-      return array('description' => $description, 'contents' => $contents);
+      // Only display pane if customer can enter codes or there are messages.
+      $pane_return = array();
+      if (!empty($contents)) {
+        $pane_return['description'] = $description;
+        $pane_return['contents'] = $contents;
+      }
+      return $pane_return;
 
-    case "process":
+    case 'process':
       // Save form values from checkout pane in order.
       if (isset($form_state['values']['panes']['uc_discounts']['codes'])) {
         $order->uc_discounts_codes = uc_discounts_codes_to_array($form_state['values']['panes']['uc_discounts']['codes']);
@@ -613,6 +638,10 @@ function uc_discounts_uc_checkout_pane_discounts($op, $order, $form = NULL, &$fo
 
       $result = uc_discounts_apply($order, FALSE, FALSE);
       return $result['success'];
+
+    case 'settings':
+      module_load_include('inc', 'uc_discounts', 'uc_discounts.admin');
+      return uc_discounts_admin_checkout_pane_settings_form($form, $form_state);
   }
 }
 

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Install, update, and uninstall functions for uc_discounts module.
@@ -393,9 +392,11 @@ function uc_discounts_schema() {
         'description' => 'The {uc_discounts}.discount_id of the discount.',
       ),
       'role_id' => array(
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => 'The role_id of the role required.',
         'not null' => TRUE,
-        'description' => 'The {role}.rid of the role required.',
+        'default' => '',
       ),
     ),
     'primary key' => array('discount_role_id'),
@@ -486,6 +487,7 @@ function uc_discounts_schema() {
   return $schema;
 }
 
+
 /**
  * Implements hook_install().
  */
@@ -493,213 +495,78 @@ function uc_discounts_install() {
   // Weight must be less than uc_payment's.
   db_update('system')
     ->fields(array(
-      'weight' => -10,
-    ))
+    'weight' => -10,
+  ))
     ->condition('name', 'uc_discounts')
     ->execute();
 
   // Print out a nice message directing administrators towards the configuration
   // screen.
-  drupal_set_message(st("UC Discounts (Alternative) settings are available under !link", array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
+  backdrop_set_message(st("UC Discounts (Alternative) settings are available under !link", array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
   ));
+  // Dynamically generated variable data was detected on the following lines.
 }
+
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function uc_discounts_update_last_removed() {
+  return 7200;
+}
+
+
+/**
+ * Convert Ubercart Discounts variables to config settings.
+ */
+function uc_discounts_update_1000() {
+  $config = config('uc_discounts.settings');
+
+  $config->set('uc_discounts_checkout_allow_user_codes',
+    update_variable_get('uc_discounts_checkout_allow_user_codes', 'TRUE'));
+  $config->set('uc_discounts_checkout_show_messages',
+    update_variable_get('uc_discounts_checkout_show_messages', 'TRUE'));
+  $config->save();
+
+//   config_set('uc_cart.settings', 'uc_cap_uc_discounts_enabled',
+//     update_variable_get('uc_cap_uc_discounts_enabled', 'TRUE'));
+
+  update_variable_del('uc_discounts_checkout_allow_user_codes');
+  update_variable_del('uc_discounts_checkout_show_messages');
+
+//  update_variable_del('uc_cap_uc_discounts_enabled');
+}
+
+
+/**
+ * Convert roles in Ubercart Discounts tables from numeric rids to strings.
+ */
+function uc_discounts_update_1001() {
+  $role_column = array(
+    'type' => 'varchar',
+    'length' => 64,
+    'description' => 'The role_id of the role required.',
+    'not null' => TRUE,
+    'default' => '',
+  );
+  db_change_field('uc_discounts_roles', 'role_id', 'role_id', $role_column);
+  db_query('
+    UPDATE {uc_discounts_roles}
+    SET role_id = :role
+    WHERE role_id = :rid
+    ', array(':rid' => 1, ':role' => BACKDROP_ANONYMOUS_ROLE));
+  db_query('
+    UPDATE {uc_discounts_roles}
+    SET role_id = :role
+    WHERE role_id = :rid
+    ', array(':rid' => 2, ':role' => BACKDROP_AUTHENTICATED_ROLE));
+}
+
 
 /**
  * Implements hook_uninstall().
  */
 function uc_discounts_uninstall() {
-}
-
-/**
- * Implements hook_update_last_removed().
- *
- * Notify drupal that 5.x update functions have been removed.
- */
-function uc_discounts_update_last_removed() {
-  // Before 6.x the updates used single digit update numbers rather then the 4
-  // digit numbers used now. The last update in 5.x was uc_discounts_update_7.
-  return 7;
-}
-
-/**
- * Issue #984718: Add an activates_on date to discounts.
- */
-function uc_discounts_update_6001() {
-  $has_activation_schema = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-    'description' => t('Whether or not discount has an activation date.'),
-  );
-  $activates_on_schema = array(
-    'type' => 'int',
-    'not null' => TRUE,
-    'default' => 0,
-    'description' => t('The activation date and time as a unix timestamp.'),
-  );
-
-  db_add_field('uc_discounts', 'has_activation', $has_activation_schema);
-  db_add_field('uc_discounts', 'activates_on', $activates_on_schema);
-}
-
-/**
- * Issue #919730: Add the ability for a discount to qualify based on subtotal of
- * all products.
- */
-function uc_discounts_update_6002() {
-  $use_only_discounted_products_to_qualify_schema = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-    'description' => t('Calculate the order subtotal using only discounted products.'),
-  );
-
-  db_add_field('uc_discounts', 'use_only_discounted_products_to_qualify', $use_only_discounted_products_to_qualify_schema);
-  // This was the default before this feature was added.
-  db_update('uc_discounts')
-    ->fields(array(
-      'use_only_discounted_products_to_qualify' => 1,
-    ))
-    ->execute();
-}
-
-/**
- * Issue #1100790: Add the ability for a discount max applications to be limited
- * to number of required products in the cart.
- */
-function uc_discounts_update_6003() {
-  $limit_max__times_applied_schema = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-    'description' => t('Whether or not to further limit the maximum times applied to the number of qualifying products.'),
-  );
-  db_add_field('uc_discounts', 'limit_max_times_applied', $limit_max__times_applied_schema);
-  db_update('uc_discounts')
-    ->fields(array(
-      'required_product' => '',
-    ))
-    ->condition('required_product', 'none')
-    ->execute();
-}
-
-/**
- * Add uc_discounts_authors table.
- */
-function uc_discounts_update_6004() {
-  $schema['uc_discounts_authors'] = array(
-    'fields' => array(
-      'discount_author_id' => array(
-        'type' => 'serial',
-        'not null' => TRUE,
-      ),
-      'discount_id' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'description' => t('The {uc_discounts}.discount_id of the discount.'),
-      ),
-      'author_id' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'description' => t('The {users}.uid of the author being discounted.'),
-      ),
-    ),
-    'primary key' => array('discount_author_id'),
-  );
-  db_create_table('uc_discounts_authors', $schema['uc_discounts_authors']);
-}
-
-/**
- * Issue #999778: Allow multiple products to be selected for discount
- * qualification.
- */
-function uc_discounts_update_6005() {
-  $grouping_schema = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 1,
-    'description' => t('The grouping of this entry since required products be used in discount qualification or application.'),
-  );
-  $req_prod_type_schema = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-  );
-
-  db_add_field('uc_discounts', 'required_product_type', $req_prod_type_schema);
-  db_add_field('uc_discounts_products', 'grouping', $grouping_schema);
-  db_add_index('uc_discounts_products', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field('uc_discounts_terms', 'grouping', $grouping_schema);
-  db_add_index('uc_discounts_terms', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field('uc_discounts_skus', 'grouping', $grouping_schema);
-  db_add_index('uc_discounts_skus', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field('uc_discounts_classes', 'grouping', $grouping_schema);
-  db_add_index('uc_discounts_classes', 'discount_id_grouping', array('discount_id', 'grouping'));
-  db_add_field('uc_discounts_authors', 'grouping', $grouping_schema);
-  db_add_index('uc_discounts_authors', 'discount_id_grouping', array('discount_id', 'grouping'));
-  $result = db_query("SELECT discount_id, required_product FROM {uc_discounts} WHERE required_product != :required_product", array(':required_product' => ''));
-  foreach ($result as $discount) {
-
-    db_insert('uc_discounts_skus')
-      ->fields(array(
-        'discount_id' => $discount->discount_id,
-        'sku' => $discount->required_product,
-        'grouping' => UC_DISCOUNTS_GROUPING_QUALIFICATION))
-      ->execute();
-
-    db_update('uc_discounts')
-      ->fields(array(
-        'required_product_type' => UC_DISCOUNTS_FILTER_TYPE_SKUS,
-      ))
-      ->condition('discount_id', $discount->discount_id)
-      ->execute();
-  }
-  db_drop_field('uc_discounts', 'required_product');
-}
-
-/**
- * Issue #1220388: Optionally allow free items to be automatically added to cart.
- */
-function uc_discounts_update_6006() {
-  $spec = array(
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => FALSE,
-    'default' => 0,
-    'description' => t('Indicates whether free items are added to cart by the module.'),
-  );
-
-  db_add_field('uc_discounts', 'add_to_cart', $spec);
-}
-
-/**
- * Adds indexes to speed up queries. Add primary key to uc_discounts_order_codes.
- *
- * Note: Update numbering jumps to 7200 which indicates:
- * - 7 - Drupal version
- * - 2 - Major module version 2
- * - 00 - Sequential counting with this being the first update in 7.x-2.x
- */
-function uc_discounts_update_7200() {
-  db_add_index('uc_discounts_codes', 'discount_id', array('discount_id'));
-  db_add_index('uc_discounts_roles', 'discount_id', array('discount_id'));
-  db_add_index('uc_discounts_uses', 'discount_id', array('discount_id'));
-
-  $order_discount_id_schema = array(
-    'type' => 'serial',
-    'not null' => TRUE,
-  );
-  $order_discount_id_keys = array(
-    'primary key' => array('order_discount_id'),
-    'indexes' => array(
-      'order_id' => array('order_id'),
-    ),
-  );
-  db_add_field('uc_discounts_order_codes', 'order_discount_id', $order_discount_id_schema, $order_discount_id_keys);
-  return t('Added primary keys and indexes to database tables to speed up queries.');
+  config_clear('uc_cart.settings', 'uc_cap_uc_discounts_enabled');
+  config_clear('uc_cart.settings', 'uc_cap_uc_discounts_weight');
 }

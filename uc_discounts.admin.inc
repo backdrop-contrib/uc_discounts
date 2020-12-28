@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Admin forms and functions for uc_discounts module.
@@ -128,21 +127,25 @@ function uc_discounts_admin_discounts_list() {
   }
 
   $output['content'] = array(
-    'search_form' => drupal_get_form('uc_discounts_admin_discounts_search_form', $search_params),
+    'search_form' => backdrop_get_form('uc_discounts_admin_discounts_search_form', $search_params),
     'list_table' => array(
       '#markup' => theme('table', array(
         'header' => $header,
         'rows' => $rows,
         'attributes' => array(
-          'class' => array('uc-discounts')
-        )
-      ))
+          'class' => array('uc-discounts'),
+        ),
+      )),
     ),
-    'pager' => array('#theme' => 'pager', '#weight' => 5),
+    'pager' => array(
+      '#theme' => 'pager',
+      '#weight' => 5,
+    ),
   );
 
   return $output;
 }
+
 
 /**
  * Creates an admin form for searching discounts by name.
@@ -175,6 +178,7 @@ function uc_discounts_admin_discounts_search_form($form, &$form_state, $values) 
   return $form;
 }
 
+
 /**
  * Form submit handler for uc_discounts_admin_search_discounts_form().
  *
@@ -187,6 +191,7 @@ function uc_discounts_admin_discounts_search_form_submit($form, &$form_state) {
   );
   $form_state['redirect'] = array('admin/store/uc_discounts/list/' . implode('/', $args));
 }
+
 
 /**
  * Generates admin form to create or edit a discount.
@@ -259,7 +264,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
 
   $activates_on = isset($form_state['values']['activates_on']) ? $form_state['values']['activates_on'] : REQUEST_TIME;
   $form['activates_on'] = array(
-    '#type' => 'date_popup',
+    '#type' => 'date_popup',  // TODO: convert to ordinary 'date'
     '#date_type' => 'DATE_UNIX',
     '#title' => t('Discount activation date'),
     '#description' => t('Date and time when the discount will become active.  Note that if the %is_active field is not checked, this will be ignored.', array('%is_active' => t('Is active'))),
@@ -419,15 +424,8 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     $role_ids = uc_discounts_get_role_ids_for_discount_id($discount_id, FALSE);
   }
 
-  // Create roles form element.
-  $options = array();
-  $result = db_query('SELECT rid, name
-                     FROM {role}
-                     ORDER BY rid');
-  $options[UC_DISCOUNTS_OPTION_ALL_ROLES] = t('<All Roles>');
-  foreach ($result as $row) {
-    $options[$row->rid] = $row->name;
-  }
+  $options = array(UC_DISCOUNTS_OPTION_ALL_ROLES => t('<All Roles>')) + user_roles();
+
   $form['qualifications']['role_ids'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
@@ -538,6 +536,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
 
   return $form;
 }
+
 
 /**
  * Helper function that creates a series of dropdowns for selecting a product
@@ -696,13 +695,14 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
   $author_ids = isset($form_state['values'][$name]) ? $form_state['values'][$name] : uc_discounts_get_author_ids_for_discount_id($discount_id, $grouping, FALSE);
   $options = array();
   // TODO Please convert this statement to the D7 database API syntax.
-  $result = db_query('SELECT uid, name
-                     FROM {users} u
-                     INNER JOIN {node} n USING(uid)
-                     WHERE u.uid > 0
-                     AND n.type IN (:uc_product_types)
-                     GROUP BY u.uid
-                     ORDER BY name', array(':uc_product_types' => uc_product_types()));
+  $result = db_query('
+    SELECT uid, name
+    FROM {users} u
+    INNER JOIN {node} n USING(uid)
+    WHERE u.uid > 0
+    AND n.type IN (:uc_product_types)
+    GROUP BY u.uid
+    ORDER BY name', array(':uc_product_types' => uc_product_types()));
   if ($grouping == UC_DISCOUNTS_GROUPING_APPLICATION) {
     $options[UC_DISCOUNTS_OPTION_ALL_AUTHORS] = t('<All Authors>');
   }
@@ -726,6 +726,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     ),
   );
 }
+
 
 /**
  * Validate handler for uc_discounts_admin_discount_edit_form().
@@ -782,16 +783,17 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
     $has_errors = TRUE;
   }
   /*
-    if ($values['has_expiration'] && !date_is_valid($values['expiration'])) {
-    form_set_error('expiration', t('Expiration required because %discount_expires is checked', array('%discount_expires' => t('Discount expires'))));
-    $has_errors = TRUE;
-    }
+   if ($values['has_expiration'] && !date_is_valid($values['expiration'])) {
+   form_set_error('expiration', t('Expiration required because %discount_expires is checked', array('%discount_expires' => t('Discount expires'))));
+   $has_errors = TRUE;
+   }
    */
   // Form requires rebuilding so codes and expiration blocks display correctly.
   if ($has_errors) {
     $form_state['rebuild'] = TRUE;
   }
 }
+
 
 /**
  * Submit handler for uc_discounts_admin_discount_edit_form().
@@ -845,11 +847,11 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   $discount->weight = $form_state['values']['weight'];
   if (empty($form_state['values']['discount_id'])) {
     $discount->insert_timestamp = REQUEST_TIME;
-    drupal_write_record('uc_discounts', $discount);
+    backdrop_write_record('uc_discounts', $discount);
   }
   else {
     $discount->discount_id = $form_state['values']['discount_id'];
-    drupal_write_record('uc_discounts', $discount, 'discount_id');
+    backdrop_write_record('uc_discounts', $discount, 'discount_id');
     // Delete existing related fields.
     uc_discounts_codes_delete($discount->discount_id);
     uc_discounts_products_delete($discount->discount_id);
@@ -871,7 +873,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
         'discount_id' => $discount->discount_id,
         'code' => $code,
       );
-      drupal_write_record('uc_discounts_codes', $new_code);
+      backdrop_write_record('uc_discounts_codes', $new_code);
     }
   }
 
@@ -887,7 +889,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
           'product_id' => $id,
           'grouping' => $grouping,
         );
-        drupal_write_record('uc_discounts_products', $new_product);
+        backdrop_write_record('uc_discounts_products', $new_product);
       }
     }
     elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_TERMS) {
@@ -899,7 +901,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
           'term_id' => $id,
           'grouping' => $grouping,
         );
-        drupal_write_record('uc_discounts_terms', $new_term);
+        backdrop_write_record('uc_discounts_terms', $new_term);
       }
     }
     elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_SKUS) {
@@ -912,7 +914,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
           'sku' => $id,
           'grouping' => $grouping,
         );
-        drupal_write_record('uc_discounts_skus', $new_sku);
+        backdrop_write_record('uc_discounts_skus', $new_sku);
       }
     }
     elseif ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_CLASS) {
@@ -925,7 +927,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
           'class' => $id,
           'grouping' => $grouping,
         );
-        drupal_write_record('uc_discounts_classes', $new_class);
+        backdrop_write_record('uc_discounts_classes', $new_class);
       }
     }
     if ($form_state['values'][$name] == UC_DISCOUNTS_FILTER_TYPE_AUTHORS) {
@@ -937,7 +939,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
           'author_id' => $id,
           'grouping' => $grouping,
         );
-        drupal_write_record('uc_discounts_authors', $new_author);
+        backdrop_write_record('uc_discounts_authors', $new_author);
       }
     }
   }
@@ -951,7 +953,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
         'discount_id' => $discount->discount_id,
         'role_id' => $role_id,
       );
-      drupal_write_record('uc_discounts_roles', $new_role);
+      backdrop_write_record('uc_discounts_roles', $new_role);
     }
   }
 
@@ -960,9 +962,10 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
     $function('save', $discount);
   }
 
-  drupal_set_message(t('%name settings have been saved.', array('%name' => $form_state['values']['name'])));
+  backdrop_set_message(t('%name settings have been saved.', array('%name' => $form_state['values']['name'])));
   $form_state['redirect'] = 'admin/store/uc_discounts/edit/' . $discount->discount_id;
 }
+
 
 /**
  * Generates admin form to create a copy of existing discount.
@@ -974,7 +977,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
   $discount->name = t('Copy of @discount', array('@discount' => $discount->name));
   $discount->insert_timestamp = REQUEST_TIME;
   unset($discount->discount_id);
-  drupal_write_record('uc_discounts', $discount);
+  backdrop_write_record('uc_discounts', $discount);
 
   // Copy discount's codes.
   $codes = uc_discounts_get_codes_for_discount_id($original_discount_id);
@@ -983,7 +986,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
       'discount_id' => $discount->discount_id,
       'code' => $code,
     );
-    drupal_write_record('uc_discounts_codes', $new_code);
+    backdrop_write_record('uc_discounts_codes', $new_code);
   }
 
   foreach (array(UC_DISCOUNTS_GROUPING_APPLICATION, UC_DISCOUNTS_GROUPING_QUALIFICATION) as $grouping) {
@@ -995,7 +998,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
         'product_id' => $product_id,
         'grouping' => $grouping,
       );
-      drupal_write_record('uc_discounts_products', $new_product);
+      backdrop_write_record('uc_discounts_products', $new_product);
     }
 
     // Copy discount's terms.
@@ -1006,7 +1009,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
         'term_id' => $term_id,
         'grouping' => $grouping,
       );
-      drupal_write_record('uc_discounts_terms', $new_term);
+      backdrop_write_record('uc_discounts_terms', $new_term);
     }
 
     // Copy discount's SKUs.
@@ -1017,7 +1020,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
         'sku' => $sku,
         'grouping' => $grouping,
       );
-      drupal_write_record('uc_discounts_skus', $new_sku);
+      backdrop_write_record('uc_discounts_skus', $new_sku);
     }
 
     // Copy discount's Classes.
@@ -1028,7 +1031,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
         'class' => $class,
         'grouping' => $grouping,
       );
-      drupal_write_record('uc_discounts_classes', $new_class);
+      backdrop_write_record('uc_discounts_classes', $new_class);
     }
 
     // Copy discount's authors.
@@ -1039,7 +1042,7 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
         'author_id' => $author_id,
         'grouping' => $grouping,
       );
-      drupal_write_record('uc_discounts_authors', $new_author);
+      backdrop_write_record('uc_discounts_authors', $new_author);
     }
   }
 
@@ -1050,16 +1053,17 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
       'discount_id' => $discount->discount_id,
       'role_id' => $role_id,
     );
-    drupal_write_record('uc_discounts_roles', $new_role);
+    backdrop_write_record('uc_discounts_roles', $new_role);
   }
 
   foreach (module_implements('uc_discount') as $module) {
     $function = $module . '_uc_discount';
     $function('save', $discount);
   }
-  drupal_set_message(t('The discount was successfully copied as %name.', array('%name' => $discount->name)));
-  drupal_goto('admin/store/uc_discounts/edit/' . $discount->discount_id);
+  backdrop_set_message(t('The discount was successfully copied as %name.', array('%name' => $discount->name)));
+  backdrop_goto('admin/store/uc_discounts/edit/' . $discount->discount_id);
 }
+
 
 /**
  * Generates an admin form to delete a discount.
@@ -1079,6 +1083,7 @@ function uc_discounts_admin_discount_delete_form($form, &$form_state, $discount_
   return $output;
 }
 
+
 /**
  * Submit handler for uc_discounts_admin_discount_delete_form().
  *
@@ -1089,11 +1094,12 @@ function uc_discounts_admin_discount_delete_form_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
     $discount = uc_discounts_load($form_state['values']['discount_id']);
     uc_discounts_delete_all($discount);
-    drupal_set_message(t('Discount deleted.'));
+    backdrop_set_message(t('Discount deleted.'));
   }
 
   $form_state['redirect'] = 'admin/store/uc_discounts';
 }
+
 
 /**
  * Generate admin report page content of all discount usage.
@@ -1231,7 +1237,7 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
     );
     foreach ($http_headers as $http_header) {
       $http_header = preg_replace('/\r?\n(?!\t| )/', '', $http_header);
-      drupal_add_http_header($http_header);
+      backdrop_add_http_header($http_header);
     }
 
     $fp = fopen('php://output', 'w');
@@ -1272,13 +1278,17 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
           ),
         )),
       ),
-      'pager' => array('#theme' => 'pager', '#weight' => 5),
+      'pager' => array(
+        '#theme' => 'pager',
+        '#weight' => 5,
+      ),
       'link' => array('#markup' => l(t('Export to CSV'), 'admin/reports/uc_discounts/all/download')),
     );
 
     return $output;
   }
 }
+
 
 /**
  * Generate admin report page content of discount usage for discount ID.
@@ -1409,10 +1419,14 @@ function uc_discounts_admin_report_discount($discount_id) {
       'attributes' => array('id' => 'uc_discounts_report'),
     )),
   );
-  $output['content']['pager'] = array('#theme' => 'pager', '#weight' => 5);
+  $output['content']['pager'] = array(
+    '#theme' => 'pager',
+    '#weight' => 5,
+  );
 
   return $output;
 }
+
 
 /**
  * Generate unique discount codes for a specified discount id.
@@ -1421,13 +1435,14 @@ function uc_discounts_admin_generate_codes(&$form_state, $discount_id) {
 
 }
 
+
 /**
  * Generate an admin form used to automatically create discount codes.
  *
  * @param array $form
  * @param array $form_state
  * @param int $discount_id
- * 
+ *
  * @return string
  *
  * @ingroup forms
@@ -1477,6 +1492,7 @@ function uc_discounts_admin_generate_codes_form($form, &$form_state, $discount_i
   return $form;
 }
 
+
 /**
  * Form validation handler for uc_discounts_admin_generate_codes_form().
  *
@@ -1494,6 +1510,7 @@ function uc_discounts_admin_generate_codes_form_validate($form, &$form_state) {
     form_set_error('pattern', t('Code pattern must have at least two random digits or letters to ensure uniqueness.'));
   }
 }
+
 
 /**
  * Submit handler for uc_discounts_generate_codes_form().
@@ -1518,6 +1535,7 @@ function uc_discounts_admin_generate_codes_form_submit($form, &$form_state) {
   $_SESSION['codes'] = implode("\n", $codes);
 }
 
+
 /**
  * Generates a random digit or letter, used as a callback for preg_replace.
  */
@@ -1528,16 +1546,18 @@ function _uc_discounts_get_random_string($matches) {
   return $str[mt_rand(0, $str_len)];
 }
 
+
 /**
  * Displays admin settings form for discounts checkout pane.
  */
 function uc_discounts_admin_checkout_pane_settings_form($form, &$form_state) {
+  $config = config('uc_discounts.settings');
   $form['uc_discounts_checkout_allow_user_codes'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow customer to enter discount codes'),
     '#description' => t('When enabled a text field will be displayed to the'
       . ' customer during checkout where they can enter discount codes.'),
-    '#default_value' => variable_get('uc_discounts_checkout_allow_user_codes', TRUE),
+    '#default_value' => $config->get('uc_discounts_checkout_allow_user_codes'),
   );
   $form['uc_discounts_checkout_show_messages'] = array(
     '#type' => 'checkbox',
@@ -1546,7 +1566,7 @@ function uc_discounts_admin_checkout_pane_settings_form($form, &$form_state) {
       . ' displayed to the customer during checkout in the discounts checkout'
       . ' pane. This provides additional information beyond the discount text'
       . ' displayed in the checkout cart pane and checkout payment pane.'),
-    '#default_value' => variable_get('uc_discounts_checkout_show_messages', TRUE),
+    '#default_value' => $config->get('uc_discounts_checkout_show_messages'),
   );
   return $form;
 }

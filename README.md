@@ -1,7 +1,7 @@
 Ubercart Discounts
 ======================
 
-The Ubercart Discounts modul allows the creation of discounts for products according to a variety of criteria, based on the products, user roles, and other things.
+The Ubercart Discounts module allows the creation of discounts for products according to a variety of criteria based on the products, user roles, and more.
 
 Installation
 ------------

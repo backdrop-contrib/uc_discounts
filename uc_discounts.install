@@ -521,20 +521,17 @@ function uc_discounts_update_last_removed() {
  */
 function uc_discounts_update_1000() {
   $config = config('uc_discounts.settings');
-
   $config->set('uc_discounts_checkout_allow_user_codes',
     update_variable_get('uc_discounts_checkout_allow_user_codes', 'TRUE'));
   $config->set('uc_discounts_checkout_show_messages',
     update_variable_get('uc_discounts_checkout_show_messages', 'TRUE'));
   $config->save();
-
-//   config_set('uc_cart.settings', 'uc_cap_uc_discounts_enabled',
-//     update_variable_get('uc_cap_uc_discounts_enabled', 'TRUE'));
-
   update_variable_del('uc_discounts_checkout_allow_user_codes');
   update_variable_del('uc_discounts_checkout_show_messages');
 
-//  update_variable_del('uc_cap_uc_discounts_enabled');
+  // uc_discounts settings stored in uc_cart
+  config_set('uc_cart.settings', 'uc_cap_uc_discounts_enabled',
+    update_variable_get('uc_cap_uc_discounts_enabled', 'TRUE'));
 }
 
 

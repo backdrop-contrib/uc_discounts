@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Rules integration for uc_discounts module.
@@ -50,7 +49,6 @@ function uc_discounts_rules_condition_info() {
   return $conditions;
 }
 
-
 /**
  * Checks if a particular discount id has been applied on an order.
  */
@@ -67,7 +65,6 @@ function uc_discounts_condition_discount_applied_condition($order, $discount_id)
 
   return FALSE;
 }
-
 
 /**
  * Check the current order balance minus any discounts.
@@ -97,7 +94,6 @@ function uc_discounts_condition_total_after_discounts($order, $order_total_value
       return $total > $order_total_value;
   }
 }
-
 
 /**
  * Option list callback for discount ids.

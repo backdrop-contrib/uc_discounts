@@ -146,7 +146,6 @@ function uc_discounts_admin_discounts_list() {
   return $output;
 }
 
-
 /**
  * Creates an admin form for searching discounts by name.
  *
@@ -178,7 +177,6 @@ function uc_discounts_admin_discounts_search_form($form, &$form_state, $values) 
   return $form;
 }
 
-
 /**
  * Form submit handler for uc_discounts_admin_search_discounts_form().
  *
@@ -191,7 +189,6 @@ function uc_discounts_admin_discounts_search_form_submit($form, &$form_state) {
   );
   $form_state['redirect'] = array('admin/store/uc_discounts/list/' . implode('/', $args));
 }
-
 
 /**
  * Generates admin form to create or edit a discount.
@@ -537,7 +534,6 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
   return $form;
 }
 
-
 /**
  * Helper function that creates a series of dropdowns for selecting a product
  * via product_id, sku, class, term, or author.
@@ -727,7 +723,6 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
   );
 }
 
-
 /**
  * Validate handler for uc_discounts_admin_discount_edit_form().
  *
@@ -793,7 +788,6 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
     $form_state['rebuild'] = TRUE;
   }
 }
-
 
 /**
  * Submit handler for uc_discounts_admin_discount_edit_form().
@@ -966,7 +960,6 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/uc_discounts/edit/' . $discount->discount_id;
 }
 
-
 /**
  * Generates admin form to create a copy of existing discount.
  *
@@ -1064,7 +1057,6 @@ function uc_discounts_admin_discount_copy_form($original_discount_id) {
   backdrop_goto('admin/store/uc_discounts/edit/' . $discount->discount_id);
 }
 
-
 /**
  * Generates an admin form to delete a discount.
  *
@@ -1083,7 +1075,6 @@ function uc_discounts_admin_discount_delete_form($form, &$form_state, $discount_
   return $output;
 }
 
-
 /**
  * Submit handler for uc_discounts_admin_discount_delete_form().
  *
@@ -1099,7 +1090,6 @@ function uc_discounts_admin_discount_delete_form_submit($form, &$form_state) {
 
   $form_state['redirect'] = 'admin/store/uc_discounts';
 }
-
 
 /**
  * Generate admin report page content of all discount usage.
@@ -1289,7 +1279,6 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
   }
 }
 
-
 /**
  * Generate admin report page content of discount usage for discount ID.
  *
@@ -1427,14 +1416,12 @@ function uc_discounts_admin_report_discount($discount_id) {
   return $output;
 }
 
-
 /**
  * Generate unique discount codes for a specified discount id.
  */
 function uc_discounts_admin_generate_codes(&$form_state, $discount_id) {
 
 }
-
 
 /**
  * Generate an admin form used to automatically create discount codes.
@@ -1492,7 +1479,6 @@ function uc_discounts_admin_generate_codes_form($form, &$form_state, $discount_i
   return $form;
 }
 
-
 /**
  * Form validation handler for uc_discounts_admin_generate_codes_form().
  *
@@ -1510,7 +1496,6 @@ function uc_discounts_admin_generate_codes_form_validate($form, &$form_state) {
     form_set_error('pattern', t('Code pattern must have at least two random digits or letters to ensure uniqueness.'));
   }
 }
-
 
 /**
  * Submit handler for uc_discounts_generate_codes_form().
@@ -1535,7 +1520,6 @@ function uc_discounts_admin_generate_codes_form_submit($form, &$form_state) {
   $_SESSION['codes'] = implode("\n", $codes);
 }
 
-
 /**
  * Generates a random digit or letter, used as a callback for preg_replace.
  */
@@ -1545,7 +1529,6 @@ function _uc_discounts_get_random_string($matches) {
   $str_len = strlen($str) - 1;
   return $str[mt_rand(0, $str_len)];
 }
-
 
 /**
  * Displays admin settings form for discounts checkout pane.

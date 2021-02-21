@@ -487,7 +487,6 @@ function uc_discounts_schema() {
   return $schema;
 }
 
-
 /**
  * Implements hook_install().
  */
@@ -507,14 +506,12 @@ function uc_discounts_install() {
   // Dynamically generated variable data was detected on the following lines.
 }
 
-
 /**
  * Implements hook_update_last_removed().
  */
 function uc_discounts_update_last_removed() {
   return 7200;
 }
-
 
 /**
  * Convert Ubercart Discounts variables to config settings.
@@ -533,7 +530,6 @@ function uc_discounts_update_1000() {
   config_set('uc_cart.settings', 'uc_cap_uc_discounts_enabled',
     update_variable_get('uc_cap_uc_discounts_enabled', 'TRUE'));
 }
-
 
 /**
  * Convert roles in Ubercart Discounts tables from numeric rids to strings.
@@ -558,7 +554,6 @@ function uc_discounts_update_1001() {
     WHERE role_id = :rid
     ', array(':rid' => 2, ':role' => BACKDROP_AUTHENTICATED_ROLE));
 }
-
 
 /**
  * Implements hook_uninstall().

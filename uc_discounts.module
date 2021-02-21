@@ -30,7 +30,6 @@ define('UC_DISCOUNTS_DISCOUNT_ACTIVE', TRUE);
 define('UC_DISCOUNTS_LINE_ITEM_TYPE', 'uc_discounts');
 define('UC_DISCOUNTS_LINE_ITEM_WEIGHT', 1); // 1 to appear after subtotal.
 
-
 /**
  * Implements hook_init().
  */
@@ -115,7 +114,6 @@ function uc_discounts_init() {
   }
 }
 
-
 /**
  * Implements hook_permission().
  */
@@ -127,7 +125,6 @@ function uc_discounts_permission() {
     ),
   );
 }
-
 
 /**
  * Implements hook_menu().
@@ -224,7 +221,6 @@ function uc_discounts_menu() {
   return $items;
 }
 
-
 /**
  * Implements hook_uc_order().
  *
@@ -319,7 +315,6 @@ function uc_discounts_uc_order($op, $order, $arg2) {
   }
 }
 
-
 /**
  * Implements hook_uc_checkout_complete().
  *
@@ -332,7 +327,6 @@ function uc_discounts_uc_checkout_complete($order, $account) {
   unset($_SESSION['uc_discounts_codes']);
 }
 
-
 /**
  * Implements hook_uc_add_to_cart().
  */
@@ -343,7 +337,6 @@ function uc_discounts_uc_add_to_cart($nid, $qty, $data) {
     'qty' => $qty,
   );
 }
-
 
 /**
  * Implements hook_uc_line_item().
@@ -364,7 +357,6 @@ function uc_discounts_uc_line_item() {
   return $line_items;
 }
 
-
 /**
  * Implements hook_uc_order_pane().
  */
@@ -379,7 +371,6 @@ function uc_discounts_uc_order_pane() {
     ),
   );
 }
-
 
 /**
  * Callback for hook_uc_order_pane().
@@ -438,7 +429,6 @@ function uc_discounts_uc_order_pane_callback($op, $order, &$form = NULL, &$form_
   }
 }
 
-
 /**
  * Implements hook_uc_cart_pane().
  *
@@ -457,7 +447,6 @@ function uc_discounts_uc_cart_pane($items) {
   );
 }
 
-
 /**
  * Implements hook_config_info().
  */
@@ -467,7 +456,6 @@ function uc_discounts_config_info() {
     'group' => t('Configuration'),
   );
 }
-
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -528,7 +516,6 @@ function uc_discounts_form_uc_cart_view_form_alter(&$form, &$form_state) {
   }
 }
 
-
 /**
  * Implements hook_uc_checkout_pane().
  *
@@ -547,7 +534,6 @@ function uc_discounts_uc_checkout_pane() {
     ),
   );
 }
-
 
 /**
  * Discounts checkout pane callback.
@@ -663,7 +649,6 @@ function uc_discounts_uc_checkout_pane_discounts($op, $order, $form = NULL, &$fo
   }
 }
 
-
 /**
  * Add temporary discount line items to order.
  *
@@ -692,7 +677,6 @@ function uc_discounts_add_line_items_to_order(&$order, $discounts) {
   $order->uc_discounts_line_items = $line_items;
 }
 
-
 /**
  * AJAX callback for checkouut pane button submit.
  *
@@ -701,7 +685,6 @@ function uc_discounts_add_line_items_to_order(&$order, $discounts) {
 function uc_discounts_checkout_pane_ajax_callback($form, $form_state) {
   return $form['panes']['uc_discounts']['messages'];
 }
-
 
 /**
  * Implements hook_theme().
@@ -718,7 +701,6 @@ function uc_discounts_theme() {
   );
 }
 
-
 /**
  * Implements hook_uc_checkout_pane_alter().
  *
@@ -730,7 +712,6 @@ function uc_discounts_uc_checkout_pane_alter(&$panes) {
     $panes['cart']['callback'] = 'uc_discounts_uc_checkout_pane_cart';
   }
 }
-
 
 /**
  * Callback that replaces the stock ubercart checkout cart pane.
@@ -760,7 +741,6 @@ function uc_discounts_uc_checkout_pane_cart($op, $order, $form = NULL, &$form_st
       return $review;
   }
 }
-
 
 /**
  * Theme shopping cart checkout table.
@@ -878,7 +858,6 @@ function theme_uc_discounts_uc_cart_review_table($variables) {
   return theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => array('cart-review'))));
 }
 
-
 /**
  * Deletes discounts and all dependencies.
  */
@@ -913,7 +892,6 @@ function uc_discounts_delete_all($discount) {
     ->execute();
 }
 
-
 /**
  * Load discount by discount ID.
  *
@@ -931,7 +909,6 @@ function uc_discounts_load($discount_id) {
   }
   return $discount;
 }
-
 
 /**
  * Returns all codes associated with a discount ID.
@@ -951,7 +928,6 @@ function uc_discounts_get_codes_for_discount_id($discount_id) {
   return $codes;
 }
 
-
 /**
  * Deletes all dicsount codes associated with a discount ID.
  *
@@ -962,7 +938,6 @@ function uc_discounts_codes_delete($discount_id) {
     ->condition('discount_id', $discount_id)
     ->execute();
 }
-
 
 /**
  * Returns product IDs to which a discount applies.
@@ -1041,7 +1016,6 @@ function uc_discounts_get_product_ids_for_discount($discount, $grouping = UC_DIS
   return array();
 }
 
-
 /**
  * Returns product IDs to which a discount ID applies.
  *
@@ -1077,7 +1051,6 @@ function uc_discounts_get_product_ids_for_discount_id($discount_id, $grouping, $
   return $ids;
 }
 
-
 /**
  * Return all term IDs used by a dicsount ID.
  *
@@ -1109,7 +1082,6 @@ function uc_discounts_get_term_ids_for_discount_id($discount_id, $grouping, $exc
   }
   return $ids;
 }
-
 
 /**
  * Get all product SKUs to which a discount ID applies.
@@ -1143,7 +1115,6 @@ function uc_discounts_get_skus_for_discount_id($discount_id, $grouping, $exclude
   return $ids;
 }
 
-
 /**
  * Get all Product Class names used by discount ID.
  *
@@ -1175,7 +1146,6 @@ function uc_discounts_get_classes_for_discount_id($discount_id, $grouping, $excl
   }
   return $ids;
 }
-
 
 /**
  * Get all Author IDs used by discount ID.
@@ -1209,7 +1179,6 @@ function uc_discounts_get_author_ids_for_discount_id($discount_id, $grouping, $e
   return $ids;
 }
 
-
 /**
  * Get all role IDs used by discount ID.
  *
@@ -1239,7 +1208,6 @@ function uc_discounts_get_role_ids_for_discount_id($discount_id, $exclude_all_ro
   return $ids;
 }
 
-
 /**
  * Deletes all uc_discounts_products rows for a discount.
  *
@@ -1250,7 +1218,6 @@ function uc_discounts_products_delete($discount_id) {
     ->condition('discount_id', $discount_id)
     ->execute();
 }
-
 
 /**
  * Deletes all uc_discounts_terms rows for a discount.
@@ -1263,7 +1230,6 @@ function uc_discounts_terms_delete($discount_id) {
     ->execute();
 }
 
-
 /**
  * Deletes all uc_discounts_skus rows for a discount.
  *
@@ -1274,7 +1240,6 @@ function uc_discounts_skus_delete($discount_id) {
     ->condition('discount_id', $discount_id)
     ->execute();
 }
-
 
 /**
  * Deletes all uc_discounts_classes rows for a discount.
@@ -1287,7 +1252,6 @@ function uc_discounts_classes_delete($discount_id) {
     ->execute();
 }
 
-
 /**
  * Deletes all uc_discounts_authors rows for a discount.
  *
@@ -1299,7 +1263,6 @@ function uc_discounts_authors_delete($discount_id) {
     ->execute();
 }
 
-
 /**
  * Deletes all uc_discounts_roles rows for a discount.
  *
@@ -1310,7 +1273,6 @@ function uc_discounts_roles_delete($discount_id) {
     ->condition('discount_id', $discount_id)
     ->execute();
 }
-
 
 /**
  * Returns discounts for order.
@@ -2075,7 +2037,6 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
   return $order_discounts[$order->order_id];
 }
 
-
 /**
  * Get total discount amount for an order.
  *
@@ -2089,7 +2050,6 @@ function uc_discounts_get_discount_amount_for_order($order) {
   $results = uc_discounts_get_discounts_for_order($order);
   return $results['total_discount_amount'];
 }
-
 
 /**
  * Helper function that gets the codeless discounted price of a product.
@@ -2116,7 +2076,6 @@ function uc_discounts_get_discounted_price_for_product($product, $return_null = 
   return $product->sell_price - $total_discount_amount;
 }
 
-
 /**
  * Returns all codeless discounts that apply to a product.
  *
@@ -2133,7 +2092,6 @@ function uc_discounts_get_discounted_price_for_product($product, $return_null = 
 function uc_discounts_get_codeless_discounts_for_product($product, $sort_column = "weight", $is_ascending_sort = TRUE) {
   return uc_discounts_get_codeless_discounts_for_product_and_quantity($product, NULL, $sort_column, $is_ascending_sort);
 }
-
 
 /**
  * Returns codeless discounts that apply to product with specified quantity.
@@ -2264,7 +2222,6 @@ function uc_discounts_get_codeless_discounts_for_product_and_quantity($product, 
   return $discounts;
 }
 
-
 /**
  * Deletes all uc_discounts_uses rows for a discount ID.
  *
@@ -2276,7 +2233,6 @@ function uc_discounts_uses_delete_for_discount($discount_id) {
     ->execute();
 }
 
-
 /**
  * Deletes all uc_discounts_uses rows for an order ID.
  *
@@ -2287,7 +2243,6 @@ function uc_discounts_uses_delete_for_order($order_id) {
     ->condition('order_id', $order_id)
     ->execute();
 }
-
 
 /**
  * Records uses of a discount for an order.
@@ -2318,7 +2273,6 @@ function uc_discounts_uses_save_for_order($order) {
   }
 }
 
-
 /**
  * Returns discount order codes used by order ID.
  *
@@ -2330,7 +2284,6 @@ function uc_discounts_uses_save_for_order($order) {
 function uc_discounts_get_codes_for_order($order_id) {
   return uc_discounts_codes_to_array(db_query('SELECT codes FROM {uc_discounts_order_codes} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchField());
 }
-
 
 /**
  * Applies the discounts to an order by creating the necessary line items.
@@ -2408,7 +2361,6 @@ function uc_discounts_apply($order, $save_uses = TRUE, $compare_to_existing = TR
   return array('success' => TRUE, 'message' => t('Discount code(s) applied to order.'));
 }
 
-
 /**
  * Returns existing discounts line items for order.
  *
@@ -2436,7 +2388,6 @@ function uc_discounts_get_order_discount_line_items($order) {
   return $line_items;
 }
 
-
 /**
  * Deletes all uc_discounts_order_codes rows for an order.
  *
@@ -2447,7 +2398,6 @@ function uc_discounts_order_codes_delete($order_id) {
     ->condition('order_id', $order_id)
     ->execute();
 }
-
 
 /**
  * Converts a newline separated code string to an array.
@@ -2470,7 +2420,6 @@ function uc_discounts_codes_to_array($codes_string) {
   return $codes;
 }
 
-
 /**
  * Converts an array of codes to a newline separated code string.
  *
@@ -2483,7 +2432,6 @@ function uc_discounts_codes_to_array($codes_string) {
 function uc_discounts_codes_to_str($codes) {
   return implode("\n", (array) $codes);
 }
-
 
 /**
  * Returns options array of qualifying types with descriptions.
@@ -2504,7 +2452,6 @@ function uc_discounts_qualifying_type_options() {
   return $options;
 }
 
-
 /**
  * Get the options 'type' name using option ID.
  *
@@ -2516,7 +2463,6 @@ function uc_discounts_qualifying_type_name($qualifying_type) {
   $options = uc_discounts_qualifying_type_options();
   return $options[$qualifying_type];
 }
-
 
 /**
  * Returns an options list array of discount types with descriptions.
@@ -2541,7 +2487,6 @@ function uc_discounts_discount_type_options() {
   return $options;
 }
 
-
 /**
  * Get a discount type name using discount type constant.
  *
@@ -2553,7 +2498,6 @@ function uc_discounts_discount_type_name($discount_type) {
   $options = uc_discounts_discount_type_options();
   return $options[$discount_type];
 }
-
 
 /**
  * Format a discount amount as percentage or with currency symbol.
@@ -2575,7 +2519,6 @@ function uc_discounts_discount_amount_formatted($discount) {
   }
 }
 
-
 /**
  * Add discount key and value to array.
  *
@@ -2592,7 +2535,6 @@ function uc_discounts_discount_amount_formatted($discount) {
 function uc_discounts_add_to_existing_map_number_value(&$a, $key, $value) {
   $a[$key] = (array_key_exists($key, $a)) ? $a[$key] + $value : $value;
 }
-
 
 /**
  * Implements hook_views_api().

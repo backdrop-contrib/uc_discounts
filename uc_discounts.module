@@ -1485,7 +1485,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
   }
 
   // Create roles clause.
-  $auth_rid = ($order->uid != 0) ? BACKDROP_AUTHENTICATED_RID : BACKDROP_ANONYMOUS_RID;
+  $auth_rid = ($order->uid != 0) ? BACKDROP_AUTHENTICATED_ROLE : BACKDROP_ANONYMOUS_ROLE;
   $roles_discounts_sql = '
     SELECT DISTINCT dr.discount_id
     FROM {uc_discounts_roles} dr
@@ -2162,7 +2162,7 @@ function uc_discounts_get_codeless_discounts_for_product_and_quantity($product, 
 
   // Create roles clause.
   global $user;
-  $auth_rid = ($user->uid != 0) ? BACKDROP_AUTHENTICATED_RID : BACKDROP_ANONYMOUS_RID;
+  $auth_rid = ($user->uid != 0) ? BACKDROP_AUTHENTICATED_ROLE : BACKDROP_ANONYMOUS_ROLE;
   $roles_clause = sprintf("
     d.has_role_filter = 0
     OR d.discount_id IN(

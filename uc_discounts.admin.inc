@@ -1439,10 +1439,12 @@ function uc_discounts_admin_generate_codes(&$form_state, $discount_id) {
  */
 function uc_discounts_admin_generate_codes_form($form, &$form_state, $discount_id) {
   $form['about'] = array(
-    '#markup' => '<p>' . t('Generate unqiue codes for this discount.  After generating them simply copy and paste them into the Codes textarea for your discount.') . '</p>',
+    '#type' => 'help',
+    '#markup' => t('Generate unqiue codes for this discount.  After generating them simply copy and paste them into the Codes textarea for your discount.'),
   );
   $form['discount_link'] = array(
-    '#markup' => '<p>' . t('Discount') . '#: ' . l($discount_id, 'admin/store/uc_discounts/edit/' . $discount_id) . '</p>',
+    '#type' => 'help',
+    '#markup' => t('Discount') . '#: ' . l($discount_id, 'admin/store/uc_discounts/edit/' . $discount_id),
   );
   $form['num'] = array(
     '#title' => t('Number of codes'),

@@ -389,7 +389,7 @@ function uc_discounts_uc_order_pane_callback($op, $order, &$form = NULL, &$form_
       return $form;
 
     case 'edit-process':
-      $order_org = clone $order;
+      $order_orig = clone $order;
 
       if (isset($form_state['values']['uc_discounts_codes'])) {
         $order->uc_discounts_codes = uc_discounts_codes_to_array($form_state['values']['uc_discounts_codes']);
@@ -417,13 +417,19 @@ function uc_discounts_uc_order_pane_callback($op, $order, &$form = NULL, &$form_
       // Add discount line items to order.
       uc_discounts_add_line_items_to_order($order, $results['discounts']);
 
+      // Check for changes, taking into account that either order might not have
+      // uc_discounts_* fields yet, in which case we'll use empty arrays.
       $changes = array();
-      if ($order->uc_discounts_codes != $order_org->uc_discounts_codes) {
-        $changes['uc_discounts_codes'] = $order->uc_discounts_codes;
+      $order_discounts_codes = isset($order->uc_discounts_codes) ? $order->uc_discounts_codes : array();
+      $order_orig_discounts_codes = isset($order_orig->uc_discounts_codes) ? $order_orig->uc_discounts_codes : array();
+      if ($order_discounts_codes != $order_orig_discounts_codes) {
+        $changes['uc_discounts_codes'] = $order_orig_discounts_codes;
       }
-      if ($order->uc_discounts_line_items != $order_org->uc_discounts_line_items) {
+      $order_discounts_line_items = isset($order->uc_discounts_line_items) ? $order->uc_discounts_line_items : array();
+      $order_orig_discounts_line_items = isset($order_orig->uc_discounts_line_items) ? $order_orig->uc_discounts_line_items : array();
+      if ($order_discounts_line_items != $order_orig_discounts_line_items) {
         $changes['uc_discounts_line_items_need_updating'] = TRUE;
-        $changes['uc_discounts_line_items'] = $order->uc_discounts_line_items;
+        $changes['uc_discounts_line_items'] = $order_discounts_line_items;
       }
       return $changes;
   }

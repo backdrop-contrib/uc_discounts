@@ -1,6 +1,6 @@
 name = Ubercart Discounts
 description = Defines Ubercart discount based on admin-defined codes.
 dependencies[] = ubercart
-package = "Ubercart - core (optional)"
+package = Ubercart - extra
 backdrop = 1.x
 type = module

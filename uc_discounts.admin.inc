@@ -261,8 +261,9 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
 
   $activates_on = isset($form_state['values']['activates_on']) ? $form_state['values']['activates_on'] : REQUEST_TIME;
   $form['activates_on'] = array(
-    '#type' => 'date_popup',  // TODO: convert to ordinary 'date'
-    '#date_type' => 'DATE_UNIX',
+    '#type' => 'date_popup',
+    '#date_format' => 'F j, Y H:i:s',
+    '#date_timezone' => date_default_timezone(),
     '#title' => t('Discount activation date'),
     '#description' => t('Date and time when the discount will become active.  Note that if the %is_active field is not checked, this will be ignored.', array('%is_active' => t('Is active'))),
     '#default_value' => date('Y-m-d H:i:s', $activates_on),
@@ -287,7 +288,8 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
   $expiration = isset($form_state['values']['expiration']) ? $form_state['values']['expiration'] : REQUEST_TIME;
   $form['expiration'] = array(
     '#type' => 'date_popup',
-    '#date_type' => 'DATE_UNIX',
+    '#date_format' => 'F j, Y H:i:s',
+    '#date_timezone' => date_default_timezone(),
     '#title' => t('Discount expiration'),
     '#description' => t('Date and time when the discount expires.'),
     '#default_value' => date('Y-m-d H:i:s', $expiration),
@@ -799,9 +801,10 @@ function uc_discounts_admin_discount_edit_form_validate($form, &$form_state) {
 function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
   $codes = explode("\n", $form_state['values']['codes']);
 
-  // Set expiration to a valid value because it is not nullable.
-  $expiration = isset($form_state['values']['expiration']) ? strtotime($form_state['values']['expiration']) : 0; //date_convert(date_make_date($form_state['values']['expiration']), DATE_OBJECT, DATE_UNIX) : 0;
-  $activates_on = isset($form_state['values']['activates_on']) ? strtotime($form_state['values']['activates_on']) : 0; //date_convert(date_make_date($form_state['values']['activates_on']), DATE_OBJECT, DATE_UNIX) : 0;
+  // Set activation/expiration to a valid value because it is not nullable.
+  $activates_on = isset($form_state['values']['activates_on']) ? strtotime($form_state['values']['activates_on']) : 0;
+  $expiration = isset($form_state['values']['expiration']) ? strtotime($form_state['values']['expiration']) : 0;
+
   // Set discount_amount.
   if (($index = strpos($form_state['values']['discount_amount'], '%')) !== FALSE) {
     $discount_amount = floatval(substr($form_state['values']['discount_amount'], 0, $index)) / 100;

@@ -192,16 +192,16 @@ function uc_discounts_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
-  $items['admin/reports/uc_discounts/all'] = array(
-    'title' => 'Ubercart discounts usage data',
+  $items['admin/store/reports/uc_discounts/all'] = array(
+    'title' => 'Discounts usage data',
     'description' => 'View usage data for each Ubercart discount.',
     'page callback' => 'uc_discounts_admin_report_discounts_list',
     'page arguments' => array(FALSE),
     'access arguments' => array('access site reports'),
     'file' => 'uc_discounts.admin.inc',
   );
-  $items['admin/reports/uc_discounts/all/download'] = array(
-    'title' => 'Download Ubercart discounts usage data',
+  $items['admin/store/reports/uc_discounts/all/download'] = array(
+    'title' => 'Download discounts usage data',
     'description' => 'Download usage data for each Ubercart discount.',
     'page callback' => 'uc_discounts_admin_report_discounts_list',
     'page arguments' => array(TRUE),
@@ -209,10 +209,10 @@ function uc_discounts_menu() {
     'file' => 'uc_discounts.admin.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/reports/uc_discounts/discount/%'] = array(
-    'title' => 'Ubercart discount usage data',
+  $items['admin/store/reports/uc_discounts/discount/%'] = array(
+    'title' => 'Discounts usage data',
     'page callback' => 'uc_discounts_admin_report_discount',
-    'page arguments' => array('uc_discounts_admin_report_discount', 4),
+    'page arguments' => array('uc_discounts_admin_report_discount', 5),
     'access arguments' => array('access site reports'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',

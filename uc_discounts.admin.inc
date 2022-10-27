@@ -75,7 +75,7 @@ function uc_discounts_admin_discounts_list() {
     //$total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
     //$total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
     $operations = array(
-      l(t('usage'), 'admin/reports/uc_discounts/discount/' . $discount->discount_id),
+      l(t('usage'), 'admin/store/reports/uc_discounts/discount/' . $discount->discount_id),
       l(t('edit'), 'admin/store/uc_discounts/edit/' . $discount->discount_id),
       l(t('copy'), 'admin/store/uc_discounts/copy/' . $discount->discount_id),
       l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
@@ -1179,7 +1179,7 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
     $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
     $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
     $operations = array(
-      l(t('usage'), 'admin/reports/uc_discounts/discount/' . $discount->discount_id),
+      l(t('usage'), 'admin/store/reports/uc_discounts/discount/' . $discount->discount_id),
       l(t('edit'), 'admin/store/uc_discounts/edit/' . $discount->discount_id),
       l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
     );
@@ -1275,7 +1275,7 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
         '#theme' => 'pager',
         '#weight' => 5,
       ),
-      'link' => array('#markup' => l(t('Export to CSV'), 'admin/reports/uc_discounts/all/download')),
+      'link' => array('#markup' => l(t('Export to CSV'), 'admin/store/reports/uc_discounts/all/download')),
     );
 
     return $output;
@@ -1293,7 +1293,7 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
 function uc_discounts_admin_report_discount($discount_id) {
   $output = array();
   // Add link to all discount data.
-  $output['content']['title'] = array('#markup' => l(t('Report for all discounts.'), 'admin/reports/uc_discounts/all') . '<br /><br />');
+  $output['content']['title'] = array('#markup' => l(t('Report for all discounts.'), 'admin/store/reports/uc_discounts/all') . '<br /><br />');
 
   // Add table for discount's data.
 

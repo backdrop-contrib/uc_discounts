@@ -12,11 +12,6 @@ instructions](https://backdropcms.org/guide/modules).
 - Visit the configuration page under Administration > Store > Discounts
 (admin/store/uc_discounts) to create or edit discounts.
 
-Documentation
--------------
-
-Additional documentation is located in [the Wiki](https://github.com/backdrop-contrib/uc_discounts/wiki/Documentation).
-
 Differences from Drupal 7
 -------------------------
 

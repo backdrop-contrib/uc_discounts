@@ -1151,7 +1151,6 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
     array('data' => t('Operations')),
   );
 
-  // TODO Please convert this statement to the D7 database API syntax.
   $select = db_select('uc_discounts', 'd')
     ->extend('TableSort')
     ->orderByHeader($header);
@@ -1164,8 +1163,8 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
     ->fields('d')
     ->groupBy('d.discount_id');
 
-  $select->leftjoin('uc_discounts_uses', 'du', 'd.discount_id=du.discount_id');
-  $select->leftjoin('uc_orders', 'o', 'o.order_id=du.order_id AND o.order_status = :order_status AND o.order_total > 0', array(':order_status' => 'completed'));
+  $select->leftjoin('uc_discounts_uses', 'du', 'd.discount_id = du.discount_id');
+  $select->leftjoin('uc_orders', 'o', 'o.order_id = du.order_id AND o.order_status = :order_status AND o.order_total > 0', array(':order_status' => 'completed'));
 
   $select->addExpression('COUNT(du.discount_use_id)', 'total_use_count');
   $select->addExpression('SUM(du.times_applied)', 'total_times_applied');
@@ -1176,12 +1175,27 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
 
   $rows = array();
   foreach ($result as $discount) {
+    $discount_id = $discount->discount_id;
     $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
     $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
+    $total_amount = (is_numeric($discount->total_amount)) ? $discount->total_amount : 0;
+    $total_revenue = (is_numeric($discount->total_revenue)) ? $discount->total_revenue : 0;
     $operations = array(
-      l(t('usage'), 'admin/store/reports/uc_discounts/discount/' . $discount->discount_id),
-      l(t('edit'), 'admin/store/uc_discounts/edit/' . $discount->discount_id),
-      l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
+      '#type' => 'operations',
+      '#links' => array(
+        array(
+          'title' => t('usage'),
+          'href' => 'admin/store/reports/uc_discounts/discount/' . $discount_id,
+        ),
+        array(
+          'title' => t('edit'),
+          'href' => 'admin/store/uc_discounts/edit/' . $discount_id,
+        ),
+        array(
+          'title' => t('delete'),
+          'href' => 'admin/store/uc_discounts/delete/' . $discount_id,
+        ),
+      ),
     );
 
     $rows[] = array(
@@ -1201,8 +1215,8 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
         'data' => $total_times_applied,
         'class' => array('numeric'),
       ),
-      uc_currency_format($discount->total_amount),
-      uc_currency_format($discount->total_revenue),
+      uc_currency_format($total_amount),
+      uc_currency_format($total_revenue),
       array(
         'data' => $discount->weight,
         'class' => array('weight'),
@@ -1212,7 +1226,7 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
         'class' => array('date'),
       ),
       array(
-        'data' => implode(' ', $operations),
+        'data' => backdrop_render($operations),
         'class' => array('operations'),
       ),
     );
@@ -1291,42 +1305,79 @@ function uc_discounts_admin_report_discounts_list($download = FALSE) {
  *   Array of page content.
  */
 function uc_discounts_admin_report_discount($discount_id) {
+  $discount_name = db_query('
+    SELECT name
+    FROM {uc_discounts}
+    WHERE discount_id = :discount_id
+    ', array(':discount_id' => $discount_id))
+    ->fetchField();
+
+  if (!$discount_name) {
+    backdrop_set_message(t('There is no discount with ID @discount_id.', array('@discount_id' => $discount_id)), 'warning');
+    backdrop_goto('admin/store/reports/uc_discounts/all');
+  }
+  backdrop_set_title(t('Discount usage: @name', array('@name' => $discount_name)));
+
   $output = array();
-  // Add link to all discount data.
-  $output['content']['title'] = array('#markup' => l(t('Report for all discounts.'), 'admin/store/reports/uc_discounts/all') . '<br /><br />');
+  $output[] = array(
+    '#type' => 'help',
+    '#markup' => l(t('Report for all discounts'), 'admin/store/reports/uc_discounts/all'),
+  );
 
   // Add table for discount's data.
-
   $header = array(
     t('Name'),
     t('Uses'),
     t('Times Applied'),
     t('Discounted Amount'),
     t('Revenue Amount'),
-    array(
-      'data' => t('Operations'),
-      'colspan' => 3,
+    t('Operations'),
+  );
+
+  // Get the discount with totals from completed orders.
+  $discount = db_query('
+    SELECT
+      d.*,
+      COUNT(du.discount_use_id) total_use_count,
+      SUM(du.times_applied) total_times_applied,
+      SUM(du.amount) total_amount,
+      SUM(o.order_total) total_revenue
+    FROM {uc_discounts} d
+    LEFT JOIN {uc_discounts_uses} du ON d.discount_id = du.discount_id
+    LEFT JOIN {uc_orders} o ON du.order_id = o.order_id AND o.order_status = :order_status AND o.order_total > 0
+    WHERE d.discount_id = :d_discount_id
+    GROUP BY d.discount_id',
+      array(':d_discount_id' => $discount_id, ':order_status' => 'completed'))
+    ->fetchObject();
+
+  // If no orders have made use of it, get
+
+
+  $total_use_count = is_numeric($discount->total_use_count) ? $discount->total_use_count : 0;
+  $total_times_applied = is_numeric($discount->total_times_applied) ? $discount->total_times_applied : 0;
+  $total_amount = is_numeric($discount->total_amount) ? $discount->total_amount : 0;
+  $total_revenue = is_numeric($discount->total_revenue) ? $discount->total_revenue : 0;
+  $operations = array(
+    '#type' => 'operations',
+    '#links' => array(
+      array(
+        'title' => t('edit'),
+        'href' => 'admin/store/uc_discounts/edit/' . $discount_id,
+      ),
+      array(
+        'title' => t('delete'),
+        'href' => 'admin/store/uc_discounts/delete/' . $discount_id,
+      ),
     ),
   );
 
-  $discount = db_query('SELECT d.*, COUNT(du.discount_use_id) total_use_count,
-                            SUM(du.times_applied) total_times_applied, SUM(du.amount) total_amount, SUM(o.order_total) total_revenue
-                          FROM {uc_discounts} d
-                          LEFT JOIN {uc_discounts_uses} du ON d.discount_id=du.discount_id
-                          LEFT JOIN {uc_orders} o ON du.order_id=o.order_id AND o.order_status = "completed" AND o.order_total > 0
-                          WHERE d.discount_id = :d_discount_id
-                          GROUP BY d.discount_id', array(':d_discount_id' => $discount_id))->fetchObject();
-  $total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
-  $total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
   $discounts[] = array(
     $discount->name,
     $total_use_count,
     $total_times_applied,
-    uc_currency_format($discount->total_amount),
-    uc_currency_format($discount->total_revenue),
-    l(t('edit'), 'admin/store/uc_discounts/edit/' . $discount->discount_id),
-    l(t('copy'), 'admin/store/uc_discounts/copy/' . $discount->discount_id),
-    l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
+    uc_currency_format($total_amount),
+    uc_currency_format($total_revenue),
+    backdrop_render($operations),
   );
   $output['content']['table1'] = array(
     '#markup' => theme('table', array(
@@ -1344,6 +1395,10 @@ function uc_discounts_admin_report_discount($discount_id) {
     array(
       'data' => t('Order'),
       'field' => 'order_id',
+    ),
+    array(
+      'data' => t('Status'),
+      'field' => 'status',
     ),
     array(
       'data' => t('Code'),
@@ -1372,10 +1427,13 @@ function uc_discounts_admin_report_discount($discount_id) {
     ->fields('du')
     ->condition('discount_id', $discount_id);
 
-  $select->leftjoin('users', 'u', 'du.user_id=u.uid');
+  $select->leftjoin('users', 'u', 'du.user_id = u.uid');
   $select->addExpression('u.uid', 'user_id');
   $select->addExpression('u.name', 'username');
   $select->addExpression('u.mail', 'email');
+
+  $select->leftjoin('uc_orders', 'o', 'du.order_id = o.order_id');
+  $select->addExpression('o.order_status', 'status');
 
   $result = $select->execute();
 
@@ -1387,6 +1445,7 @@ function uc_discounts_admin_report_discount($discount_id) {
       'data' => array(
         $user_description,
         $use->order_id,
+        $use->status,
         (!empty($use->code)) ? $use->code : '<' . t('no code') . '>',
         $use->times_applied,
         uc_currency_format($use->amount),

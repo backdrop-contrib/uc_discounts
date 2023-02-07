@@ -2364,7 +2364,13 @@ function uc_discounts_apply($order, $save_uses = TRUE, $compare_to_existing = TR
     uc_order_log_changes($order->order_id, $results['messages']['success']);
   }
 
-  return array('success' => TRUE, 'message' => t('Discount code(s) applied to order.'));
+  if (!empty($results['discounts'])) {
+    return array('success' => TRUE, 'message' => t('Discount code(s) applied to order.'));
+  }
+  else {
+    // No discounts were applicable to order.
+    return array('success' => TRUE, 'message' => '');
+  }
 }
 
 /**

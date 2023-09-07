@@ -1615,12 +1615,17 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
     // - Check max uses (if applicable).
     // - Check if discount is being combined and can be combined.
     // - Check if order qualifies (type, requires_single_product_to_qualify,
-//   required_products, can_be_combined_with_other_discounts).
+    //   required_products, can_be_combined_with_other_discounts).
     // - Determine number of times to apply discount.
     // If this discount has a max uses amount, check max uses.
     if ($discount->max_uses > 0) {
-      $row = db_query("SELECT COUNT(*) as uses_count FROM {uc_discounts_uses} WHERE discount_id = :discount_id", array(':discount_id' => $discount->discount_id))->fetchArray();
-      if ($row["uses_count"] >= $discount->max_uses) {
+      $uses_count = db_query('
+        SELECT COUNT(*)
+        FROM {uc_discounts_uses}
+        WHERE discount_id = :discount_id
+        ', array(':discount_id' => $discount->discount_id))
+        ->fetchField();
+      if ($uses_count >= $discount->max_uses) {
         // If this is a coded discount add error message.
         if (!empty($discount->code)) {
           $messages['warnings'][] = t('The discount for code "@code" has reached its maximum number of uses.', array("@code" => $discount->code)
@@ -1628,35 +1633,48 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
         }
         continue;
       }
-
-      $discount->uses_count = $row["uses_count"];
+      $discount->uses_count = $uses_count;
     }
 
     // If this discount has a max uses per user amount, check max uses per user.
     if ($discount->max_uses_per_user > 0) {
-      $row = db_query("SELECT COUNT(*) as user_uses_count FROM {uc_discounts_uses} WHERE discount_id = :discount_id AND user_id = :user_id", array(':discount_id' => $discount->discount_id, ':user_id' => $order->uid))->fetchArray();
-      if ($row["user_uses_count"] >= $discount->max_uses_per_user) {
+      $user_uses_count = db_query('
+        SELECT COUNT(*)
+        FROM {uc_discounts_uses}
+        WHERE discount_id = :discount_id
+        AND user_id = :user_id
+        ', array(
+          ':discount_id' => $discount->discount_id,
+          ':user_id' => $order->uid),
+        )->fetchField();
+      if ($user_uses_count >= $discount->max_uses_per_user) {
         // If this is a coded discount add warning message.
         if (!empty($discount->code)) {
           $messages['warnings'][] = t('The discount for code %code has reached its maximum number of uses.', array("%code" => $discount->code));
         }
         continue;
       }
-
-      $discount->user_uses_count = $row["user_uses_count"];
+      $discount->user_uses_count = $user_uses_count;
     }
 
     // If code exists and this discount has a max uses per code amount, check
     // max uses per code.
     if (!is_null($discount->code) && ($discount->max_uses_per_code > 0)) {
-      $row = db_query("SELECT COUNT(*) as code_uses_count FROM {uc_discounts_uses} WHERE discount_id = :discount_id AND code = :code", array(':discount_id' => $discount->discount_id, ':code' => $discount->code))->fetchArray();
-      if ($row['code_uses_count'] >= $discount->max_uses_per_code) {
+      $code_uses_count = db_query('
+        SELECT COUNT(*)
+        FROM {uc_discounts_uses}
+        WHERE discount_id = :discount_id
+        AND code = :code
+        ', array(
+          ':discount_id' => $discount->discount_id,
+          ':code' => $discount->code),
+        )->fetchField();
+      if ($code_uses_count >= $discount->max_uses_per_code) {
         // Add warning message.
         $messages['warnings'][] = t('The discount code %code has reached its max number of uses.', array('%code' => $discount->code));
         continue;
       }
-
-      $discount->code_uses_count = $row["code_uses_count"];
+      $discount->code_uses_count = $code_uses_count;
     }
 
     // If there are applied discounts, check if discount is being combined and

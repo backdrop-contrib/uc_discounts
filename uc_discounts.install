@@ -501,7 +501,7 @@ function uc_discounts_install() {
 
   // Print out a nice message directing administrators towards the configuration
   // screen.
-  backdrop_set_message(st("UC Discounts (Alternative) settings are available under !link", array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
+  backdrop_set_message(st("UC Discounts settings are available under !link", array("!link" => l("Administer > Store administration > Discounts", "admin/store/uc_discounts"))
   ));
   // Dynamically generated variable data was detected on the following lines.
 }

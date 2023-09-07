@@ -1600,6 +1600,7 @@ function _uc_discounts_get_random_string($matches) {
 function uc_discounts_admin_checkout_pane_settings_form($form, &$form_state) {
   $config = config('uc_discounts.settings');
   $form['uc_discounts_checkout_allow_user_codes'] = array(
+    '#config' => 'uc_discounts.settings',
     '#type' => 'checkbox',
     '#title' => t('Allow customer to enter discount codes'),
     '#description' => t('When enabled a text field will be displayed to the'
@@ -1607,6 +1608,7 @@ function uc_discounts_admin_checkout_pane_settings_form($form, &$form_state) {
     '#default_value' => $config->get('uc_discounts_checkout_allow_user_codes'),
   );
   $form['uc_discounts_checkout_show_messages'] = array(
+    '#config' => 'uc_discounts.settings',
     '#type' => 'checkbox',
     '#title' => t('Show messages about discounts in discounts checkout pane'),
     '#description' => t('When enabled messages about call discounts will be'

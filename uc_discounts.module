@@ -262,22 +262,24 @@ function uc_discounts_uc_order($op, $order, $arg2) {
         // - Storing new discount line items.
         $new_order_line_items = array();
 
-        // Delete existing discount line items.
+        // Delete existing discount line items from the db.
         foreach ($existing_line_items as $line_item) {
           if ($line_item["type"] == UC_DISCOUNTS_LINE_ITEM_TYPE) {
-            uc_order_delete_line_item($line_item["line_item_id"]);
+            if (isset($line_item["line_item_id"])) {
+              uc_order_delete_line_item($line_item["line_item_id"]);
+            }
           }
-          // Otherwise store non-discount line item.
+          // Otherwise keep non-discount line item.
           else {
             $new_order_line_items[] = $line_item;
           }
         }
 
-        // Add discount line items.
+        // Add discount line items and store them in the db.
         if (!empty($order->uc_discounts_line_items)) {
           foreach ($order->uc_discounts_line_items as $line_item) {
             if ($line_item['amount'] != 0) {
-              uc_order_line_item_add($order->order_id, $line_item['type'], $line_item['title'], $line_item['amount'], $line_item['weight'], $line_item['data']);
+              $line_item = uc_order_line_item_add($order->order_id, $line_item['type'], $line_item['title'], $line_item['amount'], $line_item['weight'], $line_item['data']);
               $new_order_line_items[] = $line_item;
             }
           }

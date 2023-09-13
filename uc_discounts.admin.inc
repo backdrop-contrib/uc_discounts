@@ -72,15 +72,27 @@ function uc_discounts_admin_discounts_list() {
 
   $rows = array();
   foreach ($result as $discount) {
-    //$total_use_count = (is_numeric($discount->total_use_count)) ? $discount->total_use_count : 0;
-    //$total_times_applied = (is_numeric($discount->total_times_applied)) ? $discount->total_times_applied : 0;
     $operations = array(
-      l(t('usage'), 'admin/store/reports/uc_discounts/discount/' . $discount->discount_id),
-      l(t('edit'), 'admin/store/uc_discounts/edit/' . $discount->discount_id),
-      l(t('copy'), 'admin/store/uc_discounts/copy/' . $discount->discount_id),
-      l(t('delete'), 'admin/store/uc_discounts/delete/' . $discount->discount_id),
+      '#type' => 'operations',
+      '#links' => array(
+        array(
+          'title' => t('usage'),
+          'href' => 'admin/store/reports/uc_discounts/discount/' . $discount->discount_id,
+        ),
+        array(
+          'title' => t('edit'),
+          'href' => 'admin/store/uc_discounts/edit/' . $discount->discount_id,
+        ),
+        array(
+          'title' => t('copy'),
+          'href' => 'admin/store/uc_discounts/copy/' . $discount->discount_id,
+        ),
+        array(
+          'title' => t('delete'),
+          'href' => 'admin/store/uc_discounts/delete/' . $discount->discount_id,
+        ),
+      ),
     );
-
     $rows[] = array(
       'data' => array(
         array(
@@ -108,7 +120,7 @@ function uc_discounts_admin_discounts_list() {
           'class' => array('date'),
         ),
         array(
-          'data' => implode(' ', $operations),
+          'data' => $operations,
           'class' => array('operations'),
         ),
       ),

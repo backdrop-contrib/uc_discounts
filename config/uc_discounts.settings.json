@@ -2,5 +2,6 @@
     "_config_name": "uc_discounts.settings",
     "uc_discounts_checkout_allow_user_codes": 1,
     "uc_discounts_checkout_show_messages": 1,
+    "uc_discounts_checkout_show_in_cart_contents": 1,
     "uc_cap_uc_discounts_enabled": 1
 }

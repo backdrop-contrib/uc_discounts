@@ -121,7 +121,7 @@ function uc_discounts_permission() {
   return array(
     'configure discounts' => array(
       'title' => t('configure discounts'),
-      'description' => t('Configure ubercart discounts.'),
+      'description' => t('Configure Ubercart discounts.'),
     ),
   );
 }
@@ -471,8 +471,11 @@ function uc_discounts_config_info() {
  * Alters Ubercart shopping cart view form adding discount subtotals.
  *
  * @see uc_cart_view_form()
+ * @see uc_cart_cart_settings_form()
  */
 function uc_discounts_form_uc_cart_view_form_alter(&$form, &$form_state) {
+  // Note that 'uc_cap_uc_discounts_enabled' is stored in uc_cart.settings
+  // config by uc_cart_cart_settings_form().
   $enabled = config_get('uc_cart.settings', 'uc_cap_uc_discounts_enabled');
   if ($enabled) {
     $total_key = 0;
@@ -533,8 +536,8 @@ function uc_discounts_uc_checkout_pane() {
   return array(
     'uc_discounts' => array(
       'callback' => 'uc_discounts_uc_checkout_pane_discounts',
-      'title' => t('Discount codes'),
-      'desc' => t('Displays entry form for customers to add discount codes.'),
+      'title' => t('Discounts'),
+      'desc' => t('Displays entry form for customers to add discount codes and messages about discounts.'),
       'weight' => 5,
       'process' => TRUE,
       'collapsible' => TRUE,
@@ -545,8 +548,6 @@ function uc_discounts_uc_checkout_pane() {
 
 /**
  * Discounts checkout pane callback.
- *
- * More information at http://www.ubercart.org/docs/developer/245/checkout
  */
 function uc_discounts_uc_checkout_pane_discounts($op, $order, $form = NULL, &$form_state = NULL) {
   $config = config('uc_discounts.settings');
@@ -662,10 +663,10 @@ function uc_discounts_uc_checkout_pane_discounts($op, $order, $form = NULL, &$fo
  *
  * Creates discount line items and saves them to order->uc_discounts_line_items.
  * This is temporary storage and uc_discounts_apply() should be used to create
- * real ubercart line items that affect totals.
+ * real Ubercart line items that affect totals.
  *
  * @param object $order
- *   Fully loaded ubercart order.
+ *   Fully loaded Ubercart order.
  * @param array $discounts
  *   Array of loaded discounts as created by uc_discounts_discounts_for_order().
  */
@@ -712,7 +713,7 @@ function uc_discounts_theme() {
 /**
  * Implements hook_uc_checkout_pane_alter().
  *
- * Overrides the ubercart callback for the checkout stage cart pane so that we
+ * Overrides the Ubercart callback for the checkout stage cart pane so that we
  * can add discount and subtotals to the cart display.
  */
 function uc_discounts_uc_checkout_pane_alter(&$panes) {
@@ -722,7 +723,7 @@ function uc_discounts_uc_checkout_pane_alter(&$panes) {
 }
 
 /**
- * Callback that replaces the stock ubercart checkout cart pane.
+ * Callback that replaces the stock Ubercart checkout cart pane.
  *
  * @param string $op
  *
@@ -734,24 +735,29 @@ function uc_discounts_uc_checkout_pane_alter(&$panes) {
 function uc_discounts_uc_checkout_pane_cart($op, $order, $form = NULL, &$form_state = NULL) {
   switch ($op) {
     case 'view':
-      // TODO This variable was probably removed in Backdrop without replacement.
-      $contents['cart_review_table'] = array(
-        '#theme' => 'uc_discounts_uc_cart_review_table',
-        '#items' => $order->products,
-        '#discount' => uc_discounts_get_discount_amount_for_order($order),
-        '#weight' => variable_get('uc_pane_cart_field_cart_weight', 2),
-      );
-      return array('contents' => $contents, 'next-button' => FALSE);
+      if (config_get('uc_discounts.settings', 'uc_discounts_checkout_show_in_cart_contents')) {
+        $contents['cart_review_table'] = array(
+          '#theme' => 'uc_discounts_uc_cart_review_table',
+          '#items' => $order->products,
+          '#discount' => uc_discounts_get_discount_amount_for_order($order),
+          '#weight' => config_get('uc_cart.settings', 'uc_pane_cart_field_cart_weight'),
+        );
+        return array('contents' => $contents, 'next-button' => FALSE);
+      }
+      else {
+        return uc_checkout_pane_cart($op, $order, $form, $form_state);
+      }
 
     case 'review':
-      $discount = uc_discounts_get_discount_amount_for_order($order);
-      $review[] = theme('uc_discounts_uc_cart_review_table', array('items' => $order->products, 'show_subtotal' => FALSE, 'discount' => $discount));
-      return $review;
+      // Review can use the unmodified function because discounts are now part
+      // of the order as line items and will always show up.
+      return uc_checkout_pane_cart($op, $order, $form, $form_state);
   }
 }
 
 /**
- * Theme shopping cart checkout table.
+ * Theme shopping cart checkout table to include total discounts and subtotal
+ * with discounts.
  *
  * @param array $variables
  *
@@ -2067,7 +2073,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
  * Get total discount amount for an order.
  *
  * @param object $order
- *   Loaded ubercart order object.
+ *   Loaded Ubercart order object.
  *
  * @return float
  *   Total amount of discount for order.
@@ -2081,7 +2087,7 @@ function uc_discounts_get_discount_amount_for_order($order) {
  * Helper function that gets the codeless discounted price of a product.
  *
  * @param object $product
- *   Loaded ubercart product node.
+ *   Loaded Ubercart product node.
  * @param bool $return_null
  *   If TRUE return NULL for the price if there are no discounts.
  *
@@ -2106,7 +2112,7 @@ function uc_discounts_get_discounted_price_for_product($product, $return_null = 
  * Returns all codeless discounts that apply to a product.
  *
  * @param object $product
- *   Loaded ubercart product.
+ *   Loaded Ubercart product.
  * @param string $sort_column
  *   Column name on which to sort the discounts.
  * @param bool $is_ascending_sort
@@ -2123,7 +2129,7 @@ function uc_discounts_get_codeless_discounts_for_product($product, $sort_column 
  * Returns codeless discounts that apply to product with specified quantity.
  *
  * @param object $product
- *   Loaded ubercart product.
+ *   Loaded Ubercart product.
  * @param int $quantity
  * @param string $sort_column
  *   Column name on which to sort the discounts.
@@ -2399,7 +2405,7 @@ function uc_discounts_apply($order, $save_uses = TRUE, $compare_to_existing = TR
  * @param object $order
  *
  * @return array
- *   Array of ubercart order line items.
+ *   Array of Ubercart order line items.
  */
 function uc_discounts_get_order_discount_line_items($order) {
   if (is_array($order->line_items)) {

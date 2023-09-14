@@ -1610,24 +1610,30 @@ function _uc_discounts_get_random_string($matches) {
  * Displays admin settings form for discounts checkout pane.
  */
 function uc_discounts_admin_checkout_pane_settings_form($form, &$form_state) {
-  $config = config('uc_discounts.settings');
   $form['uc_discounts_checkout_allow_user_codes'] = array(
     '#config' => 'uc_discounts.settings',
     '#type' => 'checkbox',
     '#title' => t('Allow customer to enter discount codes'),
-    '#description' => t('When enabled a text field will be displayed to the'
-      . ' customer during checkout where they can enter discount codes.'),
-    '#default_value' => $config->get('uc_discounts_checkout_allow_user_codes'),
+    '#description' => t('When enabled, a text field will be displayed to the customer during checkout where they can enter discount codes.'),
+    '#default_value' => config_get('uc_discounts.settings', 'uc_discounts_checkout_allow_user_codes'),
   );
   $form['uc_discounts_checkout_show_messages'] = array(
     '#config' => 'uc_discounts.settings',
     '#type' => 'checkbox',
     '#title' => t('Show messages about discounts in discounts checkout pane'),
-    '#description' => t('When enabled messages about call discounts will be'
-      . ' displayed to the customer during checkout in the discounts checkout'
-      . ' pane. This provides additional information beyond the discount text'
-      . ' displayed in the checkout cart pane and checkout payment pane.'),
-    '#default_value' => $config->get('uc_discounts_checkout_show_messages'),
+    '#description' => t('When enabled, messages about all discounts will be displayed to the customer during checkout in the discounts checkout pane. This provides additional information beyond the discount text displayed in the checkout cart pane and checkout payment pane.'),
+    '#default_value' => config_get('uc_discounts.settings', 'uc_discounts_checkout_show_messages'),
   );
+  $form['uc_discounts_checkout_show_in_cart_contents'] = array(
+    '#config' => 'uc_discounts.settings',
+    '#type' => 'checkbox',
+    '#title' => t('Show discounts in the Cart Contents checkout pane'),
+    '#description' => t('When enabled, show the discounts in the Cart Contents pane, which will be in addition to its display in the Payment Methods pane.'),
+    '#default_value' => config_get('uc_discounts.settings', 'uc_discounts_checkout_show_in_cart_contents'),
+  );
+
+  // Add JS for vertical tabs summaries.
+  $form['#attached']['js'][] = backdrop_get_path('module', 'uc_discounts') . '/js/uc_discounts.js';
+
   return $form;
 }

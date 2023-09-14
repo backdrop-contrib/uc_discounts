@@ -556,6 +556,15 @@ function uc_discounts_update_1001() {
 }
 
 /**
+ * Initialize the new config setting to choose whether to show discounts in the
+ * cart contents pane.
+ */
+function uc_discounts_update_1002() {
+  // Past behavior was to show it, so we'll initialize the box to be checked.
+  config_set('uc_discounts.settings', 'uc_discounts_checkout_show_in_cart_contents', 1);
+}
+
+/**
  * Implements hook_uninstall().
  */
 function uc_discounts_uninstall() {

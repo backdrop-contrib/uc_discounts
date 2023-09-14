@@ -519,16 +519,16 @@ function uc_discounts_update_last_removed() {
 function uc_discounts_update_1000() {
   $config = config('uc_discounts.settings');
   $config->set('uc_discounts_checkout_allow_user_codes',
-    update_variable_get('uc_discounts_checkout_allow_user_codes', 'TRUE'));
+    update_variable_get('uc_discounts_checkout_allow_user_codes', 1));
   $config->set('uc_discounts_checkout_show_messages',
-    update_variable_get('uc_discounts_checkout_show_messages', 'TRUE'));
+    update_variable_get('uc_discounts_checkout_show_messages', 1));
   $config->save();
   update_variable_del('uc_discounts_checkout_allow_user_codes');
   update_variable_del('uc_discounts_checkout_show_messages');
 
   // uc_discounts settings stored in uc_cart
   config_set('uc_cart.settings', 'uc_cap_uc_discounts_enabled',
-    update_variable_get('uc_cap_uc_discounts_enabled', 'TRUE'));
+    update_variable_get('uc_cap_uc_discounts_enabled', 1));
 }
 
 /**
@@ -562,6 +562,34 @@ function uc_discounts_update_1001() {
 function uc_discounts_update_1002() {
   // Past behavior was to show it, so we'll initialize the box to be checked.
   config_set('uc_discounts.settings', 'uc_discounts_checkout_show_in_cart_contents', 1);
+}
+
+/**
+ * Fix variables improperly converted to strings when updated from D7.
+ */
+function uc_discounts_update_1003() {
+  // Prior to this update, uc_discounts_update_1000() initialized config
+  // variables improperly to string values. If those values are still strings,
+  // we'll convert them to the correct Boolean values.
+  $vars = array(
+    'uc_discounts_checkout_allow_user_codes' => 'uc_discounts.settings',
+    'uc_discounts_checkout_show_messages' => 'uc_discounts.settings',
+    'uc_cap_uc_discounts_enabled' => 'uc_cart.settings',
+  );
+  foreach ($vars as $var => $config_file) {
+    $value = config_get($config_file, $var);
+    if ($value === 'TRUE') {
+      config_set($config_file, $var, 1);
+    }
+    elseif ($value === 'FALSE') {
+      config_set($config_file, $var, 0);
+    }
+  }
+
+  // If 'uc_cap_uc_discounts_enabled' is still in the config file, remove it, because it should have been stored in uc_cart.settings.
+  if (!is_null(config_get('uc_discounts.settings', 'uc_cap_uc_discounts_enabled'))) {
+    config_clear('uc_discounts.settings', 'uc_cap_uc_discounts_enabled');
+  }
 }
 
 /**

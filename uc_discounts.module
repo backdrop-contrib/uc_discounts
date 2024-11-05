@@ -978,7 +978,7 @@ function uc_discounts_get_product_ids_for_discount($discount, $grouping = UC_DIS
       $terms = uc_discounts_get_term_ids_for_discount_id($discount->discount_id, $grouping, $exclude_all_products);
       $query = 'SELECT DISTINCT p.nid FROM {uc_products} p';
       if (!empty($terms)) {
-        $query .= ' INNER JOIN { taxonomy_index} tn ON p.nid=tn.nid
+        $query .= ' INNER JOIN {taxonomy_index} tn ON p.nid=tn.nid
                     INNER JOIN {uc_discounts_terms} dt ON tn.tid=dt.term_id
                     WHERE dt.discount_id=:discount_id';
       }

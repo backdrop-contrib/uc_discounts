@@ -466,7 +466,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
   $form['application'] = array(
     '#type' => 'fieldset',
     '#title' => t('Discount Application'),
-    '#description' => t('Details of the discount to apply'),
+    '#description' => t('Details of the discount to apply.'),
     '#collapsible' => TRUE,
   );
 
@@ -481,7 +481,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
   $form['application']['discount_amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Discount amount'),
-    '#description' => t('The amount of discount.  E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%)'),
+    '#description' => t('The amount of discount.  E.g. 50 (for $50), 5 (for 5 items), or 0.05 (for 5%). Enter a negative number to create a surcharge.'),
     '#default_value' => isset($form_state['values']['discount_amount']) ? $form_state['values']['discount_amount'] : '',
     '#size' => 15,
     '#required' => TRUE,
@@ -601,6 +601,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
   foreach ($result as $row) {
     $options[$row->nid] = $row->title . ' (' . $row->model . ')';
   }
+
   $form[$fieldset_name]['filter'][$name] = array(
     '#type' => 'select',
     '#title' => t('Products'),

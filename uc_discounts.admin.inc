@@ -606,6 +606,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#title' => t('Products'),
     '#description' => t('Select all products this discount applies to or &lt;All Products&gt; to apply to all products.'),
     '#options' => $options,
+    '#size' => uc_discounts_admin_num_shown($options),
     '#default_value' => $product_ids,
     '#multiple' => TRUE,
     '#states' => array(
@@ -632,6 +633,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#title' => t('Terms'),
     '#description' => t('Select all terms this discount applies to or &lt;All Terms&gt; to apply to all terms.  Selections are <b>not</b> recursive.'),
     '#options' => $options,
+    '#size' => uc_discounts_admin_num_shown($options),
     '#default_value' => $term_ids,
     '#multiple' => TRUE,
     '#states' => array(
@@ -662,6 +664,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#title' => t('SKUs'),
     '#description' => t('Select all SKUs this discount applies to or &lt;All SKUs&gt; to apply to all SKUs.  Selections are <b>not</b> recursive.'),
     '#options' => $options,
+    '#size' => uc_discounts_admin_num_shown($options),
     '#default_value' => $skus,
     '#multiple' => TRUE,
     '#states' => array(
@@ -689,6 +692,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#title' => t('Classes'),
     '#description' => t('Select all product classes that this discount applies to or &lt;All Classes&gt; to apply to all classes.  Selections are <b>not</b> recursive.'),
     '#options' => $options,
+    '#size' => uc_discounts_admin_num_shown($options),
     '#default_value' => $classes,
     '#multiple' => TRUE,
     '#states' => array(
@@ -724,6 +728,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
     '#title' => t('Authors'),
     '#description' => t('Select all authors this discount applies to or &lt;All Authors&gt; to apply to all authors.'),
     '#options' => $options,
+    '#size' => uc_discounts_admin_num_shown($options),
     '#default_value' => $author_ids,
     '#multiple' => TRUE,
     '#states' => array(
@@ -735,6 +740,23 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
       ),
     ),
   );
+}
+
+/**
+ * Helper function to specify the number of elements to display in a multiple
+ * select.
+ */
+function uc_discounts_admin_num_shown($options) {
+  $num_options = count($options);
+  if ($num_options <= 10) {
+    return $num_options;
+  }
+  elseif ($num_options <= 100) {
+    return min($num_options, 20);
+  }
+  else {
+    return min($num_options, 50);
+  }
 }
 
 /**

@@ -1047,7 +1047,7 @@ function uc_discounts_get_product_ids_for_discount_id($discount_id, $grouping, $
   $query = "SELECT product_id
             FROM {uc_discounts_products}
             WHERE discount_id = :discount_id
-            AND grouping = :grouping";
+            AND `grouping` = :grouping";
   $args = array(
     ':discount_id' => $discount_id,
     ':grouping' => $grouping,
@@ -1079,7 +1079,7 @@ function uc_discounts_get_term_ids_for_discount_id($discount_id, $grouping, $exc
   $query = "SELECT term_id
             FROM {uc_discounts_terms}
             WHERE discount_id = :discount_id
-            AND grouping = :grouping";
+            AND `grouping` = :grouping";
   $args = array(
     ':discount_id' => $discount_id,
     ':grouping' => $grouping,
@@ -1111,7 +1111,7 @@ function uc_discounts_get_skus_for_discount_id($discount_id, $grouping, $exclude
   $query = "SELECT sku
             FROM {uc_discounts_skus}
             WHERE discount_id = :discount_id
-            AND grouping = :grouping";
+            AND `grouping` = :grouping";
   $args = array(
     ':discount_id' => $discount_id,
     ':grouping' => $grouping,
@@ -1143,7 +1143,7 @@ function uc_discounts_get_classes_for_discount_id($discount_id, $grouping, $excl
   $query = "SELECT class
             FROM {uc_discounts_classes}
             WHERE discount_id = :discount_id
-            AND grouping = :grouping";
+            AND `grouping` = :grouping";
   $args = array(
     ':discount_id' => $discount_id,
     ':grouping' => $grouping,
@@ -1175,7 +1175,7 @@ function uc_discounts_get_author_ids_for_discount_id($discount_id, $grouping, $e
   $query = "SELECT author_id
             FROM {uc_discounts_authors}
             WHERE discount_id = :discount_id
-            AND grouping = :grouping";
+            AND `grouping` = :grouping";
   $args = array(
     ':discount_id' => $discount_id,
     ':grouping' => $grouping,

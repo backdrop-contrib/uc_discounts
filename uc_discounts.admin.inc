@@ -227,6 +227,8 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
     $form_state['values'] = (array) uc_discounts_load($discount_id);
   }
 
+  $form['#attached']['js'][] = backdrop_get_path('module', 'uc_discounts') . '/js/select_description.js';
+
   $form['discount_id'] = array(
     '#type' => 'hidden',
     '#value' => isset($form_state['values']['discount_id']) ? $form_state['values']['discount_id'] : '',
@@ -461,6 +463,7 @@ function uc_discounts_admin_discount_edit_form($form, &$form_state, $discount_id
         'input[name="has_role_filter"]' => array('checked' => TRUE),
       ),
     ),
+    '#attributes' => array('class' => array('uc-discounts-update-select-description')),
   );
 
   $form['qualifications']['requires_single_product_to_qualify'] = array(
@@ -627,6 +630,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_PRODUCTS),
       ),
     ),
+    '#attributes' => array('class' => array('uc-discounts-update-select-description')),
   );
 
   $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_TERMS;
@@ -653,6 +657,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
       'required' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_TERMS),
       ),
+    '#attributes' => array('class' => array('uc-discounts-update-select-description')),
     ),
   );
 
@@ -684,6 +689,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
       'required' => array(
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_SKUS),
       ),
+    '#attributes' => array('class' => array('uc-discounts-update-select-description')),
     ),
   );
 
@@ -713,6 +719,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_CLASS),
       ),
     ),
+    '#attributes' => array('class' => array('uc-discounts-update-select-description')),
   );
 
   $name = $grouping . '-filter-select-' . UC_DISCOUNTS_FILTER_TYPE_AUTHORS;
@@ -749,6 +756,7 @@ function _uc_discounts_product_filter_form(&$form, &$form_state, $grouping, $dis
         ':input[name="' . $filter_name . '"]' => array('value' => UC_DISCOUNTS_FILTER_TYPE_AUTHORS),
       ),
     ),
+    '#attributes' => array('class' => array('uc-discounts-update-select-description')),
   );
 }
 

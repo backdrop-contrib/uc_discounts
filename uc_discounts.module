@@ -164,8 +164,8 @@ function uc_discounts_menu() {
     'file' => 'uc_discounts.admin.inc',
   );
   $items['admin/store/uc_discounts/copy/%'] = array(
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => array('uc_discounts_admin_discount_copy_form', 4),
+    'page callback' => 'uc_discounts_admin_discount_copy',
+    'page arguments' => array(4),
     'access arguments' => array('configure discounts'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_discounts.admin.inc',

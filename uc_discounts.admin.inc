@@ -1003,7 +1003,7 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
  *
  * @ingroup forms
  */
-function uc_discounts_admin_discount_copy_form($original_discount_id) {
+function uc_discounts_admin_discount_copy($original_discount_id) {
   $discount = uc_discounts_load($original_discount_id);
   $discount->name = t('Copy of @discount', array('@discount' => $discount->name));
   $discount->insert_timestamp = REQUEST_TIME;

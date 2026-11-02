@@ -79,6 +79,15 @@ function uc_discounts_admin_discounts_list() {
           'title' => t('usage'),
           'href' => 'admin/store/reports/uc_discounts/discount/' . $discount->discount_id,
         ),
+        $discount->is_active ?
+          array(
+            'title' => t('disable'),
+            'href' => 'admin/store/uc_discounts/disable/' . $discount->discount_id,
+          ) :
+          array(
+            'title' => t('enable'),
+            'href' => 'admin/store/uc_discounts/enable/' . $discount->discount_id,
+          ),
         array(
           'title' => t('edit'),
           'href' => 'admin/store/uc_discounts/edit/' . $discount->discount_id,
@@ -999,9 +1008,41 @@ function uc_discounts_admin_discount_edit_form_submit($form, &$form_state) {
 }
 
 /**
- * Generates admin form to create a copy of existing discount.
- *
- * @ingroup forms
+ * Admin action to enable a discount.
+ */
+function uc_discounts_admin_discount_enable($discount_id) {
+  $discount = uc_discounts_load($discount_id);
+  if ($discount) {
+    db_update('uc_discounts')
+      ->fields(array(
+        'is_active' => 1,
+      ))
+      ->condition('discount_id', $discount_id, '=')
+      ->execute();
+    backdrop_set_message(t('The discount %name has been enabled.', array('%name' => $discount->name)));
+  }
+  backdrop_goto('admin/store/uc_discounts');
+}
+
+/**
+ * Admin action to disable a discount.
+ */
+function uc_discounts_admin_discount_disable($discount_id) {
+  $discount = uc_discounts_load($discount_id);
+  if ($discount) {
+    db_update('uc_discounts')
+      ->fields(array(
+        'is_active' => 0,
+      ))
+      ->condition('discount_id', $discount_id, '=')
+      ->execute();
+    backdrop_set_message(t('The discount %name has been disabled.', array('%name' => $discount->name)));
+  }
+  backdrop_goto('admin/store/uc_discounts');
+}
+
+/**
+ * Admin action to create a copy of existing discount.
  */
 function uc_discounts_admin_discount_copy($original_discount_id) {
   $discount = uc_discounts_load($original_discount_id);

@@ -155,6 +155,22 @@ function uc_discounts_menu() {
     'weight' => 1,
     'file' => 'uc_discounts.admin.inc',
   );
+  $items['admin/store/uc_discounts/enable/%'] = array(
+    'title' => 'Edit discount rule',
+    'page callback' => 'uc_discounts_admin_discount_enable',
+    'page arguments' => array(4),
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
+  );
+  $items['admin/store/uc_discounts/disable/%'] = array(
+    'title' => 'Edit discount rule',
+    'page callback' => 'uc_discounts_admin_discount_disable',
+    'page arguments' => array(4),
+    'access arguments' => array('configure discounts'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_discounts.admin.inc',
+  );
   $items['admin/store/uc_discounts/edit/%'] = array(
     'title' => 'Edit discount rule',
     'page callback' => 'backdrop_get_form',

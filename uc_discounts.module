@@ -1898,7 +1898,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
           $cheapest_product_key = NULL;
           foreach ($order_and_discount_products as $key => $product) {
             // If this product has been fully discounted, continue.
-            if ($product->uc_discounts_is_fully_discounted) {
+            if ($product->uc_discounts_is_fully_discounted ?? FALSE) {
               continue;
             }
 
@@ -2028,7 +2028,7 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
 
     if (!is_null($messages)) {
       $options = array(
-        '@type' => $discount->amount > 0 ? t('discount') : t('surcharge'),
+        '@type' => $discount->amount >= 0 ? t('discount') : t('surcharge'),
         '%short_description' => $discount->short_description,
         '%code' => $discount->code,
         '@times_applied' => $discount->times_applied,
@@ -2070,11 +2070,16 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
     $discounts[] = $discount;
   }
 
-  // If no discount array was filled in, means that the discount was not found
+  // If no $discounts array was filled in, means that the discount was not found
   // in the database.
-  if (empty($discounts) && !empty($order->uc_discounts_codes)) {
-    // @todo - Fix text to using translation plural.
-    $messages['warnings'][] = t('Coupon code %code does not exist or is not valid.', array('%code' => implode(', ', $order->uc_discounts_codes)));
+  $discount_codes = $order->uc_discounts_codes ?? array();
+  if (empty($discounts) && !empty($discount_codes)) {
+    if (count($discount_codes) == 1) {
+      $messages['warnings'][] = t('Coupon code %code does not exist or does not apply to this order.', array('%code' => $order->uc_discounts_codes[0]));
+    }
+    else {
+      $messages['warnings'][] = t('Coupon codes %code do not exist or do not apply to this order.', array('%code' => implode(', ', $order->uc_discounts_codes)));
+    }
   }
 
   // Save to static variable.

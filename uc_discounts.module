@@ -1346,6 +1346,13 @@ function uc_discounts_get_discounts_for_order($order, $reset = FALSE) {
   }
 
   // If no static variable exists then do all the heavy lifting.
+
+  // Clear flag used by UC_DISCOUNTS_DISCOUNT_TYPE_FREE_ITEMS (see switch
+  // statement below).
+  foreach ($order->products as $key => $product) {
+    unset($product->uc_discounts_is_fully_discounted);
+  }
+
   // Product NIDS in cart => subtotal of individual item.
   $order_product_id_subtotal_map = array();
   // Product NIDS in cart => quantity of individual item.

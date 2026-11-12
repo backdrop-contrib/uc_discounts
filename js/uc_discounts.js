@@ -19,7 +19,7 @@ Backdrop.behaviors.ucCartDiscountPaneSummaries = {
         ret.push(Backdrop.t('Show discount messages'));
       }
       else {
-        ret.push(Backdrop.t('No discout messages'));
+        ret.push(Backdrop.t('No discount messages'));
       }
       if ($('#edit-uc-discounts-checkout-show-in-cart-contents').is(':checked')) {
         ret.push(Backdrop.t('Show discounts in cart contents'));

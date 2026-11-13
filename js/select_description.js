@@ -25,13 +25,13 @@ Backdrop.behaviors.updateSelectDescription = {
         // Ensure container div exists inside .description
         var $displayContainer = $desc.find('.uc-discounts-selected-list');
         if ($displayContainer.length === 0) {
-          $displayContainer = $('<div class="uc-discounts-selected-list"></div>').appendTo($desc);
+          $displayContainer = $('<details class="uc-discounts-selected-list"></details>').appendTo($desc);
         }
 
         if (selected.length > 0) {
-          $displayContainer.text(Backdrop.t('Currently selected: ') + selected.join(', '));
+          $displayContainer.html('<summary>' + Backdrop.t('Currently selected') + '</summary>' + selected.join(', '));
         } else {
-          $displayContainer.text(Backdrop.t('No items selected.'));
+          $displayContainer.html('<summary>' + Backdrop.t('No items selected.') + '</summary>');
         }
       }
 
